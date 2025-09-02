@@ -1,4 +1,4 @@
 package com.github.maximslepukhin.controller;
 
-public class SignUpController {
+public class SignupController {
 }

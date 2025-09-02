@@ -12,6 +12,7 @@ services:
       - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d   # ⚡ скрипты инициализации схем
 
   accounts-service:
     build:
@@ -24,8 +25,23 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
       SPRING_DATASOURCE_USERNAME: bankuser
       SPRING_DATASOURCE_PASSWORD: bankpass
+      SPRING_LIQUIBASE_CLEAR-CHECKSUMS: "true"
     depends_on:
       - postgres
+
+  front-ui:
+    build:
+      context: ./front-ui
+      dockerfile: Dockerfile
+    container_name: front-ui
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
+      SPRING_DATASOURCE_USERNAME: bankuser
+      SPRING_DATASOURCE_PASSWORD: bankpass
 
 volumes:
   postgres-data:
