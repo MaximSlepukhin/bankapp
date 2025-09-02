@@ -1,0 +1,65 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example.bank</groupId>
+    <artifactId>bankapp</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <!-- Подключаем Spring Boot parent -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.2</version>
+        <relativePath/> <!-- не искать локальный POM -->
+    </parent>
+
+    <modules>
+        <module>config-server</module>
+        <module>discovery-server</module>
+        <module>gateway</module>
+        <module>front-ui</module>
+        <module>accounts-service</module>
+        <module>cash-service</module>
+        <module>transfer-service</module>
+        <module>exchange-service</module>
+        <module>exchange-generator</module>
+        <module>blocker-service</module>
+        <module>notifications-service</module>
+    </modules>
+
+    <!-- Управление версиями внешних зависимостей -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Cloud BOM -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2023.0.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Внешние зависимости, если версии нужны -->
+            <dependency>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-core</artifactId>
+                <version>4.23.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>42.6.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <properties>
+        <java.version>21</java.version>
+    </properties>
+
+</project>
