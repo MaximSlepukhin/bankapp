@@ -8,6 +8,7 @@ eureka:
   instance:
     hostname: discovery-server      # Имя контейнера
 
+
 management:
   endpoints:
     web:

@@ -1,49 +1,43 @@
 package com.github.maximslepukhin.controller;
 
-import com.github.maximslepukhin.model.User;
+import com.github.maximslepukhin.dto.AccountDto;
+import com.github.maximslepukhin.dto.UserDto;
 import com.github.maximslepukhin.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
-    // Получить всех пользователей
-    @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
-    // Получить пользователя по логину
     @GetMapping("/{login}")
-    public ResponseEntity<User> getUserByLogin(@PathVariable String login) {
-        Optional<User> userOpt = userService.findByLogin(login);
-        return userOpt.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+    public UserDto getUser(@PathVariable String login) {
+//        return userService.getUserByLogin(login);
+        System.out.println("Запрос получен в accounts-service для пользователя: " + login);
 
-    // Регистрация нового пользователя
-    @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(
-            @RequestParam String login,
-            @RequestParam String password,
-            @RequestParam String name,
-            @RequestParam String birthdate // формат YYYY-MM-DD
-    ) {
-        try {
-            User user = userService.registerUser(login, password, name, LocalDate.parse(birthdate));
-            return ResponseEntity.ok(user);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
-        }
+        UserDto user = new UserDto();
+        user.setLogin(login);
+        user.setName("Иван Иванов");
+        user.setBirthdate(LocalDate.of(1990, 1, 1));
+
+        // Список счетов-заглушек
+        List<AccountDto> accounts = List.of(
+                new AccountDto("USD", "Доллар", new BigDecimal("150.00"), true),
+                new AccountDto("RUB", "Рубль", new BigDecimal("5000.00"), true),
+                new AccountDto("EUR", "Евро", BigDecimal.ZERO, false)
+        );
+
+        user.setAccounts(accounts);
+        return user;
     }
 }

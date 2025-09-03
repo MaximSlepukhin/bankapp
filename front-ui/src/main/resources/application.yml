@@ -1,23 +1,8 @@
 spring:
   application:
-    name: front-ui
-
-server:
-  port: 8080
-  address: 0.0.0.0
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  endpoint:
-    health:
-      show-details: always
+    name: front-ui   # 👈 так будет отображаться в Eureka
 
 eureka:
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
       defaultZone: http://discovery-server:8761/eureka/
