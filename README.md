@@ -1,1 +1,5 @@
-docker compose down -v && docker compose up --build
+mvn clean package
+docker compose down
+docker image prune -f
+docker compose up --build -d
+docker ps

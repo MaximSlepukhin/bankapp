@@ -1,8 +1,12 @@
 spring:
+  application:
+    name: accounts-service
+
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+
   jpa:
     hibernate:
       ddl-auto: none
@@ -14,5 +18,25 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     drop-first: true
     clear-checksums: true
-    default-schema: accounts_service     # схема для таблиц приложения
-    liquibase-schema: accounts_service   # схема для служебных таблиц Liquibase
+    default-schema: accounts_service
+    liquibase-schema: accounts_service
+
+server:
+  port: 8081
+  address: 0.0.0.0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka/

@@ -12,7 +12,21 @@ services:
       - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./postgres-init:/docker-entrypoint-initdb.d   # ⚡ скрипты инициализации схем
+      - ./postgres-init:/docker-entrypoint-initdb.d
+
+  discovery-server:
+    build:
+      context: ./discovery-server
+      dockerfile: Dockerfile
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 5s
+      retries: 5
 
   accounts-service:
     build:
@@ -28,20 +42,44 @@ services:
       SPRING_LIQUIBASE_CLEAR-CHECKSUMS: "true"
     depends_on:
       - postgres
+      - discovery-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 5s
+      retries: 5
 
   front-ui:
     build:
-      context: ./front-ui
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: front-ui/Dockerfile
     container_name: front-ui
     ports:
       - "8080:8080"
     depends_on:
       - postgres
+      - discovery-server
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
       SPRING_DATASOURCE_USERNAME: bankuser
       SPRING_DATASOURCE_PASSWORD: bankpass
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      retries: 5
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: gateway
+    ports:
+      - "8082:8080"
+    depends_on:
+      - accounts-service
+      - front-ui
+      - discovery-server
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
 
 volumes:
   postgres-data:
