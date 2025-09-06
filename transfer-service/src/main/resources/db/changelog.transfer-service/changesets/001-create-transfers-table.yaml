@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001
+      author: maxims
+      changes:
+        - createTable:
+            tableName: transfers
+            schemaName: transfer_service
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: from_account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: to_account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: NUMERIC(19,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: timestamp
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: PENDING
+        - addForeignKeyConstraint:
+            baseTableName: transfers
+            baseColumnNames: from_account_id
+            referencedTableName: accounts
+            referencedColumnNames: id
+            referencedTableSchemaName: accounts_service
+            constraintName: fk_transfers_from_account
+        - addForeignKeyConstraint:
+            baseTableName: transfers
+            baseColumnNames: to_account_id
+            referencedTableName: accounts
+            referencedColumnNames: id
+            referencedTableSchemaName: accounts_service
+            constraintName: fk_transfers_to_account

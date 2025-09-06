@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountDto {
-    private String currency;  // <- код валюты, например "USD"
+    private String currency;  // код валюты, например "USD"
     private String title;     // название валюты
     private BigDecimal value;
     private boolean exists;

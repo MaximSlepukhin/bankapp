@@ -1,6 +1,7 @@
 package com.github.maximslepukhin.dto;
 
 
+import com.github.maximslepukhin.model.currency.Currency;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002
+      author: maxims
+      changes:
+        - createTable:
+            tableName: accounts
+            schemaName: accounts_service
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: owner_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value
+                  type: NUMERIC(19,2)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: accounts
+            baseColumnNames: owner_id
+            referencedTableName: users
+            referencedColumnNames: id
+            referencedTableSchemaName: accounts_service
+            constraintName: fk_accounts_owner

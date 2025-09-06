@@ -39,14 +39,93 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
       SPRING_DATASOURCE_USERNAME: bankuser
       SPRING_DATASOURCE_PASSWORD: bankpass
-      SPRING_LIQUIBASE_CLEAR-CHECKSUMS: "true"
     depends_on:
       - postgres
       - discovery-server
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
-      interval: 5s
-      retries: 5
+
+  cash-service:
+    build:
+      context: .
+      dockerfile: cash-service/Dockerfile
+    container_name: cash-service
+    ports:
+      - "8091:8091"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
+      SPRING_DATASOURCE_USERNAME: bankuser
+      SPRING_DATASOURCE_PASSWORD: bankpass
+    depends_on:
+      - postgres
+      - discovery-server
+
+  transfer-service:
+    build:
+      context: .
+      dockerfile: transfer-service/Dockerfile
+    container_name: transfer-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
+      SPRING_DATASOURCE_USERNAME: bankuser
+      SPRING_DATASOURCE_PASSWORD: bankpass
+    depends_on:
+      - postgres
+      - discovery-server
+
+  exchange-service:
+    build:
+      context: .
+      dockerfile: exchange-service/Dockerfile
+    container_name: exchange-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
+      SPRING_DATASOURCE_USERNAME: bankuser
+      SPRING_DATASOURCE_PASSWORD: bankpass
+    depends_on:
+      - postgres
+      - discovery-server
+
+  blocker-service:
+    build:
+      context: .
+      dockerfile: blocker-service/Dockerfile
+    container_name: blocker-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
+      SPRING_DATASOURCE_USERNAME: bankuser
+      SPRING_DATASOURCE_PASSWORD: bankpass
+    depends_on:
+      - postgres
+      - discovery-server
+
+  notifications-service:
+    build:
+      context: .
+      dockerfile: notifications-service/Dockerfile
+    container_name: notifications-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      - discovery-server
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+
+  exchange-generator-service:
+    build:
+      context: .
+      dockerfile: exchange-generator-service/Dockerfile
+    container_name: exchange-generator-service
+    ports:
+      - "8088:8088"
+    depends_on:
+      - discovery-server
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
 
   front-ui:
     build:
@@ -56,16 +135,9 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - postgres
       - discovery-server
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
-      SPRING_DATASOURCE_USERNAME: bankuser
-      SPRING_DATASOURCE_PASSWORD: bankpass
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 5s
-      retries: 5
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
 
   gateway:
     build:
@@ -73,11 +145,17 @@ services:
       dockerfile: gateway/Dockerfile
     container_name: gateway
     ports:
-      - "8082:8080"
+      - "8090:8082"  # gateway внутри Docker 8082, внешний 8090
     depends_on:
       - accounts-service
+      - cash-service
+      - transfer-service
+      - exchange-service
+      - blocker-service
+      - notifications-service
       - front-ui
       - discovery-server
+      - exchange-generator-service
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
 

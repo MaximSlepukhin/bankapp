@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001
+      author: maxims
+      changes:
+        - createTable:
+            tableName: notifications
+            schemaName: notifications_service
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: message
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sent_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            baseTableName: notifications
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            referencedTableSchemaName: accounts_service
+            constraintName: fk_notifications_user

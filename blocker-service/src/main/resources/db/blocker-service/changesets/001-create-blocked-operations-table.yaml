@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001
+      author: maxims
+      changes:
+        - createTable:
+            tableName: blocked_operations
+            schemaName: blocker_service
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: operation_type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: blocked_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            baseTableName: blocked_operations
+            baseColumnNames: account_id
+            referencedTableName: accounts
+            referencedColumnNames: id
+            referencedTableSchemaName: accounts_service
+            constraintName: fk_blocked_operations_account

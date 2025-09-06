@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: cash-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.default_schema: cash_service
+
+  liquibase:
+    enabled: false
+    change-log: classpath:db/changelog.cash-service/db.changelog-master.yaml
+    default-schema: cash_service
+    drop-first: true
+    clear-checksums: true
+
+server:
+  port: 8091
+  address: 0.0.0.0
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka/

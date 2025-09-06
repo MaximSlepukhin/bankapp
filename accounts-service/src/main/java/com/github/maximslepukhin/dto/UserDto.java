@@ -12,6 +12,8 @@ import java.util.List;
 @AllArgsConstructor
 public class UserDto {
     private String login;
+    private String password;
+    private String confirmPassword;
     private String name;
     private LocalDate birthdate;
     private List<AccountDto> accounts;

@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: config-server
+
+  # Config Server может сам обращаться к репозиториям git или файловой системе для конфигурации
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://your-git-repo-url/config-repo
+          # optional: branch, username, password, etc.
+
+server:
+  port: 8888
+  address: 0.0.0.0
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka/

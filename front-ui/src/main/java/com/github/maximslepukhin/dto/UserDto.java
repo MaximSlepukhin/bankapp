@@ -13,8 +13,9 @@ import java.util.List;
 @AllArgsConstructor
 public class UserDto {
     private String login;
+    private String password;            // для регистрации/смены пароля
+    private String confirmPassword;     // для регистрации
     private String name;
     private LocalDate birthdate;
-
     private List<AccountDto> accounts;
 }
