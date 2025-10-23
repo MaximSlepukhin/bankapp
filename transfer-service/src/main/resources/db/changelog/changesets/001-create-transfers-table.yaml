@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: maxims
+      changes:
+        - createTable:
+            tableName: transfers
+            schemaName: transfer_service
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: from_account_id
+                  type: VARCHAR(255)
+              - column:
+                  name: to_account_id
+                  type: VARCHAR(255)
+              - column:
+                  name: debited
+                  type: NUMERIC(19,2)
+              - column:
+                  name: credited
+                  type: NUMERIC(19,2)
+              - column:
+                  name: currency_from
+                  type: VARCHAR(10)
+              - column:
+                  name: currency_to
+                  type: VARCHAR(10)
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP

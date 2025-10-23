@@ -14,8 +14,8 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: user_id
-                  type: BIGINT
+                  name: login
+                  type: VARCHAR(255)
                   constraints:
                     nullable: false
               - column:
@@ -24,13 +24,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: sent_at
+                  name: created_at
                   type: TIMESTAMP
                   defaultValueComputed: CURRENT_TIMESTAMP
-        - addForeignKeyConstraint:
-            baseTableName: notifications
-            baseColumnNames: user_id
-            referencedTableName: users
-            referencedColumnNames: id
-            referencedTableSchemaName: accounts_service
-            constraintName: fk_notifications_user

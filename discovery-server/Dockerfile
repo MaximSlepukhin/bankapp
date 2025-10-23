@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 COPY target/discovery-server-1.0-SNAPSHOT.jar app.jar
 EXPOSE 8761

@@ -1,6 +1,5 @@
-version: "3.9"
-
 services:
+  # --- PostgreSQL для банковских сервисов ---
   postgres:
     image: postgres:15-alpine
     container_name: postgres-bank
@@ -14,6 +13,43 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d
 
+  # --- PostgreSQL для Keycloak ---
+  postgres-keycloak:
+    image: postgres:15-alpine
+    container_name: postgres-keycloak
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-keycloak-data:/var/lib/postgresql/data
+
+  # --- Keycloak ---
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.4
+    container_name: keycloak
+    restart: unless-stopped
+    command: start-dev --http-port=8080
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres-keycloak:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HOSTNAME_URL: http://localhost:8082
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_LOG_LEVEL: trace
+    ports:
+      - "8082:8080"
+    depends_on:
+      - postgres-keycloak
+
+  # --- Discovery server ---
   discovery-server:
     build:
       context: ./discovery-server
@@ -25,9 +61,12 @@ services:
       SPRING_PROFILES_ACTIVE: default
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-      interval: 5s
-      retries: 5
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
+  # --- Accounts Service ---
   accounts-service:
     build:
       context: .
@@ -39,10 +78,14 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
       SPRING_DATASOURCE_USERNAME: bankuser
       SPRING_DATASOURCE_PASSWORD: bankpass
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
     depends_on:
       - postgres
       - discovery-server
+      - keycloak
 
+  # --- Cash Service ---
   cash-service:
     build:
       context: .
@@ -54,10 +97,14 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
       SPRING_DATASOURCE_USERNAME: bankuser
       SPRING_DATASOURCE_PASSWORD: bankpass
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
     depends_on:
       - postgres
       - discovery-server
+      - keycloak
 
+  # --- Transfer Service ---
   transfer-service:
     build:
       context: .
@@ -69,25 +116,33 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
       SPRING_DATASOURCE_USERNAME: bankuser
       SPRING_DATASOURCE_PASSWORD: bankpass
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
     depends_on:
       - postgres
       - discovery-server
+      - keycloak
 
+  # --- Exchange Service ---
   exchange-service:
     build:
       context: .
       dockerfile: exchange-service/Dockerfile
     container_name: exchange-service
     ports:
-      - "8085:8085"
+      - "8085:8084"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
       SPRING_DATASOURCE_USERNAME: bankuser
       SPRING_DATASOURCE_PASSWORD: bankpass
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
     depends_on:
       - postgres
       - discovery-server
+      - keycloak
 
+  # --- Blocker Service ---
   blocker-service:
     build:
       context: .
@@ -99,10 +154,14 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
       SPRING_DATASOURCE_USERNAME: bankuser
       SPRING_DATASOURCE_PASSWORD: bankpass
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
     depends_on:
       - postgres
       - discovery-server
+      - keycloak
 
+  # --- Notifications Service ---
   notifications-service:
     build:
       context: .
@@ -110,11 +169,18 @@ services:
     container_name: notifications-service
     ports:
       - "8087:8087"
-    depends_on:
-      - discovery-server
     environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
+      SPRING_DATASOURCE_USERNAME: bankuser
+      SPRING_DATASOURCE_PASSWORD: bankpass
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+    depends_on:
+      - postgres
+      - discovery-server
+      - keycloak
 
+  # --- Exchange Generator Service ---
   exchange-generator-service:
     build:
       context: .
@@ -122,11 +188,14 @@ services:
     container_name: exchange-generator-service
     ports:
       - "8088:8088"
-    depends_on:
-      - discovery-server
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+    depends_on:
+      - discovery-server
+      - keycloak
 
+  # --- Front UI ---
   front-ui:
     build:
       context: .
@@ -134,18 +203,36 @@ services:
     container_name: front-ui
     ports:
       - "8080:8080"
+      - "5005:5005"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - KEYCLOAK_INTERNAL_URL=http://keycloak:8080
+      - KEYCLOAK_EXTERNAL_URL=http://localhost:8082
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005  # ✅ JVM debug
+#      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
     depends_on:
       - discovery-server
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      - keycloak
 
+  # --- Gateway ---
   gateway:
     build:
       context: .
       dockerfile: gateway/Dockerfile
     container_name: gateway
     ports:
-      - "8090:8082"  # gateway внутри Docker 8082, внешний 8090
+      - "8090:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
     depends_on:
       - accounts-service
       - cash-service
@@ -156,8 +243,25 @@ services:
       - front-ui
       - discovery-server
       - exchange-generator-service
+      - keycloak
+
+  # --- Config Server ---
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
     environment:
+      SPRING_PROFILES_ACTIVE: native
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: file:/config-repo
+    volumes:
+      - ./config-repo:/config-repo
+#    depends_on:
+#      - discovery-server
 
 volumes:
   postgres-data:
+  postgres-keycloak-data:

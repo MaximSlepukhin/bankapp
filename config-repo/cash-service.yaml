@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: cash-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.default_schema: cash_service
+
+  liquibase:
+    enabled: false
+    change-log: classpath:db/changelog.cash-service/master.yaml
+    default-schema: cash_service
+    drop-first: true
+    clear-checksums: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak-service:
+            provider: keycloak
+            client-id: front-ui-service
+            client-secret: z1GkjE1Vi9Ba1B91tFPjZtg6CGQiw5ea
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            token-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/token
+
+server:
+  port: 8091
+  address: 0.0.0.0
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka/
+
+logging:
+  level:
+    root: info
+    org.springframework.security: trace
+    org.springframework.web: debug
+    org.springframework.security.oauth2: trace

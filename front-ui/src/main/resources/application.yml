@@ -1,8 +1,5 @@
 spring:
   application:
-    name: front-ui   # 👈 так будет отображаться в Eureka
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://discovery-server:8761/eureka/
+    name: front-ui
+  config:
+    import: "optional:configserver:http://config-server:8888"

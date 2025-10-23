@@ -1,6 +1,6 @@
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
-RUN apk add --no-cache maven bash git
+RUN apt-get update && apt-get install -y maven bash git && rm -rf /var/lib/apt/lists/*
 
 COPY pom.xml .
 COPY exchange-generator-service/pom.xml exchange-generator-service/pom.xml

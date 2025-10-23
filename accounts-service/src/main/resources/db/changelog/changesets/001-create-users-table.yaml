@@ -20,10 +20,11 @@ databaseChangeLog:
                     nullable: false
                     unique: true
               - column:
-                  name: password
-                  type: VARCHAR(255)
+                  name: keycloak_id
+                  type: VARCHAR(36)   # UUID из Keycloak
                   constraints:
                     nullable: false
+                    unique: true
               - column:
                   name: name
                   type: VARCHAR(255)

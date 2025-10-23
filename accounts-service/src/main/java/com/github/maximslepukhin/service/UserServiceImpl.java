@@ -1,28 +1,61 @@
 package com.github.maximslepukhin.service;
 
-import com.github.maximslepukhin.dto.AccountDto;
-import com.github.maximslepukhin.dto.UserDto;
-import com.github.maximslepukhin.model.Account;
-import com.github.maximslepukhin.model.User;
-import com.github.maximslepukhin.model.currency.Currency;
+import com.github.maximslepukhin.model.dto.AccountDto;
+import com.github.maximslepukhin.model.dto.UserDto;
+import com.github.maximslepukhin.mapper.UserMapper;
+import com.github.maximslepukhin.model.entity.Account;
+import com.github.maximslepukhin.model.entity.User;
+import com.github.maximslepukhin.model.enums.Currency;
 import com.github.maximslepukhin.repository.UserRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+        this.userMapper = userMapper;
+    }
+
+    @Override
+    @Transactional
+    public UserDto createUser(UserDto userDto) {
+        if (userDto.getLogin() == null || userDto.getLogin().isBlank()) {
+            throw new IllegalArgumentException("Логин не может быть пустым");
+        }
+        if (userDto.getKeycloakId() == null || userDto.getKeycloakId().isBlank()) {
+            throw new IllegalArgumentException("KeycloakId не может быть пустым");
+        }
+        if (userRepository.existsByLogin(userDto.getLogin())) {
+            throw new RuntimeException("User with this login already exists");
+        }
+
+        User user = new User();
+        user.setLogin(userDto.getLogin());
+        user.setKeycloakId(userDto.getKeycloakId());
+        user.setName(userDto.getName());
+        user.setBirthdate(userDto.getBirthdate());
+
+        List<Account> accounts = List.of(
+                new Account(Currency.RUB, BigDecimal.ZERO, user),
+                new Account(Currency.USD, BigDecimal.ZERO, user),
+                new Account(Currency.CNY, BigDecimal.ZERO, user)
+        );
+        user.setAccounts(accounts);
+        userRepository.save(user);
+
+        return getUserByLogin(user.getLogin());
     }
 
     @Override
@@ -30,7 +63,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByLogin(login)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Преобразуем в DTO
         UserDto dto = new UserDto();
         dto.setLogin(user.getLogin());
         dto.setName(user.getName());
@@ -40,7 +72,7 @@ public class UserServiceImpl implements UserService {
                 user.getAccounts().stream()
                         .map(account -> new AccountDto(
                                 account.getCurrency().name(),
-                                account.getCurrency().name(), // можно заменить на human-readable
+                                account.getCurrency().name(),
                                 account.getValue(),
                                 account.getValue().compareTo(BigDecimal.ZERO) > 0
                         ))
@@ -51,27 +83,59 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
-    public UserDto createUser(UserDto userDto) {
-        if (userRepository.existsByLogin(userDto.getLogin())) {
-            throw new RuntimeException("User with this login already exists");
-        }
+    public List<UserDto> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
+    }
 
-        User user = new User();
-        user.setLogin(userDto.getLogin());
-        user.setPassword(passwordEncoder.encode(userDto.getPassword())); // <-- храним хэш
+    @Override
+    public UserDto findByLogin(String login) {
+        return userRepository.findByLogin(login)
+                .map(userMapper::toDto)
+                .orElseThrow(() -> new RuntimeException("User not found by login: " + login));
+    }
+
+    @Override
+    public UserDto findByKeycloakId(String keycloakId) {
+        return userRepository.findByKeycloakId(keycloakId)
+                .map(userMapper::toDto)
+                .orElseThrow(() -> new RuntimeException("User not found by keycloakId: " + keycloakId));
+    }
+
+    @Override
+    public UserDto updateUser(String login, UserDto userDto) {
+        User user = userRepository.findByLogin(login)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + login));
+
+        log.info("🔄 Обновление пользователя {}", login);
+
         user.setName(userDto.getName());
         user.setBirthdate(userDto.getBirthdate());
 
-        List<Account> accounts = List.of(
-                new Account(Currency.RUB, BigDecimal.ZERO, user),
-                new Account(Currency.USD, BigDecimal.ZERO, user),
-                new Account(Currency.CNY, BigDecimal.ZERO, user)
-        );
+        if (userDto.getAccounts() != null) {
+            Set<Currency> requestedCurrencies = userDto.getAccounts().stream()
+                    .map(accDto -> Currency.valueOf(accDto.getCurrency()))
+                    .collect(Collectors.toSet());
 
-        user.setAccounts(accounts);
+            user.getAccounts().removeIf(acc ->
+                    !requestedCurrencies.contains(acc.getCurrency()));
+
+            for (Currency currency : requestedCurrencies) {
+                boolean exists = user.getAccounts().stream()
+                        .anyMatch(acc -> acc.getCurrency() == currency);
+                if (!exists) {
+                    Account newAccount = new Account(currency, BigDecimal.ZERO, user);
+                    user.getAccounts().add(newAccount);
+                    log.debug("➕ Добавлен новый счёт {} пользователю {}", currency, login);
+                }
+            }
+        }
+
         userRepository.save(user);
+        log.info("✅ Пользователь {} успешно обновлён", login);
 
-        return getUserByLogin(user.getLogin());
+        return userMapper.toDto(user);
     }
 }

@@ -1,19 +1,6 @@
-server:
-  port: 8761
+spring:
+  application:
+    name: discovery-server
 
-eureka:
-  client:
-    register-with-eureka: false
-    fetch-registry: false
-  instance:
-    hostname: discovery-server      # Имя контейнера
-
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  endpoint:
-    health:
-      show-details: always
+  config:
+    import: optional:configserver:http://config-server:8888

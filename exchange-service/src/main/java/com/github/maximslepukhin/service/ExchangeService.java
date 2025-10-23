@@ -1,9 +1,10 @@
 package com.github.maximslepukhin.service;
 
-import com.github.maximslepukhin.model.ConvertRequest;
-import com.github.maximslepukhin.model.ConvertResponse;
-import com.github.maximslepukhin.model.CurrencyRate;
-import com.github.maximslepukhin.model.currency.Currency;
+import com.github.maximslepukhin.model.dto.ConvertRequest;
+import com.github.maximslepukhin.model.dto.ConvertResponse;
+import com.github.maximslepukhin.model.dto.CurrencyRate;
+import com.github.maximslepukhin.model.enums.Currency;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Service
 public class ExchangeService {
 
@@ -35,18 +37,46 @@ public class ExchangeService {
     }
 
     public ConvertResponse convert(ConvertRequest request) {
+        log.info("➡️ Запрос на конвертацию: amount={}, from={}, to={}",
+                request.getAmount(), request.getFrom(), request.getTo());
+
         BigDecimal rate;
+
         if (request.getFrom() == request.getTo()) {
+            log.info("⚖️ Валюта одинаковая: {} → {}, курс = 1", request.getFrom(), request.getTo());
             rate = BigDecimal.ONE;
         } else {
-            BigDecimal fromToRub = request.getFrom() == Currency.RUB ? BigDecimal.ONE :
-                    rates.get(request.getFrom() + "-RUB");
-            BigDecimal rubToTo = request.getTo() == Currency.RUB ? BigDecimal.ONE :
-                    rates.get("RUB-" + request.getTo());
+            BigDecimal fromToRub = request.getFrom() == Currency.RUB
+                    ? BigDecimal.ONE
+                    : rates.get(request.getFrom() + "-RUB");
+            BigDecimal rubToTo = request.getTo() == Currency.RUB
+                    ? BigDecimal.ONE
+                    : rates.get("RUB-" + request.getTo());
+
+            log.info("🔍 Курс {} → RUB = {}", request.getFrom(), fromToRub);
+            log.info("🔍 Курс RUB → {} = {}", request.getTo(), rubToTo);
+
+            if (fromToRub == null || rubToTo == null) {
+                log.error("❌ Нет курса для конвертации {} → {}", request.getFrom(), request.getTo());
+                throw new IllegalArgumentException("Курс не найден для " + request.getFrom() + " → " + request.getTo());
+            }
+
             rate = fromToRub.multiply(rubToTo);
+            log.info("📈 Итоговый курс {} → {} = {}", request.getFrom(), request.getTo(), rate);
         }
 
-        BigDecimal convertedAmount = request.getAmount().multiply(rate).setScale(6, RoundingMode.HALF_UP);
-        return new ConvertResponse(request.getAmount(), convertedAmount);
+        BigDecimal convertedAmount = request.getAmount()
+                .multiply(rate)
+                .setScale(6, RoundingMode.HALF_UP);
+
+        log.info("✅ Конвертация завершена: {} {} → {} {}",
+                request.getAmount(), request.getFrom(), convertedAmount, request.getTo());
+
+        return new ConvertResponse(
+                request.getAmount(),
+                request.getFrom(),
+                request.getTo(),
+                convertedAmount
+        );
     }
 }

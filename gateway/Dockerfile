@@ -1,11 +1,10 @@
 # Stage 1: Build JAR
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
-RUN apk add --no-cache maven bash git
+RUN apt-get update && apt-get install -y maven bash git && rm -rf /var/lib/apt/lists/*
 
-# Копируем корневой POM и модуль gateway
-COPY pom.xml pom.xml
+COPY pom.xml .
 COPY gateway/pom.xml gateway/pom.xml
 COPY gateway/src gateway/src
 

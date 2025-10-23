@@ -1,3 +1,7 @@
+server:
+  port: 8080
+  address: 0.0.0.0
+
 spring:
   application:
     name: gateway
@@ -35,14 +39,69 @@ spring:
             - Path=/front-ui/**
       default-filters:
         - StripPrefix=1
+        # ⬇️ Добавляем фильтр, чтобы проксировать Authorization-заголовок
+        - name: PreserveHostHeader
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Можно использовать jwk-set-uri, чтобы избежать проверки issuer
+          jwk-set-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak-service:
+            provider: keycloak
+            client-id: front-ui-service
+            client-secret: z1GkjE1Vi9Ba1B91tFPjZtg6CGQiw5ea
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            token-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/token
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#          keycloak:
+#            client-id: gateway-service
+#            client-secret: 8k969VbNW0FD7BDnVuzUzn90oabY9ZBi
+#            authorization-grant-type: authorization_code
+#            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+#            scope: openid, profile, email
+#        provider:
+#          keycloak:
+#            token-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/token
+#            authorization-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/auth
+#            user-info-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/userinfo
+#            jwk-set-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/certs
+#
+#      resourceserver:
+#        jwt:
+#          jwk-set-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/certs
+
+#server:
+#  port: 8080
+#  address: 0.0.0.0
 
 eureka:
   client:
-    service-url:
-      defaultZone: http://discovery-server:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka/
 
-server:
-  port: 8082
-  address: 0.0.0.0
+logging:
+  level:
+    root: info
+    org.springframework.security: trace
+    org.springframework.web: debug
+    org.springframework.cloud.gateway: trace
+    reactor.netty.http.client: debug
+    org.springframework.web.reactive.function.client: debug
+    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
+    org.springframework.web.reactive.function.client.ExchangeFilterFunctions: DEBUG
+    org.springframework.cloud.gateway.filter: DEBUG
+    org.springframework.security.oauth2.client.web.reactive.function.client: DEBUG
+    org.springframework.security.oauth2: TRACE
+    org.springframework.security.web.authentication: TRACE
+    org.springframework.web.server.adapter.HttpWebHandlerAdapter: TRACE
