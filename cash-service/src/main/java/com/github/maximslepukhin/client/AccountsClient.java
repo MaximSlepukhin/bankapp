@@ -18,7 +18,7 @@ public class AccountsClient {
 
     public BigDecimal getBalance(String login, Currency currency) {
         return restTemplate.getForObject(
-                "http://ACCOUNTS-SERVICE/api/accounts/{login}/accounts/{currency}",
+                "http://ACCOUNTS-SERVICE/api/accounts/{login}/{currency}",
                 BigDecimal.class,
                 login,
                 currency.name()
@@ -27,7 +27,7 @@ public class AccountsClient {
 
     public void updateBalance(String login, Currency currency, BigDecimal amount) {
         restTemplate.postForEntity(
-                "http://ACCOUNTS-SERVICE/api/accounts/{login}/accounts/{currency}",
+                "http://ACCOUNTS-SERVICE/api/accounts/{login}/{currency}",
                 amount,
                 Void.class,
                 login,

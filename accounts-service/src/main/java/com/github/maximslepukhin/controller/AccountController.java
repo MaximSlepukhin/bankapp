@@ -19,7 +19,7 @@ public class AccountController {
     private final AccountService accountService;
 
     // 🟢 Получить баланс по валюте
-    @GetMapping("/{login}/accounts/{currency}")
+    @GetMapping("/{login}/{currency}")
     public ResponseEntity<BigDecimal> getBalance(
             @PathVariable String login,
             @PathVariable String currency
@@ -33,7 +33,7 @@ public class AccountController {
     }
 
     // 🟠 Списать средства (debit)
-    @PostMapping("/{login}/accounts/{currency}/debit")
+    @PostMapping("/{login}/{currency}/debit")
     public ResponseEntity<?> debit(
             @PathVariable String login,
             @PathVariable String currency,
@@ -50,7 +50,7 @@ public class AccountController {
     }
 
     // 🟢 Зачислить средства (credit)
-    @PostMapping("/{login}/accounts/{currency}/deposit")
+    @PostMapping("/{login}/{currency}/deposit")
     public ResponseEntity<?> credit(
             @PathVariable String login,
             @PathVariable String currency,
@@ -67,7 +67,7 @@ public class AccountController {
     }
 
     // 🟡 Обновить баланс (универсальный метод)
-    @PostMapping("/{login}/accounts/{currency}")
+    @PostMapping("/{login}/{currency}")
     public ResponseEntity<?> updateBalance(
             @PathVariable String login,
             @PathVariable String currency,
@@ -84,7 +84,7 @@ public class AccountController {
     }
 
     // 🧾 Получить список валют пользователя
-    @GetMapping("/{login}/accounts/currencies")
+    @GetMapping("/{login}/currencies")
     public ResponseEntity<List<String>> getCurrencies(@PathVariable String login) {
         try {
             List<String> currencies = accountService.getCurrencies(login);

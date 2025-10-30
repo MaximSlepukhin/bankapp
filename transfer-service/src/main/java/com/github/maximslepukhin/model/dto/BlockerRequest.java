@@ -1,6 +1,5 @@
 package com.github.maximslepukhin.model.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BlockerRequest {
-    @NotBlank(message = "Поле login не может быть пустым")
     private String login;
 }

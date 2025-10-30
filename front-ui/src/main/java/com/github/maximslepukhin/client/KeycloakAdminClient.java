@@ -60,6 +60,7 @@ public class KeycloakAdminClient {
             }
         }
     }
+
     public void updatePassword(String login, String newPassword) {
         log.debug("➡ Изменение пароля пользователя {} в Keycloak", login);
 

@@ -1,5 +1,8 @@
 package com.github.maximslepukhin.service;
 
+import com.github.maximslepukhin.exception.AccountNotFoundException;
+import com.github.maximslepukhin.exception.InsufficientFundsException;
+import com.github.maximslepukhin.exception.InvalidAmountException;
 import com.github.maximslepukhin.model.entity.Account;
 import com.github.maximslepukhin.model.entity.User;
 import com.github.maximslepukhin.model.enums.Currency;
@@ -42,22 +45,22 @@ public class AccountServiceImpl implements AccountService {
         log.info("➡️ debit вызван: login={}, currency={}, amount={}", login, currencyStr, amount);
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Amount must be positive");
+            throw new InvalidAmountException("Сумма должна быть положительной");
         }
 
         User user = userRepository.findByLogin(login)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AccountNotFoundException("Пользователь не найден"));
 
         Currency currency = Currency.valueOf(currencyStr.toUpperCase());
         Account account = accountRepository.findByUserAndCurrency(user, currency)
-                .orElseThrow(() -> new RuntimeException("Account with currency " + currency + " not found"));
+                .orElseThrow(() -> new AccountNotFoundException("Счёт в валюте " + currency + " не найден"));
+
 
         BigDecimal oldBalance = account.getValue();
         BigDecimal newBalance = oldBalance.subtract(amount);
 
         if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-            throw new RuntimeException("Insufficient funds");
-        }
+            throw new InsufficientFundsException("Недостаточно средств на счёте");        }
 
         account.setValue(newBalance);
         accountRepository.save(account);
@@ -109,7 +112,7 @@ public class AccountServiceImpl implements AccountService {
 
         BigDecimal newBalance = account.getValue().add(amount);
         if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-            throw new RuntimeException("Insufficient funds");
+            throw new InvalidAmountException("Сумма должна быть положительной");
         }
 
         account.setValue(newBalance);

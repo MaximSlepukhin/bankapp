@@ -50,7 +50,26 @@ eureka:
 
 logging:
   level:
+    io.github.resilience4j: debug
     org.springframework.web: debug
     org.springframework.web.filter.CommonsRequestLoggingFilter: debug
     org.springframework.security: trace
     com.github.maximslepukhin: debug
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      transferService:
+        ignoreExceptions:
+          - com.github.maximslepukhin.exception.TransferBlockedException
+          - java.lang.IllegalArgumentException
+          - org.springframework.transaction.TransactionSystemException
+        recordExceptions:
+          - java.io.IOException
+          - org.springframework.web.client.HttpServerErrorException
+          - org.springframework.web.client.ResourceAccessException
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s

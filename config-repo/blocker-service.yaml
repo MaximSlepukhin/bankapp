@@ -29,3 +29,8 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://discovery-server:8761/eureka/
+
+blocker:
+  maintenance:
+    start: "00:00"
+    end: "00:05"

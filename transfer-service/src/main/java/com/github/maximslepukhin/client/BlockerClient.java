@@ -1,7 +1,7 @@
 package com.github.maximslepukhin.client;
 
+import com.github.maximslepukhin.model.dto.BlockerRequest;
 import com.github.maximslepukhin.model.record.BlockerStatus;
-import com.github.maximslepukhin.model.dto.TransferRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,5 +10,5 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface BlockerClient {
 
     @PostMapping("/check")
-    BlockerStatus check(@RequestBody TransferRequest request);
+    BlockerStatus check(@RequestBody BlockerRequest request);
 }

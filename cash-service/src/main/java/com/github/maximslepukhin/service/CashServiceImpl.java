@@ -4,9 +4,11 @@ import com.github.maximslepukhin.client.AccountsClient;
 import com.github.maximslepukhin.client.BlockerClient;
 import com.github.maximslepukhin.client.NotificationsClient;
 import com.github.maximslepukhin.exception.OperationBlockedException;
+import com.github.maximslepukhin.exception.OperationFailedException;
 import com.github.maximslepukhin.model.dto.CashOperationDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.math.BigDecimal;
 
@@ -24,8 +26,18 @@ public class CashServiceImpl implements CashService {
             throw new OperationBlockedException("Операция заблокирована");
         }
 
-        accountsClient.updateBalance(dto.getLogin(), dto.getCurrency(), dto.getAmount());
-        notificationsClient.notify(dto.getLogin(), "Пополнение на " + dto.getAmount() + " " + dto.getCurrency());
+        try {
+            accountsClient.updateBalance(dto.getLogin(), dto.getCurrency(), dto.getAmount());
+            notificationsClient.notify(dto.getLogin(),
+                    "Пополнение на " + dto.getAmount() + " " + dto.getCurrency());
+        } catch (HttpClientErrorException e) {
+            // Пробуем вытащить сообщение об ошибке из тела JSON, если оно есть
+            String message = extractErrorMessage(e.getResponseBodyAsString());
+            throw new OperationFailedException(message != null ? message :
+                    "Ошибка от accounts-service: " + e.getStatusCode());
+        } catch (Exception e) {
+            throw new OperationFailedException("Ошибка при обращении к сервису счетов: " + e.getMessage());
+        }
     }
 
     @Override
@@ -43,6 +55,18 @@ public class CashServiceImpl implements CashService {
 
         accountsClient.updateBalance(dto.getLogin(), dto.getCurrency(), dto.getAmount().negate());
         notificationsClient.notify(dto.getLogin(), "Снятие " + dto.getAmount() + " " + dto.getCurrency());
+    }
+
+    private String extractErrorMessage(String responseBody) {
+        try {
+            if (responseBody == null || responseBody.isBlank()) return null;
+            // тело в accounts-service возвращается как {"error":"Недостаточно средств"}
+            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            var json = mapper.readTree(responseBody);
+            return json.has("error") ? json.get("error").asText() : null;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }
 

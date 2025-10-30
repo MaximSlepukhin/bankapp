@@ -18,7 +18,7 @@ public class ExchangeServiceClient {
     public void sendRates(List<CurrencyRate> rates) {
         try {
             restTemplate.postForEntity(
-                    "http://EXCHANGE-SERVICE/api/exchange/rates", // ✅ имя сервиса из Eureka
+                    "http://EXCHANGE-SERVICE/api/exchange/rates",
                     rates,
                     Void.class
             );
