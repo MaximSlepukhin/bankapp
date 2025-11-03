@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.math.BigDecimal;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -28,10 +27,10 @@ public class FinanceService {
             cashClient.deposit(new CashOperationDto(login, currency, value));
         } catch (HttpClientErrorException e) {
             String responseBody = e.getResponseBodyAsString();
-            log.error("❌ Ошибка Feign при депозите: status={}, body={}", e.getStatusCode(), responseBody);
+            log.error("Ошибка Feign при депозите: status={}, body={}", e.getStatusCode(), responseBody);
 
             String message = extractErrorMessage(responseBody);
-            log.error("📩 Извлечённое сообщение ошибки: {}", message);
+            log.error("Извлечённое сообщение ошибки: {}", message);
 
             throw new RuntimeException(message != null ? message : "Ошибка пополнения: " + e.getStatusCode());
         }
@@ -82,13 +81,13 @@ public class FinanceService {
             if (node.has("reason")) {
                 return node.get("reason").asText();
             }
-            if (node.has("message")) { // ✅ ДОБАВЬ ЭТО
+            if (node.has("message")) {
                 return node.get("message").asText();
             }
 
             return responseBody;
         } catch (Exception e) {
-            log.warn("❗ Не удалось разобрать тело ошибки: {}", responseBody);
+            log.warn("Не удалось разобрать тело ошибки: {}", responseBody);
             return responseBody;
         }
     }

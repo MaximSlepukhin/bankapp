@@ -31,7 +31,6 @@ public class CashServiceImpl implements CashService {
             notificationsClient.notify(dto.getLogin(),
                     "Пополнение на " + dto.getAmount() + " " + dto.getCurrency());
         } catch (HttpClientErrorException e) {
-            // Пробуем вытащить сообщение об ошибке из тела JSON, если оно есть
             String message = extractErrorMessage(e.getResponseBodyAsString());
             throw new OperationFailedException(message != null ? message :
                     "Ошибка от accounts-service: " + e.getStatusCode());
@@ -60,7 +59,6 @@ public class CashServiceImpl implements CashService {
     private String extractErrorMessage(String responseBody) {
         try {
             if (responseBody == null || responseBody.isBlank()) return null;
-            // тело в accounts-service возвращается как {"error":"Недостаточно средств"}
             var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             var json = mapper.readTree(responseBody);
             return json.has("error") ? json.get("error").asText() : null;

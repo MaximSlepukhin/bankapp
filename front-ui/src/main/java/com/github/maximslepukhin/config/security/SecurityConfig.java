@@ -52,9 +52,9 @@ public class SecurityConfig {
                     if (!newMetadata.containsKey("end_session_endpoint")) {
                         String endSessionUrl = keycloakServerUrl + "/realms/" + realm + "/protocol/openid-connect/logout";
                         newMetadata.put("end_session_endpoint", endSessionUrl);
-                        System.out.println("✅ Добавлен end_session_endpoint: " + endSessionUrl);
+                        System.out.println("Добавлен end_session_endpoint: " + endSessionUrl);
                     } else {
-                        System.out.println("ℹ️ end_session_endpoint уже есть: " + newMetadata.get("end_session_endpoint"));
+                        System.out.println("end_session_endpoint уже есть: " + newMetadata.get("end_session_endpoint"));
                     }
 
                     var field = details.getClass().getDeclaredField("configurationMetadata");
@@ -62,11 +62,11 @@ public class SecurityConfig {
                     field.set(details, java.util.Collections.unmodifiableMap(newMetadata));
 
                 } catch (Exception e) {
-                    System.out.println("⚠️ Ошибка при установке end_session_endpoint: " + e.getMessage());
+                    System.out.println("Ошибка при установке end_session_endpoint: " + e.getMessage());
                     e.printStackTrace();
                 }
             } else {
-                System.out.println("⚠️ Не найден clientRegistration с id=keycloak");
+                System.out.println("Не найден clientRegistration с id=keycloak");
             }
         }
 

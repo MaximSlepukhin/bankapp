@@ -40,7 +40,7 @@ public class TransferServiceImpl implements TransferService {
     @Transactional
     public TransferResponse transfer(TransferRequest request) {
         UUID txId = UUID.randomUUID();
-        log.info("=== 🚀 Transfer {} started ===", txId);
+        log.info("=== Transfer {} started ===", txId);
         log.info("From={} To={} Amount={} FromCurrency={} ToCurrency={}",
                 request.getFromLogin(), request.getToLogin(), request.getAmount(),
                 request.getFromCurrency(), request.getToCurrency());
@@ -99,7 +99,7 @@ public class TransferServiceImpl implements TransferService {
                     " на сумму " + credited + " " + request.getToCurrency()
             ));
         } catch (Exception e) {
-            log.error("⚠️ Transfer {}: уведомление не доставлено: {}", txId, e.getMessage());
+            log.error("Transfer {}: уведомление не доставлено: {}", txId, e.getMessage());
         }
 
         // ✅ Сохраняем успешный перевод
@@ -117,7 +117,7 @@ public class TransferServiceImpl implements TransferService {
 
         transferRepository.save(entity);
 
-        log.info("✅ Transfer {} completed successfully", txId);
+        log.info("Transfer {} completed successfully", txId);
 
         return TransferResponse.builder()
                 .transactionId(txId.toString())
@@ -130,16 +130,16 @@ public class TransferServiceImpl implements TransferService {
                 .build();
     }
 
-    // 🔁 fallback вызывается только при сбоях внешних микросервисов
+    //  fallback вызывается только при сбоях внешних микросервисов
     private TransferResponse fallbackTransfer(TransferRequest request, Throwable ex) {
         // Если это бизнес-ошибка — пробрасываем дальше
         if (ex instanceof TransferBlockedException || ex instanceof IllegalArgumentException) {
-            log.warn("⚠️ Business exception, fallback не применяется: {}", ex.getMessage());
+            log.warn("Business exception, fallback не применяется: {}", ex.getMessage());
             throw (RuntimeException) ex;
         }
 
         UUID txId = UUID.randomUUID();
-        log.error("❌ Transfer fallback {}, причина={}, тип={}",
+        log.error("Transfer fallback {}, причина={}, тип={}",
                 txId, ex.getMessage(), ex.getClass().getName());
 
         // Сохраняем запись об ошибке

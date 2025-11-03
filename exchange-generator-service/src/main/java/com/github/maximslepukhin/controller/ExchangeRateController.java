@@ -31,7 +31,7 @@ public class ExchangeRateController {
                 ))
                 .collect(Collectors.toList());
 
-        log.info("📤 Отправляем {} валютных курсов для UI: {}", dtoList.size(), dtoList);
+        log.info("Отправляем {} валютных курсов для UI: {}", dtoList.size(), dtoList);
 
         return dtoList;
     }

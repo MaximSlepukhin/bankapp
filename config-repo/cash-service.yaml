@@ -2,24 +2,6 @@ spring:
   application:
     name: cash-service
 
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-
-  jpa:
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate.default_schema: cash_service
-
-  liquibase:
-    enabled: false
-    change-log: classpath:db/changelog.cash-service/master.yaml
-    default-schema: cash_service
-    drop-first: true
-    clear-checksums: true
-
   security:
     oauth2:
       resourceserver:

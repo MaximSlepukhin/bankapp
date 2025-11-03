@@ -27,7 +27,7 @@ public class AccountController {
         try {
             return ResponseEntity.ok(accountService.getBalance(login, currency));
         } catch (RuntimeException e) {
-            log.warn("❌ Счёт для login={}, currency={} не найден", login, currency);
+            log.warn("Счёт для login={}, currency={} не найден", login, currency);
             return ResponseEntity.notFound().build();
         }
     }
@@ -44,7 +44,7 @@ public class AccountController {
             accountService.debit(login, currency, amount);
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
-            log.error("❌ Ошибка в debit: {}", e.getMessage());
+            log.error("Ошибка в debit: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
@@ -61,7 +61,7 @@ public class AccountController {
             accountService.credit(login, currency, amount);
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
-            log.error("❌ Ошибка в credit: {}", e.getMessage());
+            log.error("Ошибка в credit: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }

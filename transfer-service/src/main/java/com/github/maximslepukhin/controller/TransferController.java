@@ -25,7 +25,7 @@ public class TransferController {
     @PostMapping
     @Operation(summary = "Совершить перевод")
     public ResponseEntity<TransferResponse> transfer(@RequestBody @Valid TransferRequest request) {
-        log.info("=== 📩 Получен запрос на перевод ===");
+        log.info("=== Получен запрос на перевод ===");
         log.info("Отправитель: {}", request.getFromLogin());
         log.info("Получатель: {}", request.getToLogin());
         log.info("Сумма: {}", request.getAmount());
@@ -34,7 +34,7 @@ public class TransferController {
 
         TransferResponse response = transferService.transfer(request);
 
-        log.info("✅ Перевод завершён: {}", response);
+        log.info("Перевод завершён: {}", response);
 
         return ResponseEntity.ok(response);
     }

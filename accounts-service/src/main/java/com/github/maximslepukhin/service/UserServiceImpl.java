@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getUserByLogin(String login) {
         User user = userRepository.findByLogin(login)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
         UserDto dto = new UserDto();
         dto.setLogin(user.getLogin());

@@ -27,9 +27,10 @@ public class KeycloakWaiter {
                 log.warn("⏳ Keycloak ещё не готов (попытка {}/10)...", i);
                 try {
                     Thread.sleep(5000);
-                } catch (InterruptedException ignored) {}
+                } catch (InterruptedException ignored) {
+                }
             }
         }
-        log.error("❌ Keycloak не ответил после 10 попыток. Возможно, он не запущен?");
+        log.error("Keycloak не ответил после 10 попыток. Возможно, он не запущен?");
     }
 }

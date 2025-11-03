@@ -21,9 +21,9 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<UserDto> create(@RequestBody UserDto userDto) {
-        log.info("➡️ [accounts-service] Получен запрос на создание пользователя: {}", userDto);
+        log.info("[accounts-service] Получен запрос на создание пользователя: {}", userDto);
         UserDto savedUser = userService.createUser(userDto);
-        log.info("✅ [accounts-service] Пользователь сохранён в БД: {}", savedUser);
+        log.info("[accounts-service] Пользователь сохранён в БД: {}", savedUser);
         return ResponseEntity.ok(savedUser);
     }
 
@@ -32,7 +32,7 @@ public class UserController {
         try {
             return ResponseEntity.ok(userService.findByKeycloakId(keycloakId));
         } catch (RuntimeException e) {
-            log.warn("❌ Пользователь с keycloakId={} не найден", keycloakId);
+            log.warn("Пользователь с keycloakId={} не найден", keycloakId);
             return ResponseEntity.notFound().build();
         }
     }
@@ -42,7 +42,7 @@ public class UserController {
         try {
             return ResponseEntity.ok(userService.findByLogin(login));
         } catch (RuntimeException e) {
-            log.warn("❌ Пользователь с login={} не найден", login);
+            log.warn("Пользователь с login={} не найден", login);
             return ResponseEntity.notFound().build();
         }
     }
@@ -52,7 +52,7 @@ public class UserController {
         try {
             return ResponseEntity.ok(userService.getUserByLogin(login));
         } catch (RuntimeException e) {
-            log.warn("❌ Пользователь с login={} не найден", login);
+            log.warn("Пользователь с login={} не найден", login);
             return ResponseEntity.notFound().build();
         }
     }

@@ -3,7 +3,6 @@ package com.github.maximslepukhin.exception;
 
 import com.github.maximslepukhin.model.dto.TransferResponse;
 import com.github.maximslepukhin.model.enums.TransferStatus;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;

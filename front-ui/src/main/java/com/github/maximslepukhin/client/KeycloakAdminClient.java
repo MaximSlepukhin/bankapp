@@ -26,7 +26,7 @@ public class KeycloakAdminClient {
     private String realm;
 
     public String createUser(String username, String password) {
-        log.debug("➡ Создание пользователя в Keycloak: {}", username);
+        log.debug("Создание пользователя в Keycloak: {}", username);
 
         UserRepresentation user = new UserRepresentation();
         user.setUsername(username);
@@ -47,22 +47,22 @@ public class KeycloakAdminClient {
                         .get(userId)
                         .resetPassword(credential);
 
-                log.info("✅ Пользователь {} создан в Keycloak с id={}", username, userId);
+                log.info("Пользователь {} создан в Keycloak с id={}", username, userId);
                 return userId;
 
             } else if (response.getStatus() == 409) {
-                log.warn("❌ Пользователь {} уже существует в Keycloak", username);
+                log.warn("Пользователь {} уже существует в Keycloak", username);
                 throw new UserAlreadyExistsException("Пользователь " + username + " уже существует");
             } else {
                 String error = response.readEntity(String.class);
-                log.error("⚠ Ошибка Keycloak при создании пользователя {}: {} - {}", username, response.getStatus(), error);
+                log.error("Ошибка Keycloak при создании пользователя {}: {} - {}", username, response.getStatus(), error);
                 throw new RuntimeException("Ошибка Keycloak: " + response.getStatus() + " " + error);
             }
         }
     }
 
     public void updatePassword(String login, String newPassword) {
-        log.debug("➡ Изменение пароля пользователя {} в Keycloak", login);
+        log.debug("Изменение пароля пользователя {} в Keycloak", login);
 
         try {
             List<UserRepresentation> users = keycloak.realm(realm)
@@ -70,7 +70,7 @@ public class KeycloakAdminClient {
                     .search(login, true);
 
             if (users == null || users.isEmpty()) {
-                log.warn("❌ Пользователь {} не найден в Keycloak", login);
+                log.warn("Пользователь {} не найден в Keycloak", login);
                 throw new RuntimeException("Пользователь не найден: " + login);
             }
 
@@ -86,10 +86,10 @@ public class KeycloakAdminClient {
                     .get(userId)
                     .resetPassword(credential);
 
-            log.info("✅ Пароль пользователя {} успешно изменён в Keycloak", login);
+            log.info("Пароль пользователя {} успешно изменён в Keycloak", login);
 
         } catch (Exception e) {
-            log.error("❌ Ошибка при изменении пароля пользователя {}: {}", login, e.getMessage(), e);
+            log.error("Ошибка при изменении пароля пользователя {}: {}", login, e.getMessage(), e);
             throw new RuntimeException("Ошибка при изменении пароля для " + login, e);
         }
     }

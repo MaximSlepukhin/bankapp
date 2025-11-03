@@ -60,7 +60,8 @@ public class AccountServiceImpl implements AccountService {
         BigDecimal newBalance = oldBalance.subtract(amount);
 
         if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-            throw new InsufficientFundsException("Недостаточно средств на счёте");        }
+            throw new InsufficientFundsException("Недостаточно средств на счёте");
+        }
 
         account.setValue(newBalance);
         accountRepository.save(account);

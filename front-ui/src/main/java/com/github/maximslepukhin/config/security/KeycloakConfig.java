@@ -23,7 +23,7 @@ public class KeycloakConfig {
     public Keycloak keycloak() {
         return KeycloakBuilder.builder()
                 .serverUrl(serverUrl)
-                .realm("master") // ✅ Админ-токен берём из master
+                .realm("master")
                 .clientId("admin-cli")
                 .username(adminUsername)
                 .password(adminPassword)

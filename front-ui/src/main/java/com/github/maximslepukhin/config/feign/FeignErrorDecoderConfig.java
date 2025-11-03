@@ -28,9 +28,9 @@ public class FeignErrorDecoderConfig {
                     if (response.body() != null) {
                         body = new String(response.body().asInputStream().readAllBytes(), StandardCharsets.UTF_8);
                     }
-                } catch (IOException ignored) {}
+                } catch (IOException ignored) {
+                }
 
-                // ✅ конвертируем headers в HttpHeaders
                 HttpHeaders headers = new HttpHeaders();
                 for (Map.Entry<String, Collection<String>> entry : response.headers().entrySet()) {
                     headers.put(entry.getKey(), List.copyOf(entry.getValue()));

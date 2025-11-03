@@ -29,13 +29,13 @@ public class FeignOAuth2Config {
             OAuth2AuthorizedClient client = serviceAuthorizedClientManager.authorize(authorizeRequest);
 
             if (client == null || client.getAccessToken() == null) {
-                log.error("❌ Не удалось получить access token из Keycloak для Feign-клиента");
+                log.error("Не удалось получить access token из Keycloak для Feign-клиента");
                 throw new IllegalStateException("Не удалось получить сервисный access token из Keycloak");
             }
 
             String token = client.getAccessToken().getTokenValue();
-            log.info("🔑 Получен access token длиной {} символов", token.length());
-            log.debug("➡️ Первые 40 символов токена: {}...", token.substring(0, Math.min(40, token.length())));
+            log.info("Получен access token длиной {} символов", token.length());
+            log.debug("Первые 40 символов токена: {}...", token.substring(0, Math.min(40, token.length())));
 
             requestTemplate.header("Authorization", "Bearer " + token);
         };

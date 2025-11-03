@@ -36,10 +36,8 @@ public class UserService {
             throw new UserAlreadyExistsException("Пользователь уже существует");
         }
 
-        // 1. Создаём пользователя в Keycloak
         String keycloakId = keycloakAdminClient.createUser(form.getLogin(), form.getPassword());
 
-        // 2. Создаём в accounts-service
         UserDto dto = UserDto.builder()
                 .keycloakId(keycloakId)
                 .login(form.getLogin())

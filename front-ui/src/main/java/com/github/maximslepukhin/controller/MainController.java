@@ -43,6 +43,7 @@ public class MainController {
     @GetMapping("/main")
     public String mainPage(Model model, @AuthenticationPrincipal OidcUser oidcUser) {
         UserDto user = userService.getUserFromOidc(oidcUser);
+        log.info("OIDC user attributes: {}", oidcUser.getAttributes());
         model.addAttribute("login", user.getLogin());
         model.addAttribute("name", user.getName());
         model.addAttribute("birthdate", user.getBirthdate());
@@ -50,7 +51,6 @@ public class MainController {
         model.addAttribute("currency", List.of(Currency.USD, Currency.RUB, Currency.CNY));
         model.addAttribute("users", userService.getOtherUsers(user.getLogin()));
 
-        // Flash-атрибуты по умолчанию, если не переданы
         model.addAttribute("passwordErrors", model.getAttribute("passwordErrors") != null ? model.getAttribute("passwordErrors") : List.of());
         model.addAttribute("userAccountsErrors", model.getAttribute("userAccountsErrors") != null ? model.getAttribute("userAccountsErrors") : List.of());
         model.addAttribute("cashErrors", model.getAttribute("cashErrors") != null ? model.getAttribute("cashErrors") : List.of());

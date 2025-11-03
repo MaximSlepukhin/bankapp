@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface NotificationService {
     Notification create(NotificationRequest request);
+
     List<Notification> getForUser(String login);
 }
