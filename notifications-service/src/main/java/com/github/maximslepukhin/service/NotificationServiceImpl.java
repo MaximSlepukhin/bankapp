@@ -23,7 +23,6 @@ public class NotificationServiceImpl implements NotificationService {
                 .createdAt(OffsetDateTime.now())
                 .build();
         Notification saved = repository.save(n);
-        // Тут можно добавить отправку email/telegram и т.д.
         return saved;
     }
 

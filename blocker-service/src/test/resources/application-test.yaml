@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: blocker-service
+  main:
+    allow-bean-definition-overriding: true
+
+eureka:
+  client:
+    enabled: false
+
+blocker:
+  maintenance:
+    start: "01:00"
+    end: "05:00"

@@ -36,5 +36,3 @@ public class Account {
         this.user = user;
     }
 }
-
-
