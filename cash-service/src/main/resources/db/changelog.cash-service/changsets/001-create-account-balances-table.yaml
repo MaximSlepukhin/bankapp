@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001
+      author: maxims
+      changes:
+        - createTable:
+            tableName: account_balances
+            schemaName: cash_service
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: NUMERIC(19,2)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: account_balances
+            baseColumnNames: account_id
+            referencedTableName: accounts
+            referencedColumnNames: id
+            referencedTableSchemaName: accounts_service
+            constraintName: fk_account_balances_account
