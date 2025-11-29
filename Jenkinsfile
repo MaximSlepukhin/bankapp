@@ -20,10 +20,22 @@ pipeline {
         stage('Check Tools') {
             steps {
                 script {
+                    // Проверяем доступность kubectl, helm и docker
                     sh 'kubectl version --client'
                     sh 'helm version'
                     sh 'docker version'
-                    sh 'eval $(minikube docker-env)' // Подключаем docker к minikube
+                    // Подключаем docker к minikube
+                    sh 'eval $(minikube docker-env)'
+                }
+            }
+        }
+
+        stage('Check Docker') {
+            steps {
+                script {
+                    // Проверяем Docker в контексте minikube
+                    sh 'eval $(minikube docker-env)'  // Подключаем Docker Minikube
+                    sh 'docker version'  // Проверяем доступность Docker
                 }
             }
         }
@@ -58,11 +70,12 @@ pipeline {
             }
         }
 
-//         stage('Deploy to Kubernetes') {
-//             steps {
-//                 sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
-//             }
-//         }
+        stage('Deploy to Kubernetes') {
+            steps {
+                // Здесь можно добавить команду для деплоя на Kubernetes, если нужно
+                sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
+            }
+        }
     }
 }
 
