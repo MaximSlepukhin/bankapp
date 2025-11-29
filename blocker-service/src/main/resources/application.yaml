@@ -2,5 +2,17 @@ spring:
   application:
     name: blocker-service
 
-  config:
-    import: optional:configserver:http://config-server:8888
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs
+
+server:
+  port: 8087
+  address: 0.0.0.0
+
+blocker:
+  maintenance:
+    start: "00:00"
+    end: "00:05"

@@ -1,0 +1,17 @@
+replicaCount: 1
+
+image:
+  repository: blocker-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: blocker-service
+  port: 8087
+  targetPort: 8087
+
+env:
+  maintenanceStart: "00:00"
+  maintenanceEnd: "00:05"
+
+resources: {}

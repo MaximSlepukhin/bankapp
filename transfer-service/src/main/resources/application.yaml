@@ -2,5 +2,77 @@ spring:
   application:
     name: transfer-service
 
-  config:
-    import: optional:configserver:http://config-server:8888
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.default_schema: transfer_service
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/transfer-service/db.changelog-master.yaml
+    default-schema: transfer_service
+    drop-first: true
+    clear-checksums: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak.default.svc.cluster.local:8080/realms/bank-realm/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak-service:
+            provider: keycloak
+            client-id: front-ui-service
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            token-uri: http://keycloak.default.svc.cluster.local:8080/realms/bank-realm/protocol/openid-connect/token
+            authorization-uri: http://keycloak.default.svc.cluster.local:8080/realms/bank-realm/protocol/openid-connect/auth
+
+server:
+  port: 8083
+  address: 0.0.0.0
+
+services:
+  accounts:
+    url: http://accounts-service.default.svc.cluster.local:8081
+  blocker:
+    url: http://blocker-service.default.svc.cluster.local:8087
+  exchange:
+    url: http://exchange-service.default.svc.cluster.local:8085
+  notifications:
+    url: http://notifications-service.default.svc.cluster.local:8089
+
+logging:
+  level:
+    io.github.resilience4j: debug
+    org.springframework.web: debug
+    org.springframework.web.filter.CommonsRequestLoggingFilter: debug
+    org.springframework.security: trace
+    com.github.maximslepukhin: debug
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      transferService:
+        ignoreExceptions:
+          - com.github.maximslepukhin.exception.TransferBlockedException
+          - java.lang.IllegalArgumentException
+          - org.springframework.transaction.TransactionSystemException
+        recordExceptions:
+          - java.io.IOException
+          - org.springframework.web.client.HttpServerErrorException
+          - org.springframework.web.client.ResourceAccessException
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s

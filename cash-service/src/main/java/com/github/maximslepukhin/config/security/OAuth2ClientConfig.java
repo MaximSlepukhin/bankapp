@@ -1,6 +1,5 @@
 package com.github.maximslepukhin.config.security;
 
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.*;
@@ -26,7 +25,6 @@ public class OAuth2ClientConfig {
     }
 
     @Bean
-    @LoadBalanced
     public RestTemplate restTemplate(OAuth2AuthorizedClientManager manager) {
         var restTemplate = new RestTemplate();
 

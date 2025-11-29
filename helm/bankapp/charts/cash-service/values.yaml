@@ -1,0 +1,35 @@
+replicaCount: 1
+
+image:
+  repository: cash-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8091
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+env:
+  SPRING_PROFILES_ACTIVE: "prod"
+
+clients:
+  accounts-service-url: "http://accounts-service:8081"
+  blocker-service-url: "http://blocker-service:8087"
+  notifications-service-url: "http://notifications-service:8093"
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: cash-service.local
+      paths:
+        - path: /
+          pathType: Prefix

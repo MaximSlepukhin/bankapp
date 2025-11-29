@@ -1,6 +1,7 @@
 package com.github.maximslepukhin.client;
 
-import com.github.maximslepukhin.config.feign.FeignOAuth2Config;
+//import com.github.maximslepukhin.config.feign.FeignOAuth2Config;
+import com.github.maximslepukhin.config.feign.FeignConfig;
 import com.github.maximslepukhin.model.dto.UserDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -8,25 +9,24 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @FeignClient(
-        name = "accounts-gateway-client",
-        url = "http://gateway:8080",
-        configuration = FeignOAuth2Config.class
+        name = "accounts-service", // имя Kubernetes сервиса
+        url = "${ACCOUNTS_SERVICE_URL:http://accounts-service:8081}",
+        configuration = FeignConfig.class
+// можно вынести в переменную
 )
-
 public interface AccountsClient {
-
-    @GetMapping("/accounts-service/api/users/keycloak/{keycloakId}")
+    @GetMapping("/api/users/keycloak/{keycloakId}")
     UserDto getUserByKeycloakId(@PathVariable String keycloakId);
 
-    @GetMapping("/accounts-service/api/users/login/{login}")
+    @GetMapping("/api/users/login/{login}")
     UserDto getUserByLogin(@PathVariable String login);
 
-    @GetMapping("/accounts-service/api/users")
+    @GetMapping("/api/users")
     List<UserDto> getAllUsers();
 
-    @PostMapping("/accounts-service/api/users")
+    @PostMapping("/api/users")
     void createUser(@RequestBody UserDto user);
 
-    @PutMapping("/accounts-service/api/users/{login}")
+    @PutMapping("/api/users/{login}")
     void updateUser(@PathVariable String login, @RequestBody UserDto user);
 }

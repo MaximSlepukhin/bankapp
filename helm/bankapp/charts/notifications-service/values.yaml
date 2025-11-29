@@ -1,0 +1,45 @@
+replicaCount: 1
+
+image:
+  repository: notifications-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 8087
+  targetPort: 8087
+
+resources: {}
+
+env:
+  SPRING_PROFILES_ACTIVE: "dev"
+  POSTGRES_HOST: "accounts-db-accounts-db.default.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DATABASE: "accountsdb"
+  POSTGRES_USERNAME: "accounts_user"
+  POSTGRES_PASSWORD: "strongpassword123"
+  POSTGRES_SCHEMA: "notifications_service"
+
+postgres:
+  host: "accounts-db-accounts-db.default.svc.cluster.local"
+  port: 5432
+  database: "accountsdb"
+  username: "accounts_user"
+  password: "strongpassword123"
+  schema: "notifications_service"
+
+keycloak:
+  jwkSetUri: "http://keycloak:8080/realms/bank-realm/protocol/openid-connect/certs"
+  clientId: "front-ui-service"
+  tokenUri: "http://keycloak:8080/realms/bank-realm/protocol/openid-connect/token"
+  authorizationUri: "http://keycloak:8080/realms/bank-realm/protocol/openid-connect/auth"
+
+secrets:
+  POSTGRES_USERNAME: "admin"
+  POSTGRES_PASSWORD: "password"
+  KEYCLOAK_CLIENTSECRET: "z1GkjE1Vi9Ba1B91tFPjZtg6CGQiw5ea"
+
+logging:
+  level:
+    root: info

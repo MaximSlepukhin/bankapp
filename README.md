@@ -160,3 +160,307 @@ docker system prune -f
 
 ---
 
+
+# 1️⃣ Основная структура
+mkdir -p helm/bankapp/{templates,charts}
+
+# 2️⃣ Основные файлы чарта
+touch helm/bankapp/{Chart.yaml,values.yaml,values-dev.yaml,values-test.yaml,values-prod.yaml}
+touch helm/bankapp/templates/{_helpers.tpl,ingress.yaml,configmap.yaml,secrets.yaml,postgres-statefulset.yaml,namespace.yaml}
+
+# 3️⃣ Сабчарты для микросервисов
+for svc in accounts-service cash-service transfer-service exchange-service exchange-generator-service blocker-service notifications-service front-ui; do
+mkdir -p helm/bankapp/charts/$svc/templates
+touch helm/bankapp/charts/$svc/{Chart.yaml,values.yaml}
+touch helm/bankapp/charts/$svc/templates/{deployment.yaml,service.yaml}
+done
+
+# 4️⃣ Сабчарт для Keycloak (внутренний или заглушка, если потом подключишь внешний)
+mkdir -p helm/bankapp/charts/keycloak/templates
+touch helm/bankapp/charts/keycloak/{Chart.yaml,values.yaml}
+touch helm/bankapp/charts/keycloak/templates/{deployment.yaml,service.yaml}
+
+# 5️⃣ Тесты Helm (helm test)
+mkdir -p helm/bankapp/templates/tests
+touch helm/bankapp/templates/tests/{test-connection.yaml,test-pods.yaml}
+
+# 6️⃣ Jenkinsfiles
+touch Jenkinsfile
+for svc in accounts-service cash-service transfer-service exchange-service exchange-generator-service blocker-service notifications-service front-ui; do
+mkdir -p $svc
+touch $svc/Jenkinsfile
+done
+
+
+
+
+
+## Требования
+
+Для работы с данным проектом необходимо установить **Helm** версии **3.0** или выше. Чтобы проверить,
+что Helm устанволен и работает корректно, выполните команду: helm version
+
+Для локальной разработки и тестирования необходимо установить Minikube. Minikube создаст локальный кластер Kubernetes,
+в котором будут развернуты все сервисы вашего приложения.
+
+Убедитесь, что у вас установлен kubectl для взаимодействия с Kubernetes. Это нужно для управления вашим локальным кластером и развертываниями.
+kubectl version --client
+
+Для сборки Docker-образов, которые будут развернуты в Minikube, необходимо установить Docker.
+docker --version
+
+Убедитесь, что у вас установлен Git, чтобы клонировать репозиторий и работать с ним локально.
+git --version
+
+
+### Установка Helm
+
+1. Скачайте и установите последнюю стабильную версию Helm для вашей операционной системы, следуя инструкциям на официальном сайте:
+
+    - [Установка Helm для Linux](https://helm.sh/docs/intro/install/#from-script)
+    - [Установка Helm для macOS](https://helm.sh/docs/intro/install/#from-homebrew)
+    - [Установка Helm для Windows](https://helm.sh/docs/intro/install/#from-chocolatey)
+
+2. Проверьте версию Helm, убедившись, что она соответствует требуемой:
+
+   ```bash
+   helm version
+
+
+
+
+
+
+1. Предварительные требования
+   docker --version
+   minikube version
+   kubectl version --client
+   helm version
+   git --version
+   java -version
+
+
+2. Клонирование проекта
+   git clone https://github.com/<ваш-username>/<название-проекта>.git
+   cd <название-проекта>
+   git checkout v2.0
+
+3. Запуск Minikube
+   minikube start --driver=docker --memory=6g --cpus=4
+Проверка статуса:
+   minikube status
+   kubectl get nodes
+
+4. Подготовка Helm
+   helm repo update
+5. Создать namespace в Kubernetes через YAML-манифест
+   kubectl apply -f namespaces.yaml
+
+
+
+
+
+
+1 Проверка статуса
+minikube status
+
+2 Запуск миникуба
+minikube start --memory=8192 --cpus=4
+
+3 Првоерка что все работает
+kubectl get nodes
+
+
+helm upgrade --install accounts-db ./helm/accounts-db --namespace default
+
+
+
+
+minikube start
+minikube status
+minikube tunnel
+nano ~/.docker/config.json
+helm list -A
+kubectl get pods -A
+kubectl port-forward svc/front-ui 8081:8080
+kubectl port-forward deployment/keycloak 8080:8080
+
+
+
+eval $(minikube docker-env)
+docker build -t exchange-generator-service:latest -f exchange-generator-service/Dockerfile .
+helm install exchange-generator-service . --force
+helm upgrade exchange-generator-service . --force
+kubectl rollout restart deployment exchange-generator-service
+kubectl get pods -A
+kubectl logs
+
+
+eval $(minikube docker-env)
+docker build -t notifications-service:latest -f notifications-service/Dockerfile .
+kubectl get pods -A
+helm install notifications-service . --force
+helm upgrade notifications-service . --force
+kubectl logs
+kubectl rollout restart deployment notifications-service-notifications-service
+
+
+eval $(minikube docker-env)
+docker build -t exchange-service:latest -f exchange-service/Dockerfile .
+helm install exchange-service . --force
+helm upgrade exchange-service . --force
+kubectl get pods -A
+kubectl rollout restart deployment exchange-service-exchange-service
+kubectl logs
+
+docker images
+docker rmi exchange-service:latest
+
+
+
+eval $(minikube docker-env)
+docker build -t blocker-service:latest -f blocker-service/Dockerfile .
+helm install blocker-service . --force
+helm upgrade blocker-service . --force
+kubectl get pods -A
+kubectl logs
+kubectl rollout restart deployment blocker-service-blocker-service
+
+
+
+kubectl delete pod exchange-service-exchange-service-546dbcc759-8wtqg
+kubectl delete deployment exchange-service-exchange-service
+
+
+mvn clean package -DskipTests
+eval $(minikube docker-env)
+docker build -t transfer-service:latest -f transfer-service/Dockerfile .
+helm install transfer-service . --force
+helm upgrade transfer-service . --force
+kubectl get pods -A
+kubectl logs
+kubectl delete deployment transfer-service -n default
+
+
+eval $(minikube docker-env)
+docker build -t cash-service:latest -f cash-service/Dockerfile .
+helm install cash-service . --force
+helm upgrade cash-service . --force
+kubectl get pods -A
+kubectl logs
+
+
+
+minikube addons enable ingress
+kubectl get pods -n ingress-nginx
+sudo nano /etc/hosts
+127.0.0.1 keycloak.local
+minikube tunnel
+
+
+
+kubectl get ns
+helm list -A
+kubectl get pods -A
+
+
+
+
+eval $(minikube docker-env)
+docker build -t front-ui:latest -f front-ui/Dockerfile .
+docker images | grep front-ui
+
+nano ~/.docker/config.json
+minikube image load front-ui:latest
+
+
+
+из front-ui
+helm upgrade front-ui . --force
+helm upgrade front-ui . --namespace default --set image.tag=latest
+helm upgrade front-ui . --namespace default
+
+Проверка  url
+minikube service front-ui --url
+
+Проверка логов
+kubectl logs deploy/front-ui
+
+Проверка статусов подов
+kubectl get pods -n default
+
+после этой команды у меня страница регистрации открывается по http://localhost:8080/signup
+kubectl port-forward deployment/front-ui 8080:8080
+
+minikube service --url front-ui
+
+
+minikube service --url keycloak
+
+
+helm upgrade accounts-service .
+helm upgrade keycloak . -n default -f values.yaml
+
+
+
+kubectl exec -it deploy/keycloak -n default -- bash
+/opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
+/opt/keycloak/bin/kcadm.sh delete realms/bank-realm
+/opt/keycloak/bin/kcadm.sh get realms
+
+
+    пробрасываем порт!!!!!
+kubectl port-forward svc/keycloak 9090:8080 -n default
+
+
+    Убедись, что ConfigMap с твоим JSON актуален:
+kubectl get configmap keycloak-realm-import -n default -o yaml
+
+Там должен быть твой bank-realm-realm.json с нужными redirectUris.
+А при необходимости указать hostname:
+
+helm upgrade keycloak . -n default -f values.yaml --set keycloak.hostname="192.168.49.2"
+
+
+!!!!!!!!!!!обязательно для запска!!!!!!!!
+kubectl set env deployment/keycloak KC_HOSTNAME=localhost
+kubectl rollout restart deployment/keycloak
+kubectl rollout restart deployment keycloak --namespace=default
+
+maksim@MacBook-Pro-Maksim bankapp % kubectl port-forward deployment/keycloak 8080:8080
+
+
+
+kubectl port-forward svc/front-ui 8081:8080
+kubectl port-forward pod/keycloak-5d6c5c49c9-cdm94 8080:8080
+
+
+
+kubectl delete secret keycloak-tls-secret --namespace default
+
+kubectl create secret tls keycloak-tls-secret \
+--cert=./tls.crt \
+--key=./tls.key \
+--namespace default
+
+kubectl get secret keycloak-tls-secret --namespace default -o yaml
+
+
+kubectl create secret tls keycloak-tls-secret \
+kubectl get secret keycloak-tls-secret --namespace default -o yaml
+
+
+kubectl get pods --namespace=default
+kubectl logs keycloak-<новый_pod_name> --namespace default
+
+
+kubectl logs keycloak-64ff4db849-hzmqc --namespace=default
+
+
+
+
+helm uninstall front-ui -n default
+
+kubectl logs front-ui-54bfb846f7-bxq88
+
+сделал optional для email и profile и в application оставил только openid

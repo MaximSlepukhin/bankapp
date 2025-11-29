@@ -34,6 +34,7 @@ public class MainController {
     private final FinanceService financeService;
     private final ExchangeService exchangeService;
 
+
     // ------------------ Главная страница ------------------
     @GetMapping("/")
     public String root() {

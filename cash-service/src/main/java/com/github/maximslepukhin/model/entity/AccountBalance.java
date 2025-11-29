@@ -1,6 +1,6 @@
-package com.github.maximslepukhin.model.entity;
+//package com.github.maximslepukhin.model.entity;
 
-import jakarta.persistence.*;
+//import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,12 +10,12 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "account_balances")
+//@Entity
+//@Table(name = "account_balances")
 public class AccountBalance {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long accountId;
     private String currency;

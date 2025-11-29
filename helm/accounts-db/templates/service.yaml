@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "accounts-db.fullname" . }}
+  labels:
+    app: {{ include "accounts-db.name" . }}
+spec:
+  clusterIP: None   # <- делаем headless
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 5432
+  selector:
+    app: {{ include "accounts-db.name" . }}

@@ -17,6 +17,7 @@ public class FeignConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {
         return requestTemplate -> {
+            // Получаем сервисный токен
             String token = keycloakTokenService.getAccessToken();
             requestTemplate.header("Authorization", "Bearer " + token);
         };

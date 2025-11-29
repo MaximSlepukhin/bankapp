@@ -1,0 +1,83 @@
+pipeline {
+    agent any
+
+    environment {
+        // Переменная для проекта (путь к репозиторию, можно оставить пустым для локальной сборки)
+        projectDir = '.'  // Указывает на текущую директорию проекта (если у тебя локальный репозиторий)
+    }
+
+    stages {
+        // Шаг 1: Скачиваем и валидируем код с помощью Maven
+        stage('Build') {
+            steps {
+                script {
+                    // Выполняем Maven команду для чистки и сборки проекта
+                    // Используем параметр -DskipTests, чтобы пропустить тесты
+                    sh 'mvn clean install -DskipTests'  // здесь команда без './mvnw', так как она будет доступна на Jenkins-агенте
+                }
+            }
+        }
+    }
+}
+
+//
+//         // Шаг 2: Создаём Docker-образ
+//         stage('Docker Build') {
+//             steps {
+//                 script {
+//                     // Собираем Docker-образ с тегом, основанным на GIT_COMMIT
+//                     docker.build(dockerImage, ".")
+//                 }
+//             }
+//         }
+//
+//         // Шаг 3: Запускаем Docker-образ в Docker Registry
+//         stage('Docker Push') {
+//             steps {
+//                 script {
+//                     // Пушим образ в Docker Registry (используем переменную dockerImage)
+//                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+//                         sh "docker push ${dockerImage}"
+//                     }
+//                 }
+//             }
+//         }
+//
+//         // Шаг 4: Развёртываем сервис в Kubernetes с помощью Helm
+//         stage('Deploy to Kubernetes') {
+//             steps {
+//                 script {
+//                     // Применяем Helm-чарт для развёртывания в Kubernetes (используем GIT_COMMIT для тега)
+//                     sh """
+//                         helm upgrade --install blocker-service ${helmChartPath} \
+//                         --namespace ${kubernetesNamespace} \
+//                         --set image.tag=${GIT_COMMIT} \
+//                         --set image.repository=${dockerImage} \
+//                         --set image.pullPolicy=IfNotPresent
+//                     """
+//                 }
+//             }
+//         }
+//
+//         // Шаг 5: Проверка состояния Kubernetes (по желанию)
+//         stage('Kubernetes Status') {
+//             steps {
+//                 script {
+//                     // Проверка статуса деплоймента в Kubernetes
+//                     sh "kubectl get pods -n ${kubernetesNamespace}"
+//                 }
+//             }
+//         }
+//     }
+//
+//     post {
+//         // Дополнительные шаги после завершения пайплайна
+//         success {
+//             echo "Deploy to Kubernetes was successful!"
+//         }
+//
+//         failure {
+//             echo "Deploy to Kubernetes failed. Please check logs for errors."
+//         }
+//     }
+// }

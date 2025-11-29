@@ -17,8 +17,9 @@ public class ExchangeServiceClient {
 
     public void sendRates(List<CurrencyRate> rates) {
         try {
+            // Используем DNS имя Kubernetes сервиса
             restTemplate.postForEntity(
-                    "http://EXCHANGE-SERVICE/api/exchange/rates",
+                    "http://exchange-service:8084/api/exchange/rates",
                     rates,
                     Void.class
             );

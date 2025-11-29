@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "exchange-generator-service.fullname" . }}
+  labels:
+    app: {{ include "exchange-generator-service.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "exchange-generator-service.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "exchange-generator-service.name" . }}
+    spec:
+      containers:
+        - name: {{ include "exchange-generator-service.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            {{- range .Values.env }}
+            - name: {{ .name }}
+              value: {{ .value }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

@@ -17,7 +17,7 @@ public class ExchangeClient {
     }
 
     public List<CurrencyRate> getRates() {
-        String url = "http://EXCHANGE-GENERATOR/api/rates";
+        String url = "${EXCHANGE_SERVICE_URL:http://exchange-service:8084}/api/rates";
         CurrencyRate[] rates = restTemplate.getForObject(url, CurrencyRate[].class);
         return rates != null ? Arrays.asList(rates) : List.of();
     }
