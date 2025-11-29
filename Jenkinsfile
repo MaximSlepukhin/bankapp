@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'jenkins-k8s'  // Твой кастомный образ с kubectl, helm, docker
+            args '-v ~/.kube:/var/jenkins_home/.kube -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     environment {
         HELM_CHART_PATH = './helm/bankapp'
@@ -15,21 +20,17 @@ pipeline {
         stage('Check Tools') {
             steps {
                 script {
-                    // Проверка доступности kubectl, helm и docker
                     sh 'kubectl version --client'
                     sh 'helm version'
                     sh 'docker version'
-                    // Настройка Docker на Minikube
-                    sh 'eval $(minikube docker-env)'
+                    sh 'eval $(minikube docker-env)' // Подключаем docker к minikube
                 }
             }
         }
 
         stage('Create Namespaces') {
             steps {
-                script {
-                    sh 'kubectl apply -f ./namespaces.yaml'
-                }
+                sh 'kubectl apply -f ./namespaces.yaml'
             }
         }
 
@@ -52,21 +53,16 @@ pipeline {
 
         stage('Deploy Databases') {
             steps {
-                script {
-                    sh 'helm upgrade --install accounts-db ./helm/accounts-db --namespace dev --wait'
-                    // sh 'helm upgrade --install keycloak-db ./helm/keycloak-db --namespace dev --wait'
-                }
+                sh 'helm upgrade --install accounts-db ./helm/accounts-db --namespace dev --wait'
+                // sh 'helm upgrade --install keycloak-db ./helm/keycloak-db --namespace dev --wait'
             }
         }
 
 //         stage('Deploy to Kubernetes') {
 //             steps {
-//                 script {
-//                     sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
-//                 }
+//                 sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
 //             }
 //         }
-
     }
 }
 
