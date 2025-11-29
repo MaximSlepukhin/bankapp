@@ -2,13 +2,26 @@ pipeline {
     agent any
 
     environment {
-        HELM_CHART_PATH = './helm/bankapp'  // Путь к зонтичному Helm-чарту для всего приложения
+        HELM_CHART_PATH = './helm/bankapp'
     }
 
     stages {
         stage('Checkout') {
             steps {
                 git url: 'https://github.com/MaximSlepukhin/bankapp.git', branch: 'feature/sprint-10'
+            }
+        }
+
+        stage('Check Tools') {
+            steps {
+                script {
+                    // Проверка доступности kubectl, helm и docker
+                    sh 'kubectl version --client'
+                    sh 'helm version'
+                    sh 'docker version'
+                    // Настройка Docker на Minikube
+                    sh 'eval $(minikube docker-env)'
+                }
             }
         }
 
@@ -23,8 +36,6 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    sh 'eval $(minikube docker-env)'
-
                     parallel(
                         'accounts-service': { buildAndPush('accounts-service') },
                         'blocker-service': { buildAndPush('blocker-service') },
@@ -56,11 +67,9 @@ pipeline {
 //             }
 //         }
 
-    } // <-- Закрываем блок stages
+    }
+}
 
-} // <-- Закрываем блок pipeline
-
-// Функция для сборки Docker-образов
 def buildAndPush(service) {
     sh """
         docker build -t ${service}:latest -f ${service}/Dockerfile ${service}
