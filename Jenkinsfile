@@ -232,38 +232,33 @@ pipeline {
                         'transfer-service'
                     ]
 
-                    // Создаём директорию для tar-файлов
                     sh "mkdir -p ${DOCKER_TAR_DIR}"
 
                     for (svc in services) {
+                        // Собираем образ и сохраняем в tar
                         sh """
-                            echo "Building Docker image for $svc"
-                            workspace="$WORKSPACE"
-                            jarPath="\$workspace/$svc/target/${svc}-1.0-SNAPSHOT.jar"
+                            echo "Building Docker image for ${svc}"
+                            workspace=${WORKSPACE}
+                            jarPath=\${workspace}/${svc}/target/${svc}-1.0-SNAPSHOT.jar
 
-                            if [ ! -f "\$jarPath" ]; then
-                                echo "ERROR: JAR not found for $svc!"
+                            if [ ! -f "\${jarPath}" ]; then
+                                echo "ERROR: JAR not found for ${svc}!"
                                 exit 1
                             fi
 
-                            cp "\$jarPath" "\$workspace/$svc/app.jar"
-
-                            docker build -t $svc:latest "\$workspace/$svc"
-
-                            # Сохраняем образ в tar
-                            docker save -o ${DOCKER_TAR_DIR}/$svc.tar $svc:latest
-
-                            echo "Docker image $svc:latest built and saved to tar"
+                            cp "\${jarPath}" "\${workspace}/${svc}/app.jar"
+                            docker build -t ${svc}:latest "\${workspace}/${svc}"
+                            docker save -o ${DOCKER_TAR_DIR}/${svc}.tar ${svc}:latest
+                            echo "Docker image ${svc}:latest saved to tar"
                         """
-                    }
 
-                    // Загружаем все образы в Minikube
-                    for (svc in services) {
-                        sh "docker exec minikube docker load -i ${DOCKER_TAR_DIR}/$svc.tar"
+                        // Загружаем образ в Minikube
+                        sh "docker exec minikube docker load -i ${DOCKER_TAR_DIR}/${svc}.tar"
                     }
                 }
             }
         }
+
 
         stage('Deploy Databases') {
             steps {
