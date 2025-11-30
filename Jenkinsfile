@@ -1,22 +1,33 @@
 pipeline {
     agent {
         docker {
-            image 'jenkins-k8s'  // Твой кастомный образ с kubectl, helm, docker
-            args '-v /Users/maksim/.kube:/var/jenkins_home/.kube:ro \
-                  -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro \
-                  -v /var/run/docker.sock:/var/run/docker.sock'
+            image 'jenkins-k8s'  // Кастомный образ с kubectl, helm, docker
+            args '''
+                -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
+                -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
+                -v /var/run/docker.sock:/var/run/docker.sock
+            '''
         }
     }
 
     environment {
         HELM_CHART_PATH = './helm/bankapp'
-        KUBECONFIG = '/var/jenkins_home/.kube/config'  // kubectl видит Minikube
+        KUBECONFIG = '/var/jenkins_home/.kube/config'
     }
 
     stages {
         stage('Checkout') {
             steps {
                 git url: 'https://github.com/MaximSlepukhin/bankapp.git', branch: 'feature/sprint-10'
+            }
+        }
+
+        stage('Fix kubeconfig') {
+            steps {
+                sh '''
+                # Исправляем пути к сертификатам внутри контейнера
+                sed -i "s|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g" $KUBECONFIG
+                '''
             }
         }
 
