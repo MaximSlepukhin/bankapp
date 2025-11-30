@@ -15,6 +15,7 @@ pipeline {
         ORIGINAL_KUBECONFIG = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig' // используем копию внутри контейнера
         MINIKUBE_HOME = '/var/jenkins_home/.minikube'
+        MINIKUBE_IP = '192.168.49.2' // IP твоего Minikube
     }
 
     stages {
@@ -31,6 +32,8 @@ pipeline {
                 cp $ORIGINAL_KUBECONFIG $KUBECONFIG
                 # Исправляем пути к сертификатам внутри контейнера
                 sed -i "s|/Users/maksim/.minikube|$MINIKUBE_HOME|g" $KUBECONFIG
+                # Исправляем сервер на правильный IP Minikube
+                sed -i "s|127.0.0.1:50049|$MINIKUBE_IP:8443|g" $KUBECONFIG
                 '''
             }
         }
