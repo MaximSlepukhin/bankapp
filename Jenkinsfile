@@ -1588,19 +1588,19 @@ def buildAndPush(service) {
     sh """
         echo "Building Docker image for $service"
 
-        # Ищем JAR внутри Jenkins Workspace (@2, @3)
-        jarPath=\$(find "$WORKSPACE" -type f -path "*/${service}/target/${service}-*.jar" ! -name "*.original" | head -n 1)
+        # Конкретный путь к JAR
+        jarPath="$WORKSPACE/$service/target/${service}-1.0-SNAPSHOT.jar"
+        echo "Checking for JAR at: \$jarPath"
 
-        if [ -z "\$jarPath" ]; then
-            echo "ERROR: JAR not found for $service!"
+        if [ ! -f "\$jarPath" ]; then
+            echo "ERROR: JAR not found for $service at \$jarPath!"
             exit 1
         fi
 
         echo "Found JAR: \$jarPath"
 
-        # Копируем JAR туда, где лежит Dockerfile
+        # Копируем JAR в build context Docker
         cp "\$jarPath" "$WORKSPACE/$service/app.jar"
-
         echo "Copied to build context: $WORKSPACE/$service/app.jar"
 
         # Сборка Docker образа
