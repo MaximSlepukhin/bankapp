@@ -9,38 +9,38 @@ appVersion: 1.0.0
 dependencies:
   - name: accounts-service
     version: "1.0.0"
-    repository: "file://./charts/accounts-service"
+    repository: "file://charts/accounts-service"
     dependsOn:
       - name: accounts-db
   - name: blocker-service
     version: "1.0.0"
-    repository: "file://./charts/blocker-service"
-  - name: cash-serviceйq
+    repository: "file://charts/blocker-service"
+  - name: cash-service
     version: "1.0.0"
-    repository: "file://./charts/cash-service"
+    repository: "file://charts/cash-service"
   - name: exchange-generator-service
     version: "1.0.0"
-    repository: "file://./charts/exchange-generator-service"
+    repository: "file://charts/exchange-generator-service"
   - name: exchange-service
     version: "1.0.0"
-    repository: "file://./charts/exchange-service"
+    repository: "file://charts/exchange-service"
   - name: front-ui
     version: "1.0.0"
-    repository: "file://./charts/front-ui"
+    repository: "file://charts/front-ui"
   - name: notifications-service
     version: "1.0.0"
-    repository: "file://./charts/notifications-service"
+    repository: "file://charts/notifications-service"
   - name: transfer-service
     version: "1.0.0"
-    repository: "file://./charts/transfer-service"
+    repository: "file://charts/transfer-service"
   - name: keycloak
     version: "1.0.0"
-    repository: "file://./charts/keycloak"
+    repository: "file://charts/keycloak"
 
   # Базы данных
   - name: accounts-db
     version: "1.0.0"
-    repository: "file://./accounts-db"  # Путь изменён, указывает на корень проекта
+    repository: "file://../accounts-db"
   - name: keycloak-db
     version: "1.0.0"
-    repository: "file://./keycloak-db"  # Путь изменён, указывает на корень проекта
+    repository: "file://../keycloak-db"
