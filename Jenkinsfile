@@ -1586,25 +1586,35 @@ pipeline {
    ========================================================== */
 def buildAndPush(service) {
     sh """
-        echo "Building $service, searching JAR in workspace: $WORKSPACE"
+        echo "Building $service"
+        echo "Searching JAR under: $WORKSPACE*"
 
-        # Найти JAR в target, исключая .original
-        targetJar=\$(find $WORKSPACE/$service/target -type f -name "$service-*.jar" ! -name "*.original" | head -n 1)
+        # Найти target независимо от @2, @3 и т.п.
+        targetDir=\$(find ${WORKSPACE}* -type d -path "*/${service}/target" | head -n 1)
+
+        echo "Target directory: \$targetDir"
+
+        if [ -z "\$targetDir" ]; then
+            echo "ERROR: target folder not found!"
+            exit 1
+        fi
+
+        # Найти JAR
+        targetJar=\$(find "\$targetDir" -type f -name "${service}-*.jar" ! -name "*.original" | head -n 1)
+
+        echo "Using JAR: \$targetJar"
 
         if [ -z "\$targetJar" ]; then
             echo "ERROR: JAR file not found for $service!"
             exit 1
         fi
 
-        echo "Found JAR: \$targetJar"
+        # копируем jar в корень сервиса — чтобы Docker видел
+        cp "\$targetJar" "${WORKSPACE}/${service}/app.jar"
 
-        # Копируем JAR в корень папки сервиса для Docker build
-        cp "\$targetJar" "$WORKSPACE/$service/app.jar"
+        docker build -t ${service}:latest -f "${WORKSPACE}/${service}/Dockerfile" "${WORKSPACE}/${service}"
 
-        # Собираем Docker образ
-        docker build -t ${service}:latest -f "$WORKSPACE/$service/Dockerfile" "$WORKSPACE/$service"
-
-        # Удаляем временный JAR, чтобы не засорять workspace
-        rm -f "$WORKSPACE/$service/app.jar"
+        rm -f "${WORKSPACE}/${service}/app.jar"
     """
 }
+
