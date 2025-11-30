@@ -1588,8 +1588,11 @@ def buildAndPush(service) {
     sh """
         echo "Building Docker image for $service"
 
+        # Явно задаем workspace с @2
+        workspace="/var/jenkins_home/workspace/BankCICD@2"
+
         # Конкретный путь к JAR
-        jarPath="$WORKSPACE/$service/target/${service}-1.0-SNAPSHOT.jar"
+        jarPath="\$workspace/$service/target/${service}-1.0-SNAPSHOT.jar"
         echo "Checking for JAR at: \$jarPath"
 
         if [ ! -f "\$jarPath" ]; then
@@ -1600,12 +1603,13 @@ def buildAndPush(service) {
         echo "Found JAR: \$jarPath"
 
         # Копируем JAR в build context Docker
-        cp "\$jarPath" "$WORKSPACE/$service/app.jar"
-        echo "Copied to build context: $WORKSPACE/$service/app.jar"
+        cp "\$jarPath" "\$workspace/$service/app.jar"
+        echo "Copied to build context: \$workspace/$service/app.jar"
 
         # Сборка Docker образа
-        docker build -t ${service}:latest "$WORKSPACE/$service"
+        docker build -t ${service}:latest "\$workspace/$service"
     """
 }
+
 
 
