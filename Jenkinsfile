@@ -1566,7 +1566,7 @@ pipeline {
         }
 
         stage('Deploy Databases') {
-            steps { sh 'helm upgrade --install accounts-db ./helm/accounts-db --namespace dev --wait --kube-insecure-skip-tls-verify' }
+            steps { sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait --kube-insecure-skip-tls-verify' }
         }
 
         stage('Deploy to Kubernetes') {
