@@ -1,83 +1,57 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'jenkins-k8s'
+            args """
+                -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
+                -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
+                -v /var/run/docker.sock:/var/run/docker.sock
+            """
+        }
+    }
 
     environment {
-        // Переменная для проекта (путь к репозиторию, можно оставить пустым для локальной сборки)
-        projectDir = '.'  // Указывает на текущую директорию проекта (если у тебя локальный репозиторий)
+        SERVICE_NAME = 'blocker-service'
+        HELM_CHART_PATH = './helm/bankapp/charts/blocker-service'
+        ORIGINAL_KUBECONFIG = '/var/jenkins_home/.kube/config'
+        KUBECONFIG = '/tmp/kubeconfig'
+        MINIKUBE_HOME = '/var/jenkins_home/.minikube'
     }
 
     stages {
-        // Шаг 1: Скачиваем и валидируем код с помощью Maven
-        stage('Build') {
+        stage('Clean Workspace') { steps { deleteDir() } }
+        stage('Checkout') { steps { git url: 'https://github.com/MaximSlepukhin/bankapp.git', branch: 'feature/sprint-10' } }
+        stage('Prepare kubeconfig') {
             steps {
-                script {
-                    // Выполняем Maven команду для чистки и сборки проекта
-                    // Используем параметр -DskipTests, чтобы пропустить тесты
-                    sh 'mvn clean install -DskipTests'  // здесь команда без './mvnw', так как она будет доступна на Jenkins-агенте
-                }
+                sh '''
+                cp $ORIGINAL_KUBECONFIG $KUBECONFIG
+                sed -i "s|/Users/maksim/.minikube|$MINIKUBE_HOME|g" $KUBECONFIG
+                sed -i "s|127.0.0.1:[0-9]*|host.docker.internal:50049|g" $KUBECONFIG
+                '''
             }
         }
+        stage('Build with Maven') {
+            agent {
+                docker {
+                    image 'maven:3.9.8-eclipse-temurin-21'
+                    args "-v ${env.WORKSPACE}:${env.WORKSPACE} -w ${env.WORKSPACE}"
+                }
+            }
+            steps { sh 'mvn clean package -DskipTests' }
+        }
+        stage('Build Docker Image') { steps { script { buildAndPush(env.SERVICE_NAME) } } }
+        stage('Deploy to Kubernetes') { steps { sh "helm upgrade --install ${SERVICE_NAME} ${HELM_CHART_PATH} --namespace dev --kube-insecure-skip-tls-verify --wait" } }
     }
+
+    post { always { sh 'docker ps -a' } }
 }
 
-//
-//         // Шаг 2: Создаём Docker-образ
-//         stage('Docker Build') {
-//             steps {
-//                 script {
-//                     // Собираем Docker-образ с тегом, основанным на GIT_COMMIT
-//                     docker.build(dockerImage, ".")
-//                 }
-//             }
-//         }
-//
-//         // Шаг 3: Запускаем Docker-образ в Docker Registry
-//         stage('Docker Push') {
-//             steps {
-//                 script {
-//                     // Пушим образ в Docker Registry (используем переменную dockerImage)
-//                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
-//                         sh "docker push ${dockerImage}"
-//                     }
-//                 }
-//             }
-//         }
-//
-//         // Шаг 4: Развёртываем сервис в Kubernetes с помощью Helm
-//         stage('Deploy to Kubernetes') {
-//             steps {
-//                 script {
-//                     // Применяем Helm-чарт для развёртывания в Kubernetes (используем GIT_COMMIT для тега)
-//                     sh """
-//                         helm upgrade --install blocker-service ${helmChartPath} \
-//                         --namespace ${kubernetesNamespace} \
-//                         --set image.tag=${GIT_COMMIT} \
-//                         --set image.repository=${dockerImage} \
-//                         --set image.pullPolicy=IfNotPresent
-//                     """
-//                 }
-//             }
-//         }
-//
-//         // Шаг 5: Проверка состояния Kubernetes (по желанию)
-//         stage('Kubernetes Status') {
-//             steps {
-//                 script {
-//                     // Проверка статуса деплоймента в Kubernetes
-//                     sh "kubectl get pods -n ${kubernetesNamespace}"
-//                 }
-//             }
-//         }
-//     }
-//
-//     post {
-//         // Дополнительные шаги после завершения пайплайна
-//         success {
-//             echo "Deploy to Kubernetes was successful!"
-//         }
-//
-//         failure {
-//             echo "Deploy to Kubernetes failed. Please check logs for errors."
-//         }
-//     }
-// }
+def buildAndPush(service) {
+    sh """
+        workspace="/var/jenkins_home/workspace/BankCICD@2"
+        jarPath="\$workspace/$service/target/${service}-1.0-SNAPSHOT.jar"
+        if [ ! -f "\$jarPath" ]; then echo "JAR not found!"; exit 1; fi
+        cp "\$jarPath" "\$workspace/$service/app.jar"
+        docker build -t ${service}:latest "\$workspace/$service"
+    """
+}
