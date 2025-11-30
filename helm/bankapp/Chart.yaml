@@ -15,7 +15,7 @@ dependencies:
   - name: blocker-service
     version: "1.0.0"
     repository: "file://./charts/blocker-service"
-  - name: cash-service
+  - name: cash-serviceйq
     version: "1.0.0"
     repository: "file://./charts/cash-service"
   - name: exchange-generator-service

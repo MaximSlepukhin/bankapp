@@ -1,0 +1,16 @@
+blocker-service:
+  replicaCount: 3
+  image:
+    repository: blocker-service
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  env:
+    maintenanceStart: "02:00"
+    maintenanceEnd: "02:15"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"

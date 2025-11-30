@@ -1,0 +1,48 @@
+accounts-service:
+  enabled: false
+
+blocker-service:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: blocker-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  env:
+    maintenanceStart: "00:00"
+    maintenanceEnd: "00:05"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+
+cash-service:
+  enabled: false
+
+exchange-generator-service:
+  enabled: false
+
+exchange-service:
+  enabled: false
+
+front-ui:
+  enabled: false
+
+notifications-service:
+  enabled: false
+
+transfer-service:
+  enabled: false
+
+keycloak:
+  enabled: false
+
+accounts-db:
+  enabled: false
+
+keycloak-db:
+  enabled: false
