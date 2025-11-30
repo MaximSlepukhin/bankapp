@@ -31,6 +31,8 @@ pipeline {
                 cp $ORIGINAL_KUBECONFIG $KUBECONFIG
                 # Исправляем пути к сертификатам внутри контейнера
                 sed -i "s|/Users/maksim/.minikube|$MINIKUBE_HOME|g" $KUBECONFIG
+                # Используем host.docker.internal вместо 127.0.0.1 для доступа к Minikube API
+                sed -i "s|127.0.0.1:[0-9]*|host.docker.internal:8443|g" $KUBECONFIG
                 '''
             }
         }
