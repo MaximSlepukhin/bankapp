@@ -1,5 +1,5 @@
 accounts-service:
-  enabled: false
+  enabled: true
 
 blocker-service:
   enabled: true
@@ -21,28 +21,28 @@ blocker-service:
 
 
 cash-service:
-  enabled: false
+  enabled: true
 
 exchange-generator-service:
-  enabled: false
+  enabled: true
 
 exchange-service:
-  enabled: false
+  enabled: true
 
 front-ui:
-  enabled: false
+  enabled: true
 
 notifications-service:
-  enabled: false
+  enabled: true
 
 transfer-service:
-  enabled: false
+  enabled: true
 
 keycloak:
-  enabled: false
+  enabled: true
 
 accounts-db:
-  enabled: false
+  enabled: true
 
 keycloak-db:
-  enabled: false
+  enabled: true
