@@ -50,7 +50,7 @@ pipeline {
         stage('Build with Maven') {
             agent {
                 docker {
-                    image 'maven:3.9.5-openjdk-17'
+                    image 'maven:3.9.5-jdk-17'
                     args '-v $WORKSPACE:/workspace'  // монтируем рабочую директорию
                 }
             }
