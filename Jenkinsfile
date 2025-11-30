@@ -1464,7 +1464,7 @@ def buildAndPush(service) {
             exit 1
         fi
 
-        docker build -t ${service}:latest -f "\$workspace_with_jar/Dockerfile" "\$workspace_with_jar"
+        docker build -t ${service}:latest -f "$WORKSPACE/$service/Dockerfile" "$WORKSPACE/$service"
     """
 }
 
