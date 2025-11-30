@@ -1,13 +1,14 @@
 pipeline {
     agent {
         docker {
-            image 'jenkins-k8s' // твой кастомный образ с kubectl, helm, docker
-            args "-v /Users/maksim/.kube:/var/jenkins_home/.kube -v /var/run/docker.sock:/var/run/docker.sock"
+            image 'jenkins-k8s'  // Твой кастомный образ с kubectl, helm, docker
+            args '-v /Users/maksim/.kube:/var/jenkins_home/.kube -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     environment {
         HELM_CHART_PATH = './helm/bankapp'
+        KUBECONFIG = '/var/jenkins_home/.kube/config'  // Чтобы kubectl видел кластер
     }
 
     stages {
@@ -22,22 +23,18 @@ pipeline {
                 sh 'kubectl version --client'
                 sh 'helm version'
                 sh 'docker version'
-                sh 'eval $(minikube docker-env)' // подключаем Docker Minikube
             }
         }
 
         stage('Create Namespaces') {
             steps {
-                sh 'kubectl apply -f ./namespaces.yaml'
+                sh 'kubectl apply -f ./namespaces.yaml --validate=false'
             }
         }
 
         stage('Build Docker Images') {
             steps {
                 script {
-                    // подключаем Docker Minikube
-                    sh 'eval $(minikube docker-env)'
-
                     parallel(
                         'accounts-service': { buildAndPush('accounts-service') },
                         'blocker-service': { buildAndPush('blocker-service') },
@@ -70,6 +67,6 @@ pipeline {
 def buildAndPush(service) {
     sh """
         docker build -t ${service}:latest -f ${service}/Dockerfile ${service}
-        # docker push ${service}:latest  # если нужен пуш в registry
+        # docker push ${service}:latest  # если нужно пушить в registry
     """
 }
