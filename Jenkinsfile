@@ -49,7 +49,8 @@ pipeline {
 
         stage('Create Namespaces') {
             steps {
-                sh 'kubectl apply -f ./namespaces.yaml --validate=false'
+                // Игнорируем TLS, чтобы не было ошибок x509
+                sh 'kubectl --insecure-skip-tls-verify apply -f ./namespaces.yaml --validate=false'
             }
         }
 
