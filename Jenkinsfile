@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'jenkins-k8s'  // Твой кастомный образ с kubectl, helm, docker
-            args '-v ~/.kube:/var/jenkins_home/.kube -v /var/run/docker.sock:/var/run/docker.sock'
+            image 'jenkins-k8s' // твой кастомный образ с kubectl, helm, docker
+            args "-v /Users/maksim/.kube:/var/jenkins_home/.kube -v /var/run/docker.sock:/var/run/docker.sock"
         }
     }
 
@@ -19,24 +19,10 @@ pipeline {
 
         stage('Check Tools') {
             steps {
-                script {
-                    // Проверяем доступность kubectl, helm и docker
-                    sh 'kubectl version --client'
-                    sh 'helm version'
-                    sh 'docker version'
-                    // Подключаем docker к minikube
-                    sh 'eval $(minikube docker-env)'
-                }
-            }
-        }
-
-        stage('Check Docker') {
-            steps {
-                script {
-                    // Проверяем Docker в контексте minikube
-                    sh 'eval $(minikube docker-env)'  // Подключаем Docker Minikube
-                    sh 'docker version'  // Проверяем доступность Docker
-                }
+                sh 'kubectl version --client'
+                sh 'helm version'
+                sh 'docker version'
+                sh 'eval $(minikube docker-env)' // подключаем Docker Minikube
             }
         }
 
@@ -49,6 +35,9 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
+                    // подключаем Docker Minikube
+                    sh 'eval $(minikube docker-env)'
+
                     parallel(
                         'accounts-service': { buildAndPush('accounts-service') },
                         'blocker-service': { buildAndPush('blocker-service') },
@@ -72,7 +61,6 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                // Здесь можно добавить команду для деплоя на Kubernetes, если нужно
                 sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
             }
         }
@@ -82,5 +70,6 @@ pipeline {
 def buildAndPush(service) {
     sh """
         docker build -t ${service}:latest -f ${service}/Dockerfile ${service}
+        # docker push ${service}:latest  # если нужен пуш в registry
     """
 }
