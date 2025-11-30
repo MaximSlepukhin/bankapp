@@ -1379,10 +1379,15 @@ pipeline {
             steps {
                 sh '''
                 echo "Listing all target directories and JAR files:"
-                for dir in $WORKSPACE/*/target; do
-                    echo "Contents of $dir:"
-                    ls -l "$dir" || echo "Directory $dir not found"
+                for dir in "$WORKSPACE"/*/target; do
+                    if [ -d "$dir" ]; then
+                        echo "Contents of $dir:"
+                        ls -l "$dir"
+                    else
+                        echo "Directory $dir not found"
+                    fi
                 done
+
                 '''
             }
         }
