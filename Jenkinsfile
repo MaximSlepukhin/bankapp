@@ -48,11 +48,19 @@ pipeline {
         }
 
         stage('Build with Maven') {
+            agent {
+                docker {
+                    image 'maven:3.9.5-openjdk-17'
+                    args '-v $WORKSPACE:/workspace'  // монтируем рабочую директорию
+                }
+            }
             steps {
-                // Можно собирать все модули сразу, если у вас multi-module Maven проект
-                sh 'mvn clean package -DskipTests'
+                dir('/workspace') {  // чтобы Maven работал в корне репозитория
+                    sh 'mvn clean package -DskipTests'
+                }
             }
         }
+
 
         stage('Create Namespaces') {
             steps {
