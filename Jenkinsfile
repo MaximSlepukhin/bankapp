@@ -12,7 +12,9 @@ pipeline {
 
     environment {
         HELM_CHART_PATH = './helm/bankapp'
-        KUBECONFIG = '/var/jenkins_home/.kube/config'
+        ORIGINAL_KUBECONFIG = '/var/jenkins_home/.kube/config'
+        KUBECONFIG = '/tmp/kubeconfig' // используем копию внутри контейнера
+        MINIKUBE_HOME = '/var/jenkins_home/.minikube'
     }
 
     stages {
@@ -22,11 +24,13 @@ pipeline {
             }
         }
 
-        stage('Fix kubeconfig') {
+        stage('Prepare kubeconfig') {
             steps {
                 sh '''
+                # Создаём рабочую копию kubeconfig внутри контейнера
+                cp $ORIGINAL_KUBECONFIG $KUBECONFIG
                 # Исправляем пути к сертификатам внутри контейнера
-                sed -i "s|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g" $KUBECONFIG
+                sed -i "s|/Users/maksim/.minikube|$MINIKUBE_HOME|g" $KUBECONFIG
                 '''
             }
         }
@@ -73,6 +77,12 @@ pipeline {
             steps {
                 sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
             }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker ps -a'
         }
     }
 }
