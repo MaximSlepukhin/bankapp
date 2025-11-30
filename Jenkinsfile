@@ -47,6 +47,13 @@ pipeline {
             }
         }
 
+        stage('Build with Maven') {
+            steps {
+                // Можно собирать все модули сразу, если у вас multi-module Maven проект
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
         stage('Create Namespaces') {
             steps {
                 // Игнорируем TLS, чтобы не было ошибок x509
