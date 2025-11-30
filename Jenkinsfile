@@ -2,13 +2,15 @@ pipeline {
     agent {
         docker {
             image 'jenkins-k8s'  // Твой кастомный образ с kubectl, helm, docker
-            args '-v /Users/maksim/.kube:/var/jenkins_home/.kube -v /var/run/docker.sock:/var/run/docker.sock'
+            args '-v /Users/maksim/.kube:/var/jenkins_home/.kube:ro \
+                  -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro \
+                  -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     environment {
         HELM_CHART_PATH = './helm/bankapp'
-        KUBECONFIG = '/var/jenkins_home/.kube/config'  // Чтобы kubectl видел кластер
+        KUBECONFIG = '/var/jenkins_home/.kube/config'  // kubectl видит Minikube
     }
 
     stages {
