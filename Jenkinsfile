@@ -1451,18 +1451,20 @@ pipeline {
    ========================================================== */
 def buildAndPush(service) {
     sh """
-        echo "Building $service in workspace: $WORKSPACE/$service"
-        # Найти JAR автоматически (поддержка .original и @N)
-        targetJar=\$(ls $WORKSPACE/$service/target/*.jar | grep -v 'original' | head -n 1)
+        echo "Building $service, searching JAR in workspace: $WORKSPACE"
+
+        # Найти реальный target, учитывая возможный @N
+        workspace_with_jar=\$(find $WORKSPACE* -type f -name "$service-*.jar" ! -name "*.original" -printf '%h\n' | head -n 1)
+        targetJar=\$(ls \$workspace_with_jar/$service-*.jar | grep -v 'original' | head -n 1)
+
         echo "Using JAR: \$targetJar"
 
         if [ -z "\$targetJar" ]; then
             echo "ERROR: JAR file not found!"
-            echo "Listing target directory:"
-            ls -l "$WORKSPACE/$service/target" || true
             exit 1
         fi
 
-        docker build -t ${service}:latest -f "$WORKSPACE/$service/Dockerfile" "$WORKSPACE/$service"
+        docker build -t ${service}:latest -f "\$workspace_with_jar/Dockerfile" "\$workspace_with_jar"
     """
 }
+
