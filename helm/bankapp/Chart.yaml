@@ -40,7 +40,7 @@ dependencies:
   # Базы данных
   - name: accounts-db
     version: "1.0.0"
-    repository: "file://../accounts-db"
+    repository: "file://charts/accounts-db"
   - name: keycloak-db
     version: "1.0.0"
-    repository: "file://../keycloak-db"
+    repository: "file://charts/keycloak-db"
