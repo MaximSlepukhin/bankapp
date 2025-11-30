@@ -155,6 +155,7 @@ pipeline {
         KUBECONFIG = '/tmp/kubeconfig'
         MINIKUBE_HOME = '/var/jenkins_home/.minikube'
         DOCKER_TAR_DIR = '/tmp/docker-tars'
+        HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankCICD@2'
     }
 
     stages {
@@ -208,7 +209,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Listing all target directories and JAR files:"
-                for dir in "$WORKSPACE"/*/target; do
+                for dir in "$HARDCODED_WORKSPACE"/*/target; do
                     if [ -d "$dir" ]; then
                         echo "Contents of $dir:"
                         ls -l "$dir"
@@ -235,14 +236,13 @@ pipeline {
                     sh "mkdir -p ${DOCKER_TAR_DIR}"
 
                     for (svc in services) {
-                        // Собираем образ и сохраняем в tar
                         sh """
                             echo "Building Docker image for ${svc}"
-                            workspace=${WORKSPACE}
+                            workspace=${HARDCODED_WORKSPACE}
                             jarPath=\${workspace}/${svc}/target/${svc}-1.0-SNAPSHOT.jar
 
                             if [ ! -f "\${jarPath}" ]; then
-                                echo "ERROR: JAR not found for ${svc}!"
+                                echo "ERROR: JAR not found for ${svc} at \${jarPath}!"
                                 exit 1
                             fi
 
@@ -252,13 +252,11 @@ pipeline {
                             echo "Docker image ${svc}:latest saved to tar"
                         """
 
-                        // Загружаем образ в Minikube
                         sh "docker exec minikube docker load -i ${DOCKER_TAR_DIR}/${svc}.tar"
                     }
                 }
             }
         }
-
 
         stage('Deploy Databases') {
             steps {
