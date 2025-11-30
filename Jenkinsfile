@@ -1586,35 +1586,26 @@ pipeline {
    ========================================================== */
 def buildAndPush(service) {
     sh """
-        echo "Building $service"
-        echo "Searching JAR under: $WORKSPACE*"
+        echo "Building Docker image for $service"
 
-        # Найти target независимо от @2, @3 и т.п.
-        targetDir=\$(find ${WORKSPACE}* -type d -path "*/${service}/target" | head -n 1)
+        # Ищем JAR внутри Jenkins Workspace (@2, @3)
+        jarPath=\$(find "$WORKSPACE" -type f -path "*/${service}/target/${service}-*.jar" ! -name "*.original" | head -n 1)
 
-        echo "Target directory: \$targetDir"
-
-        if [ -z "\$targetDir" ]; then
-            echo "ERROR: target folder not found!"
+        if [ -z "\$jarPath" ]; then
+            echo "ERROR: JAR not found for $service!"
             exit 1
         fi
 
-        # Найти JAR
-        targetJar=\$(find "\$targetDir" -type f -name "${service}-*.jar" ! -name "*.original" | head -n 1)
+        echo "Found JAR: \$jarPath"
 
-        echo "Using JAR: \$targetJar"
+        # Копируем JAR туда, где лежит Dockerfile
+        cp "\$jarPath" "$WORKSPACE/$service/app.jar"
 
-        if [ -z "\$targetJar" ]; then
-            echo "ERROR: JAR file not found for $service!"
-            exit 1
-        fi
+        echo "Copied to build context: $WORKSPACE/$service/app.jar"
 
-        # копируем jar в корень сервиса — чтобы Docker видел
-        cp "\$targetJar" "${WORKSPACE}/${service}/app.jar"
-
-        docker build -t ${service}:latest -f "${WORKSPACE}/${service}/Dockerfile" "${WORKSPACE}/${service}"
-
-        rm -f "${WORKSPACE}/${service}/app.jar"
+        # Сборка Docker образа
+        docker build -t ${service}:latest "$WORKSPACE/$service"
     """
 }
+
 
