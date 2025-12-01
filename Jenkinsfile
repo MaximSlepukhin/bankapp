@@ -873,8 +873,10 @@ pipeline {
 
     environment {
         HELM_CHART_PATH = './helm/bankapp'
-        KUBECONFIG = '/var/jenkins_home/.kube/config'
+        KUBECONFIG_ORIG = '/var/jenkins_home/.kube/config'
+        KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
+        MINIKUBE_IP = '192.168.49.2'
     }
 
     stages {
@@ -899,24 +901,16 @@ pipeline {
 
         stage('Fix kubeconfig') {
             steps {
-                sh '''#!/bin/bash
-set -e
+                sh '''
+echo "Copying kubeconfig..."
+cp $KUBECONFIG_ORIG $KUBECONFIG
 
-CONFIG=/var/jenkins_home/.kube/config
-
-echo "Patching kubeconfig..."
-
-# Исправляем пути к сертификатам
-sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $CONFIG
-
-# Меняем 127.0.0.1 на реальный IP Minikube
-sed -i 's|127\\.0\\.0\\.1|192.168.49.2|g' $CONFIG
-
-echo "Updated kubeconfig:"
-cat $CONFIG
+echo "Patching kubeconfig copy..."
+sed -i "s|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g" $KUBECONFIG
+sed -i "s|127.0.0.1|$MINIKUBE_IP|g" $KUBECONFIG
 
 echo "Testing kubectl..."
-kubectl get nodes
+kubectl --kubeconfig=$KUBECONFIG get nodes
 '''
             }
         }
@@ -1011,13 +1005,13 @@ echo "All Docker images are present."
 
         stage('Deploy Databases') {
             steps {
-                sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait'
+                sh 'helm --kubeconfig=$KUBECONFIG upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
+                sh "helm --kubeconfig=$KUBECONFIG upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
             }
         }
     }
