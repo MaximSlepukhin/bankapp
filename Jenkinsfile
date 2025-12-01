@@ -604,9 +604,13 @@ pipeline {
                 sh '''
                 echo "Preparing kubeconfig for Jenkins container..."
                 cp $ORIGINAL_KUBECONFIG $KUBECONFIG
+
+                # Заменяем локальный путь и localhost на пути внутри контейнера и IP Minikube
                 sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
+                sed -i 's|127.0.0.1|192.168.49.2|g' $KUBECONFIG
+
                 export KUBECONFIG=$KUBECONFIG
-                echo "Проверяем доступ к Minikube из контейнера (TLS проверка отключена):"
+                echo "Проверяем доступ к Minikube из контейнера:"
                 kubectl --insecure-skip-tls-verify get nodes
                 '''
             }
