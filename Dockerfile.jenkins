@@ -1,19 +1,37 @@
+# Берём официальный Jenkins LTS с JDK17
 FROM jenkins/jenkins:lts-jdk17
 
 USER root
 
-# Установим curl и bash (если ещё не установлены)
-RUN apt-get update && apt-get install -y curl bash
+# Устанавливаем базовые утилиты
+RUN apt-get update && apt-get install -y \
+    curl \
+    bash \
+    apt-transport-https \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    sudo \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Установим kubectl
-RUN curl -LO "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
-    chmod +x kubectl && \
-    mv kubectl /usr/local/bin/
+# Устанавливаем kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && chmod +x kubectl \
+    && mv kubectl /usr/local/bin/
 
-# Установим helm
+# Устанавливаем Helm
 RUN curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
-# Установим docker CLI
-RUN apt-get update && apt-get install -y docker.io
+# Устанавливаем Docker CLI
+RUN apt-get update && apt-get install -y docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+# Даем пользователю jenkins права на docker и sudo
+RUN usermod -aG sudo jenkins \
+    && usermod -aG docker jenkins
 
 USER jenkins
+
+# Устанавливаем рабочую директорию
+WORKDIR /var/jenkins_home

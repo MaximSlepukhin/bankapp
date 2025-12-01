@@ -222,6 +222,10 @@ pipeline {
         stage('Build Docker Images and Load to Minikube') {
             steps {
                 script {
+                    // Указываем правильный workspace
+                    def workspace = "/var/jenkins_home/workspace/BankAppCICD@2"
+                    def DOCKER_TAR_DIR = "/tmp/docker-tars"
+
                     def services = [
                         'accounts-service',
                         'blocker-service',
@@ -238,16 +242,16 @@ pipeline {
                     for (svc in services) {
                         sh """
                             echo "Building Docker image for ${svc}"
-                            workspace=${HARDCODED_WORKSPACE}
-                            jarPath=\${workspace}/${svc}/target/${svc}-1.0-SNAPSHOT.jar
+
+                            jarPath=${workspace}/${svc}/target/${svc}-1.0-SNAPSHOT.jar
 
                             if [ ! -f "\${jarPath}" ]; then
                                 echo "ERROR: JAR not found for ${svc} at \${jarPath}!"
                                 exit 1
                             fi
 
-                            cp "\${jarPath}" "\${workspace}/${svc}/app.jar"
-                            docker build -t ${svc}:latest "\${workspace}/${svc}"
+                            cp "\${jarPath}" "${workspace}/${svc}/app.jar"
+                            docker build -t ${svc}:latest "${workspace}/${svc}"
                             docker save -o ${DOCKER_TAR_DIR}/${svc}.tar ${svc}:latest
                             echo "Docker image ${svc}:latest saved to tar"
                         """

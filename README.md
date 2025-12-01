@@ -227,6 +227,41 @@ git --version
    helm version
 
 
+docker build -f Dockerfile.jenkins -t jenkins-k8s:latest .
+docker images
+
+
+docker run -d \
+--name jenkins-k8s \
+-p 8080:8080 \
+-p 50000:50000 \
+-v /Users/maksim/.kube:/var/jenkins_home/.kube:ro \
+-v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro \
+-v /var/run/docker.sock:/var/run/docker.sock \
+-v jenkins_home:/var/jenkins_home \
+jenkins-k8s:latest
+
+docker exec jenkins-k8s cat /var/jenkins_home/secrets/initialAdminPassword
+16ab5a5ec0284a159dbd6dd787850a85
+
+docker stop jenkins-k8s
+docker rm jenkins-k8s
+
+
+
+docker pull maven:3.9.8-eclipse-temurin-21
+
+
+docker run -d \
+--name jenkins-k8s \
+-p 8080:8080 \
+-p 50000:50000 \
+-v /Users/maksim/.kube:/var/jenkins_home/.kube:ro \
+-v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro \
+-v /var/run/docker.sock:/var/run/docker.sock \
+-v jenkins_home:/var/jenkins_home \
+--user root \
+jenkins-k8s:latest
 
 
 
