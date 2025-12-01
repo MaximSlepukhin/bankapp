@@ -575,6 +575,7 @@ pipeline {
                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
                 -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
                 -v /var/run/docker.sock:/var/run/docker.sock
+                -w /var/jenkins_home/workspace/BankAppCICD
             """
         }
     }
@@ -604,28 +605,21 @@ pipeline {
                 sh '''
                 echo "Preparing kubeconfig for Jenkins container..."
 
-                # Копируем оригинальный kubeconfig во временный файл
                 cp $ORIGINAL_KUBECONFIG /tmp/kubeconfig
 
-                # Получаем IP Minikube
+                # Заменяем localhost на реальный IP Minikube
                 MINIKUBE_IP=$(minikube ip -p minikube)
                 echo "Minikube IP is $MINIKUBE_IP"
-
-                # 1) Заменяем localhost на реальный IP Minikube
                 sed -i "s/127.0.0.1:8443/${MINIKUBE_IP}:8443/g" /tmp/kubeconfig
 
-                # 2) Исправляем пути к сертификатам, чтобы они указывали на директорию контейнера
+                # Исправляем пути к сертификатам
                 sed -i "s|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g" /tmp/kubeconfig
 
-                # Экспортируем переменную KUBECONFIG для всех kubectl команд
                 export KUBECONFIG=/tmp/kubeconfig
-
-                # Проверяем подключение к кластеру
                 kubectl get nodes
                 '''
             }
         }
-
 
         stage('Check Tools') {
             steps {
@@ -668,45 +662,39 @@ pipeline {
 
         stage('Build Docker Images in Minikube') {
             steps {
-                script {
-                    def workspace = "/var/jenkins_home/workspace/BankAppCICD@2"
+                sh '''
+                echo "Switching Docker to Minikube daemon..."
+                eval $(minikube -p minikube docker-env)
 
-                    def services = [
-                        'accounts-service',
-                        'blocker-service',
-                        'cash-service',
-                        'exchange-generator-service',
-                        'exchange-service',
-                        'front-ui',
-                        'notifications-service',
-                        'transfer-service'
-                    ]
+                services=(
+                    accounts-service
+                    blocker-service
+                    cash-service
+                    exchange-generator-service
+                    exchange-service
+                    front-ui
+                    notifications-service
+                    transfer-service
+                )
 
-                    for (svc in services) {
-                        sh """
-                        echo "Switching Docker to Minikube daemon and building image for ${svc}..."
-                        eval \$(minikube -p minikube docker-env)
+                for svc in "${services[@]}"; do
+                    jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
+                    if [ ! -f "$jarPath" ]; then
+                        echo "ERROR: JAR not found for $svc at $jarPath!"
+                        exit 1
+                    fi
 
-                        jarPath=${workspace}/${svc}/target/${svc}-1.0-SNAPSHOT.jar
-
-                        if [ ! -f "\${jarPath}" ]; then
-                            echo "ERROR: JAR not found for ${svc} at \${jarPath}!"
-                            exit 1
-                        fi
-
-                        cp "\${jarPath}" "${workspace}/${svc}/app.jar"
-                        docker build -t ${svc}:latest "${workspace}/${svc}"
-                        echo "Docker image ${svc}:latest built in Minikube Docker"
-                        """
-                    }
-                }
+                    cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
+                    docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
+                    echo "Docker image $svc:latest built in Minikube Docker"
+                done
+                '''
             }
         }
 
         stage('Verify Images in Minikube') {
             steps {
                 sh '''
-                echo "Verifying that Docker images exist in Minikube..."
                 eval $(minikube -p minikube docker-env)
                 for img in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
                     if ! docker images | grep -q "$img"; then
