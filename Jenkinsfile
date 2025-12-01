@@ -1608,9 +1608,6 @@ services=(
     transfer-service
 )
 
-# Если используешь Minikube Docker daemon:
-# eval $(minikube -p minikube docker-env)
-
 for svc in "${services[@]}"; do
     jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
     if [ ! -f "$jarPath" ]; then
@@ -1663,13 +1660,13 @@ echo "Fixing absolute paths..."
 sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
 sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
 
-echo "Removing client certificate references..."
-sed -i '/client-certificate/d' $KUBECONFIG
-sed -i '/client-key/d' $KUBECONFIG
-sed -i '/certificate-authority/d' $KUBECONFIG
+# НЕ удаляем client-certificate и client-key
+#sed -i '/client-certificate/d' $KUBECONFIG
+#sed -i '/client-key/d' $KUBECONFIG
+#sed -i '/certificate-authority/d' $KUBECONFIG
 
 echo "Validating kubeconfig with kubectl..."
-kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify get nodes || echo "kubectl test failed, но pipeline продолжает"
+kubectl --kubeconfig=$KUBECONFIG get nodes || echo "kubectl test failed, но pipeline продолжает"
 '''
             }
         }
@@ -1681,8 +1678,7 @@ set -e
 helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
   --namespace dev \
   --wait \
-  --kubeconfig=$KUBECONFIG \
-  --kube-insecure-skip-tls-verify
+  --kubeconfig=$KUBECONFIG
 '''
             }
         }
@@ -1694,8 +1690,7 @@ set -e
 helm upgrade --install bankapp ./helm/bankapp \
   --namespace dev \
   -f ./helm/bankapp/values-dev.yaml \
-  --kubeconfig=$KUBECONFIG \
-  --kube-insecure-skip-tls-verify
+  --kubeconfig=$KUBECONFIG
 '''
             }
         }
