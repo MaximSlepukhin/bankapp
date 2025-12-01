@@ -1536,8 +1536,7 @@ pipeline {
 
     environment {
         HELM_CHART_PATH = './helm/bankapp'
-        KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
-        KUBECONFIG = '/tmp/kubeconfig'
+        KUBECONFIG = '/var/jenkins_home/.kube/config'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
     }
 
@@ -1580,7 +1579,7 @@ pipeline {
 
         stage('Debug Target JARs') {
             steps {
-                sh '''#!/bin/bash
+                sh '''
 set -e
 echo "Listing all target directories and JAR files:"
 for dir in "$HARDCODED_WORKSPACE"/*/target; do
@@ -1595,7 +1594,7 @@ done
 
         stage('Build Docker Images') {
             steps {
-                sh '''#!/bin/bash
+                sh '''
 set -e
 services=(
     accounts-service
@@ -1608,6 +1607,9 @@ services=(
     transfer-service
 )
 
+# Настроим Docker для использования Minikube
+eval $(minikube -p minikube docker-env)
+
 for svc in "${services[@]}"; do
     jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
     if [ ! -f "$jarPath" ]; then
@@ -1617,7 +1619,7 @@ for svc in "${services[@]}"; do
 
     cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
     docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
-    echo "Docker image $svc:latest built"
+    echo "Docker image $svc:latest built and ready for Minikube"
 done
 '''
             }
@@ -1625,7 +1627,7 @@ done
 
         stage('Verify Docker Images') {
             steps {
-                sh '''#!/bin/bash
+                sh '''
 set -e
 services=(
     accounts-service
@@ -1649,42 +1651,13 @@ echo "All Docker images are present."
             }
         }
 
-        // 🔹 Исправленная стадия Prepare kubeconfig
-        stage('Prepare kubeconfig') {
-            steps {
-                sh '''
-echo "Copying kubeconfig to /tmp..."
-cp $KUBECONFIG_SRC $KUBECONFIG
-
-echo "Fixing absolute paths..."
-sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
-sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
-
-echo "Removing client certificate references..."
-sed -i '/client-certificate/d' $KUBECONFIG
-sed -i '/client-key/d' $KUBECONFIG
-sed -i '/certificate-authority/d' $KUBECONFIG
-
-echo "Injecting dummy token..."
-# Удаляем старую user-секцию
-sed -i '/user:/,/name:/d' $KUBECONFIG
-# Добавляем user с токеном в конец файла
-echo '  user:
-    token: "dummy"' >> $KUBECONFIG
-
-echo "Validating kubeconfig with kubectl..."
-kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify get nodes || echo "kubectl test failed, но pipeline продолжает"
-'''
-            }
-        }
-
         stage('Deploy Databases') {
             steps {
                 sh '''
 helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
   --namespace dev \
   --wait \
-  --kubeconfig=/tmp/kubeconfig \
+  --kubeconfig=$KUBECONFIG \
   --kube-insecure-skip-tls-verify
 '''
             }
@@ -1693,10 +1666,10 @@ helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-helm upgrade --install bankapp ./helm/bankapp \
+helm upgrade --install bankapp $HELM_CHART_PATH \
   --namespace dev \
-  -f ./helm/bankapp/values-dev.yaml \
-  --kubeconfig=/tmp/kubeconfig \
+  -f $HELM_CHART_PATH/values-dev.yaml \
+  --kubeconfig=$KUBECONFIG \
   --kube-insecure-skip-tls-verify
 '''
             }
