@@ -602,15 +602,19 @@ pipeline {
         stage('Prepare kubeconfig') {
             steps {
                 sh '''
+                echo "Preparing kubeconfig for Jenkins container..."
+
                 cp $ORIGINAL_KUBECONFIG $KUBECONFIG
-                # Переписываем пути в kubeconfig на пути внутри контейнера
-                sed -i "s|/Users/maksim/.minikube|$MINIKUBE_HOME|g" $KUBECONFIG
+
+                # Заменяем localhost на реальный IP Minikube
+                sed -i "s/127.0.0.1:8443/192.168.49.2:8443/g" $KUBECONFIG
+
                 export KUBECONFIG=$KUBECONFIG
-                # Проверка доступности Minikube
                 kubectl get nodes
                 '''
             }
         }
+
 
         stage('Check Tools') {
             steps {
