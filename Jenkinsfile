@@ -582,8 +582,7 @@ pipeline {
 
     environment {
         HELM_CHART_PATH = './helm/bankapp'
-        ORIGINAL_KUBECONFIG = '/var/jenkins_home/.kube/config'
-        KUBECONFIG = '/tmp/kubeconfig'
+        KUBECONFIG = '/var/jenkins_home/.kube/config'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
     }
 
@@ -596,23 +595,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 git url: 'https://github.com/MaximSlepukhin/bankapp.git', branch: 'feature/sprint-10'
-            }
-        }
-
-        stage('Prepare kubeconfig') {
-            steps {
-                sh '''
-                echo "Preparing kubeconfig for Jenkins container..."
-                cp $ORIGINAL_KUBECONFIG $KUBECONFIG
-
-                # Заменяем локальный путь и localhost на пути внутри контейнера и IP Minikube
-                sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
-                sed -i 's|127.0.0.1|192.168.49.2|g' $KUBECONFIG
-
-                export KUBECONFIG=$KUBECONFIG
-                echo "Проверяем доступ к Minikube из контейнера:"
-                kubectl --insecure-skip-tls-verify get nodes
-                '''
             }
         }
 
@@ -700,13 +682,13 @@ pipeline {
 
         stage('Deploy Databases') {
             steps {
-                sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait --kube-insecure-skip-tls-verify'
+                sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml --kube-insecure-skip-tls-verify"
+                sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
             }
         }
     }
