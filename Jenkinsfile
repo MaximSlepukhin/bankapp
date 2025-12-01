@@ -604,12 +604,23 @@ pipeline {
                 sh '''
                 echo "Preparing kubeconfig for Jenkins container..."
 
-                cp $ORIGINAL_KUBECONFIG $KUBECONFIG
+                # Копируем оригинальный kubeconfig во временный файл
+                cp $ORIGINAL_KUBECONFIG /tmp/kubeconfig
 
-                # Заменяем localhost на реальный IP Minikube
-                sed -i "s/127.0.0.1:8443/192.168.49.2:8443/g" $KUBECONFIG
+                # Получаем IP Minikube
+                MINIKUBE_IP=$(minikube ip -p minikube)
+                echo "Minikube IP is $MINIKUBE_IP"
 
-                export KUBECONFIG=$KUBECONFIG
+                # 1) Заменяем localhost на реальный IP Minikube
+                sed -i "s/127.0.0.1:8443/${MINIKUBE_IP}:8443/g" /tmp/kubeconfig
+
+                # 2) Исправляем пути к сертификатам, чтобы они указывали на директорию контейнера
+                sed -i "s|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g" /tmp/kubeconfig
+
+                # Экспортируем переменную KUBECONFIG для всех kubectl команд
+                export KUBECONFIG=/tmp/kubeconfig
+
+                # Проверяем подключение к кластеру
                 kubectl get nodes
                 '''
             }
