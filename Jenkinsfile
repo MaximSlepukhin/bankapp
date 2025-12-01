@@ -573,7 +573,6 @@ pipeline {
             image 'jenkins-k8s'
             args """
                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
-                -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
                 -v /var/run/docker.sock:/var/run/docker.sock
                 -w /var/jenkins_home/workspace/BankAppCICD
             """
@@ -584,7 +583,6 @@ pipeline {
         HELM_CHART_PATH = './helm/bankapp'
         ORIGINAL_KUBECONFIG = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
-        MINIKUBE_HOME = '/var/jenkins_home/.minikube'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
     }
 
@@ -604,16 +602,10 @@ pipeline {
             steps {
                 sh '''
                 echo "Preparing kubeconfig for Jenkins container..."
-
                 cp $ORIGINAL_KUBECONFIG /tmp/kubeconfig
 
-                # Заменяем localhost на реальный IP Minikube
-                MINIKUBE_IP=$(minikube ip -p minikube)
-                echo "Minikube IP is $MINIKUBE_IP"
-                sed -i "s/127.0.0.1:8443/${MINIKUBE_IP}:8443/g" /tmp/kubeconfig
-
                 # Исправляем пути к сертификатам
-                sed -i "s|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g" /tmp/kubeconfig
+                sed -i "s|/Users/maksim/.kube|/var/jenkins_home/.kube|g" /tmp/kubeconfig
 
                 export KUBECONFIG=/tmp/kubeconfig
                 kubectl get nodes
@@ -660,12 +652,9 @@ pipeline {
             }
         }
 
-        stage('Build Docker Images in Minikube') {
+        stage('Build Docker Images') {
             steps {
                 sh '''
-                echo "Switching Docker to Minikube daemon..."
-                eval $(minikube -p minikube docker-env)
-
                 services=(
                     accounts-service
                     blocker-service
@@ -686,23 +675,22 @@ pipeline {
 
                     cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
                     docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
-                    echo "Docker image $svc:latest built in Minikube Docker"
+                    echo "Docker image $svc:latest built"
                 done
                 '''
             }
         }
 
-        stage('Verify Images in Minikube') {
+        stage('Verify Docker Images') {
             steps {
                 sh '''
-                eval $(minikube -p minikube docker-env)
                 for img in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
                     if ! docker images | grep -q "$img"; then
-                        echo "ERROR: Docker image $img not found in Minikube!"
+                        echo "ERROR: Docker image $img not found!"
                         exit 1
                     fi
                 done
-                echo "All Docker images are present in Minikube."
+                echo "All Docker images are present."
                 '''
             }
         }
