@@ -640,6 +640,7 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 sh '''
+                #!/bin/bash
                 services=(
                     accounts-service
                     blocker-service
@@ -669,7 +670,19 @@ pipeline {
         stage('Verify Docker Images') {
             steps {
                 sh '''
-                for img in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
+                #!/bin/bash
+                services=(
+                    accounts-service
+                    blocker-service
+                    cash-service
+                    exchange-generator-service
+                    exchange-service
+                    front-ui
+                    notifications-service
+                    transfer-service
+                )
+
+                for img in "${services[@]}"; do
                     if ! docker images | grep -q "$img"; then
                         echo "ERROR: Docker image $img not found!"
                         exit 1
