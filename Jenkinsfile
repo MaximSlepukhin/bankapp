@@ -603,16 +603,11 @@ pipeline {
             steps {
                 sh '''
                 echo "Preparing kubeconfig for Jenkins container..."
-
-                # Копируем оригинальный kubeconfig
                 cp $ORIGINAL_KUBECONFIG /tmp/kubeconfig
-
-                # Исправляем пути к сертификатам для контейнера
-                sed -i "s|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g" /tmp/kubeconfig
-
+                sed -i '' 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' /tmp/kubeconfig
+                sed -i '' 's|127.0.0.1|host.docker.internal|g' /tmp/kubeconfig
                 export KUBECONFIG=/tmp/kubeconfig
-
-                echo "Проверяем доступ к Minikube из контейнера:"
+                echo "Проверяем доступ к Minikube из контейнера..."
                 kubectl get nodes
                 '''
             }
