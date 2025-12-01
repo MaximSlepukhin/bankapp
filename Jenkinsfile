@@ -1150,17 +1150,11 @@ echo "All Docker images are present."
                 sh '''
                 echo "Copying and patching kubeconfig..."
                 cp $KUBECONFIG /tmp/kubeconfig
-
-                # Исправляем пути к сертификатам на контейнерные
                 sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' /tmp/kubeconfig
-
-                # Меняем сервер API на host.docker.internal
                 sed -i 's|127.0.0.1|host.docker.internal|g' /tmp/kubeconfig
-
                 export KUBECONFIG=/tmp/kubeconfig
-
                 echo "Проверяем подключение к Kubernetes:"
-                kubectl --kubeconfig=/tmp/kubeconfig get nodes
+                kubectl --kubeconfig=/tmp/kubeconfig --insecure-skip-tls-verify get nodes
                 '''
             }
         }
