@@ -573,6 +573,7 @@ pipeline {
             image 'jenkins-k8s'
             args """
                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
+                -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
                 -v /var/run/docker.sock:/var/run/docker.sock
                 -w /var/jenkins_home/workspace/BankAppCICD
             """
@@ -602,12 +603,16 @@ pipeline {
             steps {
                 sh '''
                 echo "Preparing kubeconfig for Jenkins container..."
+
+                # Копируем оригинальный kubeconfig
                 cp $ORIGINAL_KUBECONFIG /tmp/kubeconfig
 
-                # Исправляем пути к сертификатам
-                sed -i "s|/Users/maksim/.kube|/var/jenkins_home/.kube|g" /tmp/kubeconfig
+                # Исправляем пути к сертификатам для контейнера
+                sed -i "s|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g" /tmp/kubeconfig
 
                 export KUBECONFIG=/tmp/kubeconfig
+
+                echo "Проверяем доступ к Minikube из контейнера:"
                 kubectl get nodes
                 '''
             }
