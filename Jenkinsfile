@@ -639,57 +639,57 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                sh '''
-                #!/bin/bash
-                services=(
-                    accounts-service
-                    blocker-service
-                    cash-service
-                    exchange-generator-service
-                    exchange-service
-                    front-ui
-                    notifications-service
-                    transfer-service
-                )
+                sh '''#!/bin/bash
+set -e
+services=(
+    accounts-service
+    blocker-service
+    cash-service
+    exchange-generator-service
+    exchange-service
+    front-ui
+    notifications-service
+    transfer-service
+)
 
-                for svc in "${services[@]}"; do
-                    jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
-                    if [ ! -f "$jarPath" ]; then
-                        echo "ERROR: JAR not found for $svc at $jarPath!"
-                        exit 1
-                    fi
+for svc in "${services[@]}"; do
+    jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
+    if [ ! -f "$jarPath" ]; then
+        echo "ERROR: JAR not found for $svc at $jarPath!"
+        exit 1
+    fi
 
-                    cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
-                    docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
-                    echo "Docker image $svc:latest built"
-                done
-                '''
+    cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
+    docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
+    echo "Docker image $svc:latest built"
+done
+'''
             }
         }
 
         stage('Verify Docker Images') {
             steps {
-                sh '''
-                #!/bin/bash
-                services=(
-                    accounts-service
-                    blocker-service
-                    cash-service
-                    exchange-generator-service
-                    exchange-service
-                    front-ui
-                    notifications-service
-                    transfer-service
-                )
+                sh '''#!/bin/bash
+set -e
+services=(
+    accounts-service
+    blocker-service
+    cash-service
+    exchange-generator-service
+    exchange-service
+    front-ui
+    notifications-service
+    transfer-service
+)
 
-                for img in "${services[@]}"; do
-                    if ! docker images | grep -q "$img"; then
-                        echo "ERROR: Docker image $img not found!"
-                        exit 1
-                    fi
-                done
-                echo "All Docker images are present."
-                '''
+for img in "${services[@]}"; do
+    if ! docker images | grep -q "$img"; then
+        echo "ERROR: Docker image $img not found!"
+        exit 1
+    fi
+done
+echo "All Docker images are present."
+'''
             }
         }
 
