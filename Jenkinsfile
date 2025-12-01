@@ -603,7 +603,10 @@ pipeline {
             steps {
                 sh '''
                 cp $ORIGINAL_KUBECONFIG $KUBECONFIG
+                # Переписываем пути в kubeconfig на пути внутри контейнера
+                sed -i "s|/Users/maksim/.minikube|$MINIKUBE_HOME|g" $KUBECONFIG
                 export KUBECONFIG=$KUBECONFIG
+                # Проверка доступности Minikube
                 kubectl get nodes
                 '''
             }
