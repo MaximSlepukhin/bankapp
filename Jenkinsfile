@@ -2067,9 +2067,8 @@ pipeline {
         docker {
             image 'jenkins-k8s'
             args """
-                -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
-                -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
                 -v /var/run/docker.sock:/var/run/docker.sock
+                -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
                 -w /var/jenkins_home/workspace/BankAppCICD
             """
         }
@@ -2080,10 +2079,6 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        MINIKUBE_IP = sh(script: "minikube -p minikube ip", returnStdout: true).trim()
-        DOCKER_TLS_VERIFY = "1"
-        DOCKER_CERT_PATH = "/Users/maksim/.minikube/certs"
-        DOCKER_HOST = "tcp://${MINIKUBE_IP}:2376"
     }
 
     stages {
@@ -2102,6 +2097,7 @@ pipeline {
             steps {
                 sh 'kubectl version --client'
                 sh 'helm version'
+                sh 'docker --version'
             }
         }
 
@@ -2124,117 +2120,92 @@ pipeline {
 
         stage('Debug Target JARs') {
             steps {
-                sh '''#!/bin/bash
-set -e
-echo "Listing all target directories and JAR files:"
-for dir in "$HARDCODED_WORKSPACE"/*/target; do
-    if [ -d "$dir" ]; then
-        echo "Contents of $dir:"
-        ls -l "$dir"
-    fi
-done
-'''
+                sh '''
+                    echo "Listing all target directories and JAR files:"
+                    for dir in "$HARDCODED_WORKSPACE"/*/target; do
+                        if [ -d "$dir" ]; then
+                            echo "Contents of $dir:"
+                            ls -l "$dir"
+                        fi
+                    done
+                '''
             }
         }
 
-        stage('Build Docker Images in Minikube') {
+        stage('Build Docker Images') {
             steps {
-                sh '''#!/bin/bash
-set -e
+                sh '''
+                    set -e
+                    services=(
+                        accounts-service
+                        blocker-service
+                        cash-service
+                        exchange-generator-service
+                        exchange-service
+                        front-ui
+                        notifications-service
+                        transfer-service
+                    )
 
-services=(
-    accounts-service
-    blocker-service
-    cash-service
-    exchange-generator-service
-    exchange-service
-    front-ui
-    notifications-service
-    transfer-service
-)
+                    for svc in "${services[@]}"; do
+                        jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
+                        if [ ! -f "$jarPath" ]; then
+                            echo "ERROR: JAR not found for $svc at $jarPath!"
+                            exit 1
+                        fi
+                        cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
+                        echo "Building Docker image $svc:latest..."
+                        docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
+                    done
 
-for svc in "${services[@]}"; do
-    jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
-    if [ ! -f "$jarPath" ]; then
-        echo "ERROR: JAR not found for $svc at $jarPath!"
-        exit 1
-    fi
-
-    cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
-    echo "Building Docker image $svc:latest в Minikube..."
-    docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
-done
-
-# Проверка, что все образы реально собраны в Minikube
-echo "Проверяем наличие образов в Minikube..."
-for svc in "${services[@]}"; do
-    if ! docker images | grep -q "$svc"; then
-        echo "ERROR: Docker image $svc:latest не найден в Minikube!"
-        exit 1
-    fi
-done
-echo "Все Docker образы присутствуют в Minikube."
-'''
+                    echo "Docker images built successfully."
+                '''
             }
         }
 
         stage('Prepare kubeconfig') {
             steps {
-                sh '''#!/bin/bash
-set -e
-echo "Копируем kubeconfig в /tmp..."
-cp $KUBECONFIG_SRC $KUBECONFIG
-
-echo "Фиксим абсолютные пути..."
-sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
-sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
-
-echo "Проверяем kubectl..."
-kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify get nodes || echo "kubectl test failed, но pipeline продолжает"
-'''
+                sh '''
+                    set -e
+                    cp $KUBECONFIG_SRC $KUBECONFIG
+                    sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
+                    echo "Kubeconfig prepared"
+                '''
             }
         }
 
         stage('Apply Namespaces') {
             steps {
-                sh '''#!/bin/bash
-set -e
-echo "Применяем namespace..."
-kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify apply -f ./namespaces.yaml
-'''
+                sh 'kubectl --kubeconfig=$KUBECONFIG apply -f ./namespaces.yaml'
             }
         }
 
         stage('Deploy Databases') {
             steps {
-                sh '''#!/bin/bash
-set -e
-helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
-  --namespace dev \
-  --wait \
-  --kubeconfig=$KUBECONFIG \
-  --kube-insecure-skip-tls-verify
-'''
+                sh '''
+                    helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
+                        --namespace dev \
+                        --wait \
+                        --kubeconfig=$KUBECONFIG
+                '''
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy Application') {
             steps {
-                sh '''#!/bin/bash
-set -e
-helm upgrade --install bankapp ./helm/bankapp \
-  --namespace dev \
-  -f ./helm/bankapp/values-dev.yaml \
-  --kubeconfig=$KUBECONFIG \
-  --kube-insecure-skip-tls-verify
-'''
+                sh '''
+                    helm upgrade --install bankapp ./helm/bankapp \
+                        --namespace dev \
+                        -f ./helm/bankapp/values-dev.yaml \
+                        --kubeconfig=$KUBECONFIG
+                '''
             }
         }
     }
 
     post {
         always {
-            sh 'docker ps -a'
+            sh 'docker images'
         }
     }
 }
