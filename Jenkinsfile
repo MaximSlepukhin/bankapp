@@ -2079,8 +2079,6 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        SERVICES = 'accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service'
-        IMAGE_TMP_DIR = '/tmp/docker-images'
     }
 
     stages {
@@ -2100,7 +2098,7 @@ pipeline {
                 sh 'kubectl version --client'
                 sh 'helm version'
                 sh 'docker --version'
-                sh 'minikube version'
+                sh 'minikube version || echo "minikube not found"'
             }
         }
 
@@ -2139,7 +2137,7 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    for svc in $SERVICES; do
+                    for svc in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
                         jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
                         if [ ! -f "$jarPath" ]; then
                             echo "ERROR: JAR not found for $svc at $jarPath!"
@@ -2158,11 +2156,11 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    mkdir -p $IMAGE_TMP_DIR
-                    for svc in $SERVICES; do
-                        echo "Saving $svc:latest to tar..."
-                        docker save -o $IMAGE_TMP_DIR/$svc.tar $svc:latest
+                    mkdir -p $WORKSPACE/exported-images
+                    for img in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
+                        docker save "$img:latest" -o "$WORKSPACE/exported-images/$img.tar"
                     done
+                    echo "Docker images exported"
                 '''
             }
         }
@@ -2171,10 +2169,10 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    for svc in $SERVICES; do
-                        echo "Loading $svc into Minikube..."
-                        minikube image load $IMAGE_TMP_DIR/$svc.tar
+                    for img in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
+                        minikube image load "$WORKSPACE/exported-images/$img.tar"
                     done
+                    echo "Docker images loaded into minikube"
                 '''
             }
         }
