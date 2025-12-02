@@ -2246,7 +2246,7 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        MINIKUBE_REGISTRY = "localhost:5000"   // <── используем порт-форвард
+        MINIKUBE_REGISTRY = "localhost:5000"     // push через port-forward
     }
 
     stages {
@@ -2305,11 +2305,10 @@ pipeline {
                 sh '''
                     set -e
 
-                    # запускаем порт-форвард в фоне
                     echo "Starting port-forward to minikube registry..."
                     kubectl port-forward -n kube-system service/registry 5000:80 &
                     PF_PID=$!
-                    sleep 2
+                    sleep 3
 
                     services="accounts-service blocker-service cash-service \
                               exchange-generator-service exchange-service \
@@ -2336,7 +2335,7 @@ pipeline {
                         docker push "$imageName"
                     done
 
-                    # останавливаем порт-форвард
+                    echo "Stopping port-forward..."
                     kill $PF_PID
                 '''
             }
