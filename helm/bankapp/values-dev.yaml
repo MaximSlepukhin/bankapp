@@ -49,7 +49,7 @@
 accounts-service:
   enabled: true
   image:
-    repository: 192.168.49.2:54611/accounts-service
+    repository: 192.168.49.2:51970/accounts-service
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -57,48 +57,48 @@ blocker-service:
   enabled: true
   replicaCount: 1
   image:
-    repository: 192.168.49.2:54611/blocker-service
+    repository: 192.168.49.2:51970/blocker-service
     tag: latest
     pullPolicy: IfNotPresent
 
 cash-service:
   enabled: true
   image:
-    repository: 192.168.49.2:54611/cash-service
+    repository: 192.168.49.2:51970/cash-service
     tag: latest
     pullPolicy: IfNotPresent
 
 exchange-generator-service:
   enabled: true
   image:
-    repository: 192.168.49.2:54611/exchange-generator-service
+    repository: 192.168.49.2:51970/exchange-generator-service
     tag: latest
     pullPolicy: IfNotPresent
 
 exchange-service:
   enabled: true
   image:
-    repository: 192.168.49.2:54611/exchange-service
+    repository: 192.168.49.2:51970/exchange-service
     tag: latest
     pullPolicy: IfNotPresent
 
 front-ui:
   enabled: true
   image:
-    repository: 192.168.49.2:54611/front-ui
+    repository: 192.168.49.2:51970/front-ui
     tag: latest
     pullPolicy: IfNotPresent
 
 notifications-service:
   enabled: true
   image:
-    repository: 192.168.49.2:54611/notifications-service
+    repository: 192.168.49.2:51970/notifications-service
     tag: latest
     pullPolicy: IfNotPresent
 
 transfer-service:
   enabled: true
   image:
-    repository: 192.168.49.2:54611/transfer-service
+    repository: 192.168.49.2:51970/transfer-service
     tag: latest
     pullPolicy: IfNotPresent

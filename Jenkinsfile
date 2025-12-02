@@ -2246,7 +2246,7 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        MINIKUBE_REGISTRY = "192.168.49.2:54611"
+        MINIKUBE_REGISTRY = "localhost:51970"
     }
 
     stages {
@@ -2300,33 +2300,7 @@ pipeline {
             }
         }
 
-        stage('Configure Docker to allow insecure registry') {
-            steps {
-                sh '''
-                    echo "Configuring Docker to trust ${MINIKUBE_REGISTRY}"
-
-                    mkdir -p /etc/docker
-                    cat <<EOF > /etc/docker/daemon.json
-{
-  "insecure-registries": ["${MINIKUBE_REGISTRY}"]
-}
-EOF
-
-                    echo "Restarting Docker daemon inside Jenkins agent..."
-
-                    pkill dockerd || true
-
-                    nohup dockerd > /var/jenkins_home/dockerd.log 2>&1 &
-
-                    sleep 5
-
-                    echo "--- Docker Info After Restart ---"
-                    docker info
-                '''
-            }
-        }
-
-        stage('Build and Push Docker Images') {
+        stage('Build & Push Docker Images') {
             steps {
                 sh '''
                     set -e
@@ -2349,8 +2323,6 @@ EOF
                         echo "Pushing $imageName..."
                         docker push "$imageName"
                     done
-
-                    echo "All Docker images built and pushed successfully."
                 '''
             }
         }
@@ -2367,9 +2339,7 @@ EOF
         stage('Apply Namespaces') {
             steps {
                 sh '''
-                    kubectl --kubeconfig=$KUBECONFIG \
-                        --insecure-skip-tls-verify \
-                        apply -f ./namespaces.yaml
+                    kubectl --kubeconfig=$KUBECONFIG apply -f ./namespaces.yaml
                 '''
             }
         }
@@ -2380,8 +2350,7 @@ EOF
                     helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
                         --namespace dev \
                         --wait \
-                        --kubeconfig=$KUBECONFIG \
-                        --kube-insecure-skip-tls-verify
+                        --kubeconfig=$KUBECONFIG
                 '''
             }
         }
@@ -2392,8 +2361,7 @@ EOF
                     helm upgrade --install bankapp ./helm/bankapp \
                         --namespace dev \
                         -f ./helm/bankapp/values-dev.yaml \
-                        --kubeconfig=$KUBECONFIG \
-                        --kube-insecure-skip-tls-verify
+                        --kubeconfig=$KUBECONFIG
                 '''
             }
         }
