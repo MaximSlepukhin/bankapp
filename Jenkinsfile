@@ -1,3 +1,142 @@
+// // // // // // // // // // // // // // pipeline {
+// // // // // // // // // // // // // //     agent {
+// // // // // // // // // // // // // //         docker {
+// // // // // // // // // // // // // //             image 'jenkins-k8s'
+// // // // // // // // // // // // // //             args """
+// // // // // // // // // // // // // //                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
+// // // // // // // // // // // // // //                 -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
+// // // // // // // // // // // // // //                 -v /var/run/docker.sock:/var/run/docker.sock
+// // // // // // // // // // // // // //             """
+// // // // // // // // // // // // // //         }
+// // // // // // // // // // // // // //     }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //     environment {
+// // // // // // // // // // // // // //         HELM_CHART_PATH = './helm/bankapp'
+// // // // // // // // // // // // // //         ORIGINAL_KUBECONFIG = '/var/jenkins_home/.kube/config'
+// // // // // // // // // // // // // //         KUBECONFIG = '/tmp/kubeconfig'
+// // // // // // // // // // // // // //         MINIKUBE_HOME = '/var/jenkins_home/.minikube'
+// // // // // // // // // // // // // //     }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //     stages {
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         stage('Clean Workspace') {
+// // // // // // // // // // // // // //             steps { deleteDir() }
+// // // // // // // // // // // // // //         }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         stage('Checkout') {
+// // // // // // // // // // // // // //             steps {
+// // // // // // // // // // // // // //                 git url: 'https://github.com/MaximSlepukhin/bankapp.git', branch: 'feature/sprint-10'
+// // // // // // // // // // // // // //             }
+// // // // // // // // // // // // // //         }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         stage('Prepare kubeconfig') {
+// // // // // // // // // // // // // //             steps {
+// // // // // // // // // // // // // //                 sh '''
+// // // // // // // // // // // // // //                 cp $ORIGINAL_KUBECONFIG $KUBECONFIG
+// // // // // // // // // // // // // //                 sed -i "s|/Users/maksim/.minikube|$MINIKUBE_HOME|g" $KUBECONFIG
+// // // // // // // // // // // // // //                 sed -i "s|127.0.0.1:[0-9]*|host.docker.internal:50049|g" $KUBECONFIG
+// // // // // // // // // // // // // //                 '''
+// // // // // // // // // // // // // //             }
+// // // // // // // // // // // // // //         }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         stage('Check Tools') {
+// // // // // // // // // // // // // //             steps {
+// // // // // // // // // // // // // //                 sh 'kubectl version --client'
+// // // // // // // // // // // // // //                 sh 'helm version'
+// // // // // // // // // // // // // //                 sh 'docker version'
+// // // // // // // // // // // // // //             }
+// // // // // // // // // // // // // //         }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         stage('Build with Maven') {
+// // // // // // // // // // // // // //             agent {
+// // // // // // // // // // // // // //                 docker {
+// // // // // // // // // // // // // //                     image 'maven:3.9.8-eclipse-temurin-21'
+// // // // // // // // // // // // // //                     args """
+// // // // // // // // // // // // // //                         -v ${env.WORKSPACE}:${env.WORKSPACE}
+// // // // // // // // // // // // // //                         -w ${env.WORKSPACE}
+// // // // // // // // // // // // // //                     """
+// // // // // // // // // // // // // //                 }
+// // // // // // // // // // // // // //             }
+// // // // // // // // // // // // // //             steps {
+// // // // // // // // // // // // // //                 sh 'mvn -version'
+// // // // // // // // // // // // // //                 sh 'mvn clean package -DskipTests'
+// // // // // // // // // // // // // //                 sh 'chmod -R 777 $WORKSPACE/*'
+// // // // // // // // // // // // // //             }
+// // // // // // // // // // // // // //         }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         stage('Debug Target JARs') {
+// // // // // // // // // // // // // //             steps {
+// // // // // // // // // // // // // //                 sh '''
+// // // // // // // // // // // // // //                 echo "Listing all target directories and JAR files:"
+// // // // // // // // // // // // // //                 for dir in "$WORKSPACE"/*/target; do
+// // // // // // // // // // // // // //                     if [ -d "$dir" ]; then
+// // // // // // // // // // // // // //                         echo "Contents of $dir:"
+// // // // // // // // // // // // // //                         ls -l "$dir"
+// // // // // // // // // // // // // //                     fi
+// // // // // // // // // // // // // //                 done
+// // // // // // // // // // // // // //                 '''
+// // // // // // // // // // // // // //             }
+// // // // // // // // // // // // // //         }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         stage('Build Docker Images in Minikube') {
+// // // // // // // // // // // // // //             steps {
+// // // // // // // // // // // // // //                 script {
+// // // // // // // // // // // // // //                     // Настраиваем Docker для использования Minikube daemon
+// // // // // // // // // // // // // //                     sh 'eval $(minikube -p minikube docker-env)'
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //                     parallel(
+// // // // // // // // // // // // // //                         'accounts-service': { buildAndPush('accounts-service') },
+// // // // // // // // // // // // // //                         'blocker-service': { buildAndPush('blocker-service') },
+// // // // // // // // // // // // // //                         'cash-service': { buildAndPush('cash-service') },
+// // // // // // // // // // // // // //                         'exchange-generator-service': { buildAndPush('exchange-generator-service') },
+// // // // // // // // // // // // // //                         'exchange-service': { buildAndPush('exchange-service') },
+// // // // // // // // // // // // // //                         'front-ui': { buildAndPush('front-ui') },
+// // // // // // // // // // // // // //                         'notifications-service': { buildAndPush('notifications-service') },
+// // // // // // // // // // // // // //                         'transfer-service': { buildAndPush('transfer-service') }
+// // // // // // // // // // // // // //                     )
+// // // // // // // // // // // // // //                 }
+// // // // // // // // // // // // // //             }
+// // // // // // // // // // // // // //         }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         stage('Deploy Databases') {
+// // // // // // // // // // // // // //             steps {
+// // // // // // // // // // // // // //                 sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait --kube-insecure-skip-tls-verify'
+// // // // // // // // // // // // // //             }
+// // // // // // // // // // // // // //         }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         stage('Deploy to Kubernetes') {
+// // // // // // // // // // // // // //             steps {
+// // // // // // // // // // // // // //                 sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml --kube-insecure-skip-tls-verify"
+// // // // // // // // // // // // // //             }
+// // // // // // // // // // // // // //         }
+// // // // // // // // // // // // // //     }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //     post {
+// // // // // // // // // // // // // //         always { sh 'docker ps -a' }
+// // // // // // // // // // // // // //     }
+// // // // // // // // // // // // // // }
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // // /* ==========================================================
+// // // // // // // // // // // // // //    buildAndPush для Minikube Docker daemon
+// // // // // // // // // // // // // //    ========================================================== */
+// // // // // // // // // // // // // // def buildAndPush(service) {
+// // // // // // // // // // // // // //     sh """
+// // // // // // // // // // // // // //         echo "Building Docker image for $service in Minikube"
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         workspace="/var/jenkins_home/workspace/BankCICD@2"
+// // // // // // // // // // // // // //         jarPath="\$workspace/$service/target/${service}-1.0-SNAPSHOT.jar"
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         if [ ! -f "\$jarPath" ]; then
+// // // // // // // // // // // // // //             echo "ERROR: JAR not found for $service at \$jarPath!"
+// // // // // // // // // // // // // //             exit 1
+// // // // // // // // // // // // // //         fi
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         cp "\$jarPath" "\$workspace/$service/app.jar"
+// // // // // // // // // // // // // //
+// // // // // // // // // // // // // //         docker build -t ${service}:latest "\$workspace/$service"
+// // // // // // // // // // // // // //         echo "Docker image ${service}:latest built successfully in Minikube"
+// // // // // // // // // // // // // //     """
+// // // // // // // // // // // // // // }
 // // // // // // // // // // // // // pipeline {
 // // // // // // // // // // // // //     agent {
 // // // // // // // // // // // // //         docker {
@@ -15,6 +154,8 @@
 // // // // // // // // // // // // //         ORIGINAL_KUBECONFIG = '/var/jenkins_home/.kube/config'
 // // // // // // // // // // // // //         KUBECONFIG = '/tmp/kubeconfig'
 // // // // // // // // // // // // //         MINIKUBE_HOME = '/var/jenkins_home/.minikube'
+// // // // // // // // // // // // //         DOCKER_TAR_DIR = '/tmp/docker-tars'
+// // // // // // // // // // // // //         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankCICD@2'
 // // // // // // // // // // // // //     }
 // // // // // // // // // // // // //
 // // // // // // // // // // // // //     stages {
@@ -68,7 +209,7 @@
 // // // // // // // // // // // // //             steps {
 // // // // // // // // // // // // //                 sh '''
 // // // // // // // // // // // // //                 echo "Listing all target directories and JAR files:"
-// // // // // // // // // // // // //                 for dir in "$WORKSPACE"/*/target; do
+// // // // // // // // // // // // //                 for dir in "$HARDCODED_WORKSPACE"/*/target; do
 // // // // // // // // // // // // //                     if [ -d "$dir" ]; then
 // // // // // // // // // // // // //                         echo "Contents of $dir:"
 // // // // // // // // // // // // //                         ls -l "$dir"
@@ -78,22 +219,45 @@
 // // // // // // // // // // // // //             }
 // // // // // // // // // // // // //         }
 // // // // // // // // // // // // //
-// // // // // // // // // // // // //         stage('Build Docker Images in Minikube') {
+// // // // // // // // // // // // //         stage('Build Docker Images and Load to Minikube') {
 // // // // // // // // // // // // //             steps {
 // // // // // // // // // // // // //                 script {
-// // // // // // // // // // // // //                     // Настраиваем Docker для использования Minikube daemon
-// // // // // // // // // // // // //                     sh 'eval $(minikube -p minikube docker-env)'
+// // // // // // // // // // // // //                     // Указываем правильный workspace
+// // // // // // // // // // // // //                     def workspace = "/var/jenkins_home/workspace/BankAppCICD@2"
+// // // // // // // // // // // // //                     def DOCKER_TAR_DIR = "/tmp/docker-tars"
 // // // // // // // // // // // // //
-// // // // // // // // // // // // //                     parallel(
-// // // // // // // // // // // // //                         'accounts-service': { buildAndPush('accounts-service') },
-// // // // // // // // // // // // //                         'blocker-service': { buildAndPush('blocker-service') },
-// // // // // // // // // // // // //                         'cash-service': { buildAndPush('cash-service') },
-// // // // // // // // // // // // //                         'exchange-generator-service': { buildAndPush('exchange-generator-service') },
-// // // // // // // // // // // // //                         'exchange-service': { buildAndPush('exchange-service') },
-// // // // // // // // // // // // //                         'front-ui': { buildAndPush('front-ui') },
-// // // // // // // // // // // // //                         'notifications-service': { buildAndPush('notifications-service') },
-// // // // // // // // // // // // //                         'transfer-service': { buildAndPush('transfer-service') }
-// // // // // // // // // // // // //                     )
+// // // // // // // // // // // // //                     def services = [
+// // // // // // // // // // // // //                         'accounts-service',
+// // // // // // // // // // // // //                         'blocker-service',
+// // // // // // // // // // // // //                         'cash-service',
+// // // // // // // // // // // // //                         'exchange-generator-service',
+// // // // // // // // // // // // //                         'exchange-service',
+// // // // // // // // // // // // //                         'front-ui',
+// // // // // // // // // // // // //                         'notifications-service',
+// // // // // // // // // // // // //                         'transfer-service'
+// // // // // // // // // // // // //                     ]
+// // // // // // // // // // // // //
+// // // // // // // // // // // // //                     sh "mkdir -p ${DOCKER_TAR_DIR}"
+// // // // // // // // // // // // //
+// // // // // // // // // // // // //                     for (svc in services) {
+// // // // // // // // // // // // //                         sh """
+// // // // // // // // // // // // //                             echo "Building Docker image for ${svc}"
+// // // // // // // // // // // // //
+// // // // // // // // // // // // //                             jarPath=${workspace}/${svc}/target/${svc}-1.0-SNAPSHOT.jar
+// // // // // // // // // // // // //
+// // // // // // // // // // // // //                             if [ ! -f "\${jarPath}" ]; then
+// // // // // // // // // // // // //                                 echo "ERROR: JAR not found for ${svc} at \${jarPath}!"
+// // // // // // // // // // // // //                                 exit 1
+// // // // // // // // // // // // //                             fi
+// // // // // // // // // // // // //
+// // // // // // // // // // // // //                             cp "\${jarPath}" "${workspace}/${svc}/app.jar"
+// // // // // // // // // // // // //                             docker build -t ${svc}:latest "${workspace}/${svc}"
+// // // // // // // // // // // // //                             docker save -o ${DOCKER_TAR_DIR}/${svc}.tar ${svc}:latest
+// // // // // // // // // // // // //                             echo "Docker image ${svc}:latest saved to tar"
+// // // // // // // // // // // // //                         """
+// // // // // // // // // // // // //
+// // // // // // // // // // // // //                         sh "docker exec minikube docker load -i ${DOCKER_TAR_DIR}/${svc}.tar"
+// // // // // // // // // // // // //                     }
 // // // // // // // // // // // // //                 }
 // // // // // // // // // // // // //             }
 // // // // // // // // // // // // //         }
@@ -115,28 +279,6 @@
 // // // // // // // // // // // // //         always { sh 'docker ps -a' }
 // // // // // // // // // // // // //     }
 // // // // // // // // // // // // // }
-// // // // // // // // // // // // //
-// // // // // // // // // // // // // /* ==========================================================
-// // // // // // // // // // // // //    buildAndPush для Minikube Docker daemon
-// // // // // // // // // // // // //    ========================================================== */
-// // // // // // // // // // // // // def buildAndPush(service) {
-// // // // // // // // // // // // //     sh """
-// // // // // // // // // // // // //         echo "Building Docker image for $service in Minikube"
-// // // // // // // // // // // // //
-// // // // // // // // // // // // //         workspace="/var/jenkins_home/workspace/BankCICD@2"
-// // // // // // // // // // // // //         jarPath="\$workspace/$service/target/${service}-1.0-SNAPSHOT.jar"
-// // // // // // // // // // // // //
-// // // // // // // // // // // // //         if [ ! -f "\$jarPath" ]; then
-// // // // // // // // // // // // //             echo "ERROR: JAR not found for $service at \$jarPath!"
-// // // // // // // // // // // // //             exit 1
-// // // // // // // // // // // // //         fi
-// // // // // // // // // // // // //
-// // // // // // // // // // // // //         cp "\$jarPath" "\$workspace/$service/app.jar"
-// // // // // // // // // // // // //
-// // // // // // // // // // // // //         docker build -t ${service}:latest "\$workspace/$service"
-// // // // // // // // // // // // //         echo "Docker image ${service}:latest built successfully in Minikube"
-// // // // // // // // // // // // //     """
-// // // // // // // // // // // // // }
 // // // // // // // // // // // // pipeline {
 // // // // // // // // // // // //     agent {
 // // // // // // // // // // // //         docker {
@@ -154,8 +296,7 @@
 // // // // // // // // // // // //         ORIGINAL_KUBECONFIG = '/var/jenkins_home/.kube/config'
 // // // // // // // // // // // //         KUBECONFIG = '/tmp/kubeconfig'
 // // // // // // // // // // // //         MINIKUBE_HOME = '/var/jenkins_home/.minikube'
-// // // // // // // // // // // //         DOCKER_TAR_DIR = '/tmp/docker-tars'
-// // // // // // // // // // // //         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankCICD@2'
+// // // // // // // // // // // //         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
 // // // // // // // // // // // //     }
 // // // // // // // // // // // //
 // // // // // // // // // // // //     stages {
@@ -219,12 +360,20 @@
 // // // // // // // // // // // //             }
 // // // // // // // // // // // //         }
 // // // // // // // // // // // //
-// // // // // // // // // // // //         stage('Build Docker Images and Load to Minikube') {
+// // // // // // // // // // // //         stage('Set Docker env for Minikube') {
+// // // // // // // // // // // //             steps {
+// // // // // // // // // // // //                 sh '''
+// // // // // // // // // // // //                 echo "Switching Docker to Minikube daemon..."
+// // // // // // // // // // // //                 eval $(minikube -p minikube docker-env)
+// // // // // // // // // // // //                 docker info
+// // // // // // // // // // // //                 '''
+// // // // // // // // // // // //             }
+// // // // // // // // // // // //         }
+// // // // // // // // // // // //
+// // // // // // // // // // // //         stage('Build Docker Images') {
 // // // // // // // // // // // //             steps {
 // // // // // // // // // // // //                 script {
-// // // // // // // // // // // //                     // Указываем правильный workspace
 // // // // // // // // // // // //                     def workspace = "/var/jenkins_home/workspace/BankAppCICD@2"
-// // // // // // // // // // // //                     def DOCKER_TAR_DIR = "/tmp/docker-tars"
 // // // // // // // // // // // //
 // // // // // // // // // // // //                     def services = [
 // // // // // // // // // // // //                         'accounts-service',
@@ -236,8 +385,6 @@
 // // // // // // // // // // // //                         'notifications-service',
 // // // // // // // // // // // //                         'transfer-service'
 // // // // // // // // // // // //                     ]
-// // // // // // // // // // // //
-// // // // // // // // // // // //                     sh "mkdir -p ${DOCKER_TAR_DIR}"
 // // // // // // // // // // // //
 // // // // // // // // // // // //                     for (svc in services) {
 // // // // // // // // // // // //                         sh """
@@ -252,11 +399,8 @@
 // // // // // // // // // // // //
 // // // // // // // // // // // //                             cp "\${jarPath}" "${workspace}/${svc}/app.jar"
 // // // // // // // // // // // //                             docker build -t ${svc}:latest "${workspace}/${svc}"
-// // // // // // // // // // // //                             docker save -o ${DOCKER_TAR_DIR}/${svc}.tar ${svc}:latest
-// // // // // // // // // // // //                             echo "Docker image ${svc}:latest saved to tar"
+// // // // // // // // // // // //                             echo "Docker image ${svc}:latest built in Minikube Docker"
 // // // // // // // // // // // //                         """
-// // // // // // // // // // // //
-// // // // // // // // // // // //                         sh "docker exec minikube docker load -i ${DOCKER_TAR_DIR}/${svc}.tar"
 // // // // // // // // // // // //                     }
 // // // // // // // // // // // //                 }
 // // // // // // // // // // // //             }
@@ -315,8 +459,8 @@
 // // // // // // // // // // //             steps {
 // // // // // // // // // // //                 sh '''
 // // // // // // // // // // //                 cp $ORIGINAL_KUBECONFIG $KUBECONFIG
-// // // // // // // // // // //                 sed -i "s|/Users/maksim/.minikube|$MINIKUBE_HOME|g" $KUBECONFIG
-// // // // // // // // // // //                 sed -i "s|127.0.0.1:[0-9]*|host.docker.internal:50049|g" $KUBECONFIG
+// // // // // // // // // // //                 export KUBECONFIG=$KUBECONFIG
+// // // // // // // // // // //                 kubectl get nodes
 // // // // // // // // // // //                 '''
 // // // // // // // // // // //             }
 // // // // // // // // // // //         }
@@ -431,15 +575,14 @@
 // // // // // // // // // //                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
 // // // // // // // // // //                 -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
 // // // // // // // // // //                 -v /var/run/docker.sock:/var/run/docker.sock
+// // // // // // // // // //                 -w /var/jenkins_home/workspace/BankAppCICD
 // // // // // // // // // //             """
 // // // // // // // // // //         }
 // // // // // // // // // //     }
 // // // // // // // // // //
 // // // // // // // // // //     environment {
 // // // // // // // // // //         HELM_CHART_PATH = './helm/bankapp'
-// // // // // // // // // //         ORIGINAL_KUBECONFIG = '/var/jenkins_home/.kube/config'
-// // // // // // // // // //         KUBECONFIG = '/tmp/kubeconfig'
-// // // // // // // // // //         MINIKUBE_HOME = '/var/jenkins_home/.minikube'
+// // // // // // // // // //         KUBECONFIG = '/var/jenkins_home/.kube/config'
 // // // // // // // // // //         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
 // // // // // // // // // //     }
 // // // // // // // // // //
@@ -452,16 +595,6 @@
 // // // // // // // // // //         stage('Checkout') {
 // // // // // // // // // //             steps {
 // // // // // // // // // //                 git url: 'https://github.com/MaximSlepukhin/bankapp.git', branch: 'feature/sprint-10'
-// // // // // // // // // //             }
-// // // // // // // // // //         }
-// // // // // // // // // //
-// // // // // // // // // //         stage('Prepare kubeconfig') {
-// // // // // // // // // //             steps {
-// // // // // // // // // //                 sh '''
-// // // // // // // // // //                 cp $ORIGINAL_KUBECONFIG $KUBECONFIG
-// // // // // // // // // //                 export KUBECONFIG=$KUBECONFIG
-// // // // // // // // // //                 kubectl get nodes
-// // // // // // // // // //                 '''
 // // // // // // // // // //             }
 // // // // // // // // // //         }
 // // // // // // // // // //
@@ -504,67 +637,79 @@
 // // // // // // // // // //             }
 // // // // // // // // // //         }
 // // // // // // // // // //
-// // // // // // // // // //         stage('Set Docker env for Minikube') {
+// // // // // // // // // //         stage('Build Docker Images') {
 // // // // // // // // // //             steps {
-// // // // // // // // // //                 sh '''
-// // // // // // // // // //                 echo "Switching Docker to Minikube daemon..."
-// // // // // // // // // //                 eval $(minikube -p minikube docker-env)
-// // // // // // // // // //                 docker info
-// // // // // // // // // //                 '''
+// // // // // // // // // //                 sh '''#!/bin/bash
+// // // // // // // // // // set -e
+// // // // // // // // // // services=(
+// // // // // // // // // //     accounts-service
+// // // // // // // // // //     blocker-service
+// // // // // // // // // //     cash-service
+// // // // // // // // // //     exchange-generator-service
+// // // // // // // // // //     exchange-service
+// // // // // // // // // //     front-ui
+// // // // // // // // // //     notifications-service
+// // // // // // // // // //     transfer-service
+// // // // // // // // // // )
+// // // // // // // // // //
+// // // // // // // // // // for svc in "${services[@]}"; do
+// // // // // // // // // //     jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
+// // // // // // // // // //     if [ ! -f "$jarPath" ]; then
+// // // // // // // // // //         echo "ERROR: JAR not found for $svc at $jarPath!"
+// // // // // // // // // //         exit 1
+// // // // // // // // // //     fi
+// // // // // // // // // //
+// // // // // // // // // //     cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
+// // // // // // // // // //     docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
+// // // // // // // // // //     echo "Docker image $svc:latest built"
+// // // // // // // // // // done
+// // // // // // // // // // '''
 // // // // // // // // // //             }
 // // // // // // // // // //         }
 // // // // // // // // // //
-// // // // // // // // // //         stage('Build Docker Images') {
+// // // // // // // // // //         stage('Verify Docker Images') {
 // // // // // // // // // //             steps {
-// // // // // // // // // //                 script {
-// // // // // // // // // //                     def workspace = "/var/jenkins_home/workspace/BankAppCICD@2"
+// // // // // // // // // //                 sh '''#!/bin/bash
+// // // // // // // // // // set -e
+// // // // // // // // // // services=(
+// // // // // // // // // //     accounts-service
+// // // // // // // // // //     blocker-service
+// // // // // // // // // //     cash-service
+// // // // // // // // // //     exchange-generator-service
+// // // // // // // // // //     exchange-service
+// // // // // // // // // //     front-ui
+// // // // // // // // // //     notifications-service
+// // // // // // // // // //     transfer-service
+// // // // // // // // // // )
 // // // // // // // // // //
-// // // // // // // // // //                     def services = [
-// // // // // // // // // //                         'accounts-service',
-// // // // // // // // // //                         'blocker-service',
-// // // // // // // // // //                         'cash-service',
-// // // // // // // // // //                         'exchange-generator-service',
-// // // // // // // // // //                         'exchange-service',
-// // // // // // // // // //                         'front-ui',
-// // // // // // // // // //                         'notifications-service',
-// // // // // // // // // //                         'transfer-service'
-// // // // // // // // // //                     ]
-// // // // // // // // // //
-// // // // // // // // // //                     for (svc in services) {
-// // // // // // // // // //                         sh """
-// // // // // // // // // //                             echo "Building Docker image for ${svc}"
-// // // // // // // // // //
-// // // // // // // // // //                             jarPath=${workspace}/${svc}/target/${svc}-1.0-SNAPSHOT.jar
-// // // // // // // // // //
-// // // // // // // // // //                             if [ ! -f "\${jarPath}" ]; then
-// // // // // // // // // //                                 echo "ERROR: JAR not found for ${svc} at \${jarPath}!"
-// // // // // // // // // //                                 exit 1
-// // // // // // // // // //                             fi
-// // // // // // // // // //
-// // // // // // // // // //                             cp "\${jarPath}" "${workspace}/${svc}/app.jar"
-// // // // // // // // // //                             docker build -t ${svc}:latest "${workspace}/${svc}"
-// // // // // // // // // //                             echo "Docker image ${svc}:latest built in Minikube Docker"
-// // // // // // // // // //                         """
-// // // // // // // // // //                     }
-// // // // // // // // // //                 }
+// // // // // // // // // // for img in "${services[@]}"; do
+// // // // // // // // // //     if ! docker images | grep -q "$img"; then
+// // // // // // // // // //         echo "ERROR: Docker image $img not found!"
+// // // // // // // // // //         exit 1
+// // // // // // // // // //     fi
+// // // // // // // // // // done
+// // // // // // // // // // echo "All Docker images are present."
+// // // // // // // // // // '''
 // // // // // // // // // //             }
 // // // // // // // // // //         }
 // // // // // // // // // //
 // // // // // // // // // //         stage('Deploy Databases') {
 // // // // // // // // // //             steps {
-// // // // // // // // // //                 sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait --kube-insecure-skip-tls-verify'
+// // // // // // // // // //                 sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait'
 // // // // // // // // // //             }
 // // // // // // // // // //         }
 // // // // // // // // // //
 // // // // // // // // // //         stage('Deploy to Kubernetes') {
 // // // // // // // // // //             steps {
-// // // // // // // // // //                 sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml --kube-insecure-skip-tls-verify"
+// // // // // // // // // //                 sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
 // // // // // // // // // //             }
 // // // // // // // // // //         }
 // // // // // // // // // //     }
 // // // // // // // // // //
 // // // // // // // // // //     post {
-// // // // // // // // // //         always { sh 'docker ps -a' }
+// // // // // // // // // //         always {
+// // // // // // // // // //             sh 'docker ps -a'
+// // // // // // // // // //         }
 // // // // // // // // // //     }
 // // // // // // // // // // }
 // // // // // // // // // pipeline {
@@ -625,15 +770,16 @@
 // // // // // // // // //
 // // // // // // // // //         stage('Debug Target JARs') {
 // // // // // // // // //             steps {
-// // // // // // // // //                 sh '''
-// // // // // // // // //                 echo "Listing all target directories and JAR files:"
-// // // // // // // // //                 for dir in "$HARDCODED_WORKSPACE"/*/target; do
-// // // // // // // // //                     if [ -d "$dir" ]; then
-// // // // // // // // //                         echo "Contents of $dir:"
-// // // // // // // // //                         ls -l "$dir"
-// // // // // // // // //                     fi
-// // // // // // // // //                 done
-// // // // // // // // //                 '''
+// // // // // // // // //                 sh '''#!/bin/bash
+// // // // // // // // // set -e
+// // // // // // // // // echo "Listing all target directories and JAR files:"
+// // // // // // // // // for dir in "$HARDCODED_WORKSPACE"/*/target; do
+// // // // // // // // //     if [ -d "$dir" ]; then
+// // // // // // // // //         echo "Contents of $dir:"
+// // // // // // // // //         ls -l "$dir"
+// // // // // // // // //     fi
+// // // // // // // // // done
+// // // // // // // // // '''
 // // // // // // // // //             }
 // // // // // // // // //         }
 // // // // // // // // //
@@ -839,6 +985,19 @@
 // // // // // // // //             }
 // // // // // // // //         }
 // // // // // // // //
+// // // // // // // //         // 🔹 Новая стадия для подготовки kubeconfig
+// // // // // // // //         stage('Prepare kubeconfig') {
+// // // // // // // //             steps {
+// // // // // // // //                 sh '''
+// // // // // // // //                 echo "Copying and patching kubeconfig..."
+// // // // // // // //                 cp $KUBECONFIG /tmp/kubeconfig
+// // // // // // // //                 sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' /tmp/kubeconfig
+// // // // // // // //                 export KUBECONFIG=/tmp/kubeconfig
+// // // // // // // //                 kubectl --kubeconfig=/tmp/kubeconfig get nodes
+// // // // // // // //                 '''
+// // // // // // // //             }
+// // // // // // // //         }
+// // // // // // // //
 // // // // // // // //         stage('Deploy Databases') {
 // // // // // // // //             steps {
 // // // // // // // //                 sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait'
@@ -985,15 +1144,17 @@
 // // // // // // //             }
 // // // // // // //         }
 // // // // // // //
-// // // // // // //         // 🔹 Новая стадия для подготовки kubeconfig
+// // // // // // //         // 🔹 Исправленная стадия для подключения к Minikube
 // // // // // // //         stage('Prepare kubeconfig') {
 // // // // // // //             steps {
 // // // // // // //                 sh '''
 // // // // // // //                 echo "Copying and patching kubeconfig..."
 // // // // // // //                 cp $KUBECONFIG /tmp/kubeconfig
 // // // // // // //                 sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' /tmp/kubeconfig
+// // // // // // //                 sed -i 's|127.0.0.1|host.docker.internal|g' /tmp/kubeconfig
 // // // // // // //                 export KUBECONFIG=/tmp/kubeconfig
-// // // // // // //                 kubectl --kubeconfig=/tmp/kubeconfig get nodes
+// // // // // // //                 echo "Проверяем подключение к Kubernetes:"
+// // // // // // //                 kubectl --kubeconfig=/tmp/kubeconfig --insecure-skip-tls-verify get nodes
 // // // // // // //                 '''
 // // // // // // //             }
 // // // // // // //         }
@@ -1161,13 +1322,13 @@
 // // // // // //
 // // // // // //         stage('Deploy Databases') {
 // // // // // //             steps {
-// // // // // //                 sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait'
+// // // // // //                 sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait --kube-insecure-skip-tls-verify'
 // // // // // //             }
 // // // // // //         }
 // // // // // //
 // // // // // //         stage('Deploy to Kubernetes') {
 // // // // // //             steps {
-// // // // // //                 sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml"
+// // // // // //                 sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml --kube-insecure-skip-tls-verify"
 // // // // // //             }
 // // // // // //         }
 // // // // // //     }
@@ -1193,7 +1354,8 @@
 // // // // //
 // // // // //     environment {
 // // // // //         HELM_CHART_PATH = './helm/bankapp'
-// // // // //         KUBECONFIG = '/var/jenkins_home/.kube/config'
+// // // // //         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
+// // // // //         KUBECONFIG = '/tmp/kubeconfig'
 // // // // //         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
 // // // // //     }
 // // // // //
@@ -1305,30 +1467,50 @@
 // // // // //             }
 // // // // //         }
 // // // // //
-// // // // //         // 🔹 Исправленная стадия для подключения к Minikube
+// // // // //         // 🔹 Исправленная стадия для подготовки kubeconfig
 // // // // //         stage('Prepare kubeconfig') {
 // // // // //             steps {
 // // // // //                 sh '''
-// // // // //                 echo "Copying and patching kubeconfig..."
-// // // // //                 cp $KUBECONFIG /tmp/kubeconfig
-// // // // //                 sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' /tmp/kubeconfig
-// // // // //                 sed -i 's|127.0.0.1|host.docker.internal|g' /tmp/kubeconfig
-// // // // //                 export KUBECONFIG=/tmp/kubeconfig
-// // // // //                 echo "Проверяем подключение к Kubernetes:"
-// // // // //                 kubectl --kubeconfig=/tmp/kubeconfig --insecure-skip-tls-verify get nodes
-// // // // //                 '''
+// // // // // echo "Copying kubeconfig to /tmp..."
+// // // // // cp $KUBECONFIG_SRC $KUBECONFIG
+// // // // //
+// // // // // echo "Fixing absolute paths..."
+// // // // // sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
+// // // // // sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
+// // // // //
+// // // // // echo "Removing client certificate references (Helm fix)..."
+// // // // // sed -i '/client-certificate/d' $KUBECONFIG
+// // // // // sed -i '/client-key/d' $KUBECONFIG
+// // // // // sed -i '/certificate-authority/d' $KUBECONFIG
+// // // // //
+// // // // // echo "Validating kubeconfig with kubectl:"
+// // // // // kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify get nodes
+// // // // // '''
 // // // // //             }
 // // // // //         }
 // // // // //
+// // // // //         // 🔹 Helm теперь использует тот же kubeconfig, что и kubectl
 // // // // //         stage('Deploy Databases') {
 // // // // //             steps {
-// // // // //                 sh 'helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db --namespace dev --wait --kube-insecure-skip-tls-verify'
+// // // // //                 sh '''
+// // // // // helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
+// // // // //   --namespace dev \
+// // // // //   --wait \
+// // // // //   --kubeconfig=/tmp/kubeconfig \
+// // // // //   --kube-insecure-skip-tls-verify
+// // // // // '''
 // // // // //             }
 // // // // //         }
 // // // // //
 // // // // //         stage('Deploy to Kubernetes') {
 // // // // //             steps {
-// // // // //                 sh "helm upgrade --install bankapp ${HELM_CHART_PATH} --namespace dev -f ${HELM_CHART_PATH}/values-dev.yaml --kube-insecure-skip-tls-verify"
+// // // // //                 sh '''
+// // // // // helm upgrade --install bankapp ./helm/bankapp \
+// // // // //   --namespace dev \
+// // // // //   -f ./helm/bankapp/values-dev.yaml \
+// // // // //   --kubeconfig=/tmp/kubeconfig \
+// // // // //   --kube-insecure-skip-tls-verify
+// // // // // '''
 // // // // //             }
 // // // // //         }
 // // // // //     }
@@ -1467,10 +1649,10 @@
 // // // //             }
 // // // //         }
 // // // //
-// // // //         // 🔹 Исправленная стадия для подготовки kubeconfig
 // // // //         stage('Prepare kubeconfig') {
 // // // //             steps {
-// // // //                 sh '''
+// // // //                 sh '''#!/bin/bash
+// // // // set -e
 // // // // echo "Copying kubeconfig to /tmp..."
 // // // // cp $KUBECONFIG_SRC $KUBECONFIG
 // // // //
@@ -1478,25 +1660,20 @@
 // // // // sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
 // // // // sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
 // // // //
-// // // // echo "Removing client certificate references (Helm fix)..."
-// // // // sed -i '/client-certificate/d' $KUBECONFIG
-// // // // sed -i '/client-key/d' $KUBECONFIG
-// // // // sed -i '/certificate-authority/d' $KUBECONFIG
-// // // //
-// // // // echo "Validating kubeconfig with kubectl:"
-// // // // kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify get nodes
+// // // // echo "Validating kubeconfig with kubectl..."
+// // // // kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify get nodes || echo "kubectl test failed, но pipeline продолжает"
 // // // // '''
 // // // //             }
 // // // //         }
 // // // //
-// // // //         // 🔹 Helm теперь использует тот же kubeconfig, что и kubectl
 // // // //         stage('Deploy Databases') {
 // // // //             steps {
-// // // //                 sh '''
+// // // //                 sh '''#!/bin/bash
+// // // // set -e
 // // // // helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
 // // // //   --namespace dev \
 // // // //   --wait \
-// // // //   --kubeconfig=/tmp/kubeconfig \
+// // // //   --kubeconfig=$KUBECONFIG \
 // // // //   --kube-insecure-skip-tls-verify
 // // // // '''
 // // // //             }
@@ -1504,11 +1681,12 @@
 // // // //
 // // // //         stage('Deploy to Kubernetes') {
 // // // //             steps {
-// // // //                 sh '''
+// // // //                 sh '''#!/bin/bash
+// // // // set -e
 // // // // helm upgrade --install bankapp ./helm/bankapp \
 // // // //   --namespace dev \
 // // // //   -f ./helm/bankapp/values-dev.yaml \
-// // // //   --kubeconfig=/tmp/kubeconfig \
+// // // //   --kubeconfig=$KUBECONFIG \
 // // // //   --kube-insecure-skip-tls-verify
 // // // // '''
 // // // //             }
@@ -1666,6 +1844,17 @@
 // // //             }
 // // //         }
 // // //
+// // //         // Новая стадия для создания namespace
+// // //         stage('Apply Namespaces') {
+// // //             steps {
+// // //                 sh '''#!/bin/bash
+// // // set -e
+// // // echo "Applying namespaces..."
+// // // kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify apply -f ./namespaces.yaml
+// // // '''
+// // //             }
+// // //         }
+// // //
 // // //         stage('Deploy Databases') {
 // // //             steps {
 // // //                 sh '''#!/bin/bash
@@ -1735,7 +1924,6 @@
 // //             steps {
 // //                 sh 'kubectl version --client'
 // //                 sh 'helm version'
-// //                 sh 'docker version'
 // //             }
 // //         }
 // //
@@ -1771,10 +1959,13 @@
 // //             }
 // //         }
 // //
-// //         stage('Build Docker Images') {
+// //         stage('Build Docker Images in Minikube') {
 // //             steps {
 // //                 sh '''#!/bin/bash
 // // set -e
+// // echo "Настраиваем Docker для сборки в Minikube..."
+// // eval $(minikube -p minikube docker-env)
+// //
 // // services=(
 // //     accounts-service
 // //     blocker-service
@@ -1794,35 +1985,19 @@
 // //     fi
 // //
 // //     cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
+// //     echo "Building Docker image $svc:latest в Minikube..."
 // //     docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
-// //     echo "Docker image $svc:latest built"
 // // done
-// // '''
-// //             }
-// //         }
 // //
-// //         stage('Verify Docker Images') {
-// //             steps {
-// //                 sh '''#!/bin/bash
-// // set -e
-// // services=(
-// //     accounts-service
-// //     blocker-service
-// //     cash-service
-// //     exchange-generator-service
-// //     exchange-service
-// //     front-ui
-// //     notifications-service
-// //     transfer-service
-// // )
-// //
-// // for img in "${services[@]}"; do
-// //     if ! docker images | grep -q "$img"; then
-// //         echo "ERROR: Docker image $img not found!"
+// // # Проверка, что все образы реально собраны
+// // echo "Проверяем наличие образов в Minikube..."
+// // for svc in "${services[@]}"; do
+// //     if ! docker images | grep -q "$svc"; then
+// //         echo "ERROR: Docker image $svc:latest не найден в Minikube!"
 // //         exit 1
 // //     fi
 // // done
-// // echo "All Docker images are present."
+// // echo "Все Docker образы присутствуют в Minikube."
 // // '''
 // //             }
 // //         }
@@ -1831,25 +2006,24 @@
 // //             steps {
 // //                 sh '''#!/bin/bash
 // // set -e
-// // echo "Copying kubeconfig to /tmp..."
+// // echo "Копируем kubeconfig в /tmp..."
 // // cp $KUBECONFIG_SRC $KUBECONFIG
 // //
-// // echo "Fixing absolute paths..."
+// // echo "Фиксим абсолютные пути..."
 // // sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
 // // sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
 // //
-// // echo "Validating kubeconfig with kubectl..."
+// // echo "Проверяем kubectl..."
 // // kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify get nodes || echo "kubectl test failed, но pipeline продолжает"
 // // '''
 // //             }
 // //         }
 // //
-// //         // Новая стадия для создания namespace
 // //         stage('Apply Namespaces') {
 // //             steps {
 // //                 sh '''#!/bin/bash
 // // set -e
-// // echo "Applying namespaces..."
+// // echo "Применяем namespace..."
 // // kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify apply -f ./namespaces.yaml
 // // '''
 // //             }
@@ -1893,9 +2067,8 @@
 //         docker {
 //             image 'jenkins-k8s'
 //             args """
-//                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
-//                 -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
 //                 -v /var/run/docker.sock:/var/run/docker.sock
+//                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
 //                 -w /var/jenkins_home/workspace/BankAppCICD
 //             """
 //         }
@@ -1906,6 +2079,7 @@
 //         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
 //         KUBECONFIG = '/tmp/kubeconfig'
 //         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
+//         MINIKUBE_REGISTRY = "host.docker.internal:54611"  // твой локальный registry
 //     }
 //
 //     stages {
@@ -1924,6 +2098,7 @@
 //             steps {
 //                 sh 'kubectl version --client'
 //                 sh 'helm version'
+//                 sh 'docker --version'
 //             }
 //         }
 //
@@ -1946,119 +2121,111 @@
 //
 //         stage('Debug Target JARs') {
 //             steps {
-//                 sh '''#!/bin/bash
-// set -e
-// echo "Listing all target directories and JAR files:"
-// for dir in "$HARDCODED_WORKSPACE"/*/target; do
-//     if [ -d "$dir" ]; then
-//         echo "Contents of $dir:"
-//         ls -l "$dir"
-//     fi
-// done
-// '''
+//                 sh '''
+//                     echo "Listing all target directories and JAR files:"
+//                     for dir in "$HARDCODED_WORKSPACE"/*/target; do
+//                         if [ -d "$dir" ]; then
+//                             echo "Contents of $dir:"
+//                             ls -l "$dir"
+//                         fi
+//                     done
+//                 '''
 //             }
 //         }
 //
-//         stage('Build Docker Images in Minikube') {
+//         stage('Configure Docker to allow insecure registry') {
 //             steps {
-//                 sh '''#!/bin/bash
-// set -e
-// echo "Настраиваем Docker для сборки в Minikube..."
-// eval $(minikube -p minikube docker-env)
+//                 sh '''
+//                     echo "Configuring Docker to trust ${MINIKUBE_REGISTRY}"
+//                     mkdir -p /etc/docker
+//                     cat <<EOF > /etc/docker/daemon.json
+//                     {
+//                         "insecure-registries" : ["${MINIKUBE_REGISTRY}"]
+//                     }
+//                     EOF
 //
-// services=(
-//     accounts-service
-//     blocker-service
-//     cash-service
-//     exchange-generator-service
-//     exchange-service
-//     front-ui
-//     notifications-service
-//     transfer-service
-// )
+//                     echo "Restarting Docker inside the Jenkins agent container..."
+//                     if command -v systemctl; then systemctl restart docker || true; fi
+//                 '''
+//             }
+//         }
 //
-// for svc in "${services[@]}"; do
-//     jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
-//     if [ ! -f "$jarPath" ]; then
-//         echo "ERROR: JAR not found for $svc at $jarPath!"
-//         exit 1
-//     fi
+//         stage('Build and Push Docker Images') {
+//             steps {
+//                 sh '''
+//                     set -e
+//                     services="accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service"
 //
-//     cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
-//     echo "Building Docker image $svc:latest в Minikube..."
-//     docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
-// done
+//                     for svc in $services; do
+//                         jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
 //
-// # Проверка, что все образы реально собраны
-// echo "Проверяем наличие образов в Minikube..."
-// for svc in "${services[@]}"; do
-//     if ! docker images | grep -q "$svc"; then
-//         echo "ERROR: Docker image $svc:latest не найден в Minikube!"
-//         exit 1
-//     fi
-// done
-// echo "Все Docker образы присутствуют в Minikube."
-// '''
+//                         if [ ! -f "$jarPath" ]; then
+//                             echo "ERROR: JAR not found for $svc at $jarPath!"
+//                             exit 1
+//                         fi
+//
+//                         cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
+//
+//                         imageName="${MINIKUBE_REGISTRY}/$svc:latest"
+//                         echo "Building Docker image $imageName..."
+//                         docker build -t "$imageName" "${HARDCODED_WORKSPACE}/$svc"
+//
+//                         echo "Pushing $imageName..."
+//                         docker push "$imageName"
+//                     done
+//
+//                     echo "All Docker images built and pushed successfully."
+//                 '''
 //             }
 //         }
 //
 //         stage('Prepare kubeconfig') {
 //             steps {
-//                 sh '''#!/bin/bash
-// set -e
-// echo "Копируем kubeconfig в /tmp..."
-// cp $KUBECONFIG_SRC $KUBECONFIG
-//
-// echo "Фиксим абсолютные пути..."
-// sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
-// sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
-//
-// echo "Проверяем kubectl..."
-// kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify get nodes || echo "kubectl test failed, но pipeline продолжает"
-// '''
+//                 sh '''
+//                     cp $KUBECONFIG_SRC $KUBECONFIG
+//                     echo "Kubeconfig copied to $KUBECONFIG"
+//                 '''
 //             }
 //         }
 //
 //         stage('Apply Namespaces') {
 //             steps {
-//                 sh '''#!/bin/bash
-// set -e
-// echo "Применяем namespace..."
-// kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify apply -f ./namespaces.yaml
-// '''
+//                 sh '''
+//                     kubectl --kubeconfig=$KUBECONFIG \
+//                         --insecure-skip-tls-verify \
+//                         apply -f ./namespaces.yaml
+//                 '''
 //             }
 //         }
 //
 //         stage('Deploy Databases') {
 //             steps {
-//                 sh '''#!/bin/bash
-// set -e
-// helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
-//   --namespace dev \
-//   --wait \
-//   --kubeconfig=$KUBECONFIG \
-//   --kube-insecure-skip-tls-verify
-// '''
+//                 sh '''
+//                     helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
+//                         --namespace dev \
+//                         --wait \
+//                         --kubeconfig=$KUBECONFIG \
+//                         --kube-insecure-skip-tls-verify
+//                 '''
 //             }
 //         }
 //
-//         stage('Deploy to Kubernetes') {
+//         stage('Deploy Application') {
 //             steps {
-//                 sh '''#!/bin/bash
-// set -e
-// helm upgrade --install bankapp ./helm/bankapp \
-//   --namespace dev \
-//   -f ./helm/bankapp/values-dev.yaml \
-//   --kubeconfig=$KUBECONFIG \
-//   --kube-insecure-skip-tls-verify
-// '''
+//                 sh '''
+//                     helm upgrade --install bankapp ./helm/bankapp \
+//                         --namespace dev \
+//                         -f ./helm/bankapp/values-dev.yaml \
+//                         --kubeconfig=$KUBECONFIG \
+//                         --kube-insecure-skip-tls-verify
+//                 '''
 //             }
 //         }
 //     }
 //
 //     post {
 //         always {
-//             sh 'docker ps -a'
+//             sh 'docker images'
 //         }
 //     }
 // }
@@ -2079,7 +2246,7 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        MINIKUBE_REGISTRY = "host.docker.internal:54611"  // твой локальный registry
+        MINIKUBE_REGISTRY = "host.docker.internal:54611"
     }
 
     stages {
@@ -2137,15 +2304,24 @@ pipeline {
             steps {
                 sh '''
                     echo "Configuring Docker to trust ${MINIKUBE_REGISTRY}"
+
                     mkdir -p /etc/docker
                     cat <<EOF > /etc/docker/daemon.json
-                    {
-                        "insecure-registries" : ["${MINIKUBE_REGISTRY}"]
-                    }
-                    EOF
+{
+  "insecure-registries": ["${MINIKUBE_REGISTRY}"]
+}
+EOF
 
-                    echo "Restarting Docker inside the Jenkins agent container..."
-                    if command -v systemctl; then systemctl restart docker || true; fi
+                    echo "Restarting Docker daemon inside Jenkins agent..."
+
+                    pkill dockerd || true
+
+                    nohup dockerd > /var/jenkins_home/dockerd.log 2>&1 &
+
+                    sleep 5
+
+                    echo "--- Docker Info After Restart ---"
+                    docker info
                 '''
             }
         }
