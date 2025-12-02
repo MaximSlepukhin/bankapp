@@ -2246,7 +2246,7 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        MINIKUBE_REGISTRY = "host.docker.internal:54611"
+        MINIKUBE_REGISTRY = "192.168.49.2:54611"
     }
 
     stages {
