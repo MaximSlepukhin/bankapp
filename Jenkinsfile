@@ -2079,7 +2079,7 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        MINIKUBE_REGISTRY = "${sh(script: 'minikube ip', returnStdout: true).trim()}:5000"
+        MINIKUBE_REGISTRY = "192.168.49.2:54611" // заменяем на IP твоего Minikube и порт registry
     }
 
     stages {

@@ -486,3 +486,7 @@ helm uninstall front-ui -n default
 kubectl logs front-ui-54bfb846f7-bxq88
 
 сделал optional для email и profile и в application оставил только openid
+
+
+minikube addons enable registry
+minikube addons enable registry-aliases

@@ -1,48 +1,104 @@
+#accounts-service:
+#  enabled: true
+#
+#blocker-service:
+#  enabled: true
+#  replicaCount: 1
+#  image:
+#    repository: blocker-service
+#    tag: latest
+#    pullPolicy: IfNotPresent
+#  env:
+#    maintenanceStart: "00:00"
+#    maintenanceEnd: "00:05"
+#  resources:
+#    requests:
+#      cpu: "100m"
+#      memory: "128Mi"
+#    limits:
+#      cpu: "200m"
+#      memory: "256Mi"
+#
+#
+#cash-service:
+#  enabled: true
+#
+#exchange-generator-service:
+#  enabled: true
+#
+#exchange-service:
+#  enabled: true
+#
+#front-ui:
+#  enabled: true
+#
+#notifications-service:
+#  enabled: true
+#
+#transfer-service:
+#  enabled: true
+#
+#keycloak:
+#  enabled: true
+#
+#accounts-db:
+#  enabled: true
+#
+#keycloak-db:
+#  enabled: true
 accounts-service:
   enabled: true
+  image:
+    repository: 192.168.49.2:54611/accounts-service
+    tag: latest
+    pullPolicy: IfNotPresent
 
 blocker-service:
   enabled: true
   replicaCount: 1
   image:
-    repository: blocker-service
+    repository: 192.168.49.2:54611/blocker-service
     tag: latest
     pullPolicy: IfNotPresent
-  env:
-    maintenanceStart: "00:00"
-    maintenanceEnd: "00:05"
-  resources:
-    requests:
-      cpu: "100m"
-      memory: "128Mi"
-    limits:
-      cpu: "200m"
-      memory: "256Mi"
-
 
 cash-service:
   enabled: true
+  image:
+    repository: 192.168.49.2:54611/cash-service
+    tag: latest
+    pullPolicy: IfNotPresent
 
 exchange-generator-service:
   enabled: true
+  image:
+    repository: 192.168.49.2:54611/exchange-generator-service
+    tag: latest
+    pullPolicy: IfNotPresent
 
 exchange-service:
   enabled: true
+  image:
+    repository: 192.168.49.2:54611/exchange-service
+    tag: latest
+    pullPolicy: IfNotPresent
 
 front-ui:
   enabled: true
+  image:
+    repository: 192.168.49.2:54611/front-ui
+    tag: latest
+    pullPolicy: IfNotPresent
 
 notifications-service:
   enabled: true
+  image:
+    repository: 192.168.49.2:54611/notifications-service
+    tag: latest
+    pullPolicy: IfNotPresent
 
 transfer-service:
   enabled: true
-
-keycloak:
-  enabled: true
-
-accounts-db:
-  enabled: true
-
-keycloak-db:
-  enabled: true
+  image:
+    repository: 192.168.49.2:54611/transfer-service
+    tag: latest
+    pullPolicy: IfNotPresent
