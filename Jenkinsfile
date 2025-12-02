@@ -2079,7 +2079,7 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        MINIKUBE_REGISTRY = "192.168.49.2:54611" // IP и порт Minikube registry
+        MINIKUBE_REGISTRY = "host.docker.internal:54611"  // твой локальный registry
     }
 
     stages {
@@ -2133,51 +2133,68 @@ pipeline {
             }
         }
 
-        stage('Configure Docker for Minikube Insecure Registry') {
+        stage('Configure Docker to allow insecure registry') {
             steps {
                 sh '''
+                    echo "Configuring Docker to trust ${MINIKUBE_REGISTRY}"
                     mkdir -p /etc/docker
                     cat <<EOF > /etc/docker/daemon.json
                     {
                         "insecure-registries" : ["${MINIKUBE_REGISTRY}"]
                     }
                     EOF
-                    echo "Docker configured for insecure registry ${MINIKUBE_REGISTRY}"
+
+                    echo "Restarting Docker inside the Jenkins agent container..."
+                    if command -v systemctl; then systemctl restart docker || true; fi
                 '''
             }
         }
 
-        stage('Build and Push Docker Images to Minikube Registry') {
+        stage('Build and Push Docker Images') {
             steps {
                 sh '''
                     set -e
-                    for svc in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
+                    services="accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service"
+
+                    for svc in $services; do
                         jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
+
                         if [ ! -f "$jarPath" ]; then
                             echo "ERROR: JAR not found for $svc at $jarPath!"
                             exit 1
                         fi
+
                         cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
+
                         imageName="${MINIKUBE_REGISTRY}/$svc:latest"
                         echo "Building Docker image $imageName..."
                         docker build -t "$imageName" "${HARDCODED_WORKSPACE}/$svc"
-                        echo "Pushing $imageName to Minikube registry..."
+
+                        echo "Pushing $imageName..."
                         docker push "$imageName"
                     done
-                    echo "Docker images built and pushed successfully."
+
+                    echo "All Docker images built and pushed successfully."
                 '''
             }
         }
 
         stage('Prepare kubeconfig') {
             steps {
-                sh 'cp $KUBECONFIG_SRC $KUBECONFIG && echo "Kubeconfig prepared"'
+                sh '''
+                    cp $KUBECONFIG_SRC $KUBECONFIG
+                    echo "Kubeconfig copied to $KUBECONFIG"
+                '''
             }
         }
 
         stage('Apply Namespaces') {
             steps {
-                sh 'kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify apply -f ./namespaces.yaml'
+                sh '''
+                    kubectl --kubeconfig=$KUBECONFIG \
+                        --insecure-skip-tls-verify \
+                        apply -f ./namespaces.yaml
+                '''
             }
         }
 

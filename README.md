@@ -490,3 +490,4 @@ kubectl logs front-ui-54bfb846f7-bxq88
 
 minikube addons enable registry
 minikube addons enable registry-aliases
+kubectl port-forward -n kube-system svc/registry 54611:80
