@@ -2079,7 +2079,7 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        MINIKUBE_REGISTRY = "192.168.49.2:54611" // заменяем на IP твоего Minikube и порт registry
+        MINIKUBE_REGISTRY = "192.168.49.2:54611" // IP и порт Minikube registry
     }
 
     stages {
@@ -2129,6 +2129,20 @@ pipeline {
                             ls -l "$dir"
                         fi
                     done
+                '''
+            }
+        }
+
+        stage('Configure Docker for Minikube Insecure Registry') {
+            steps {
+                sh '''
+                    mkdir -p /etc/docker
+                    cat <<EOF > /etc/docker/daemon.json
+                    {
+                        "insecure-registries" : ["${MINIKUBE_REGISTRY}"]
+                    }
+                    EOF
+                    echo "Docker configured for insecure registry ${MINIKUBE_REGISTRY}"
                 '''
             }
         }
