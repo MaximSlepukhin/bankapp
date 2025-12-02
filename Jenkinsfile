@@ -2069,6 +2069,7 @@ pipeline {
             args """
                 -v /var/run/docker.sock:/var/run/docker.sock
                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
+                -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
                 -w /var/jenkins_home/workspace/BankAppCICD
             """
         }
@@ -2156,6 +2157,8 @@ pipeline {
                 sh '''
                     set -e
                     cp $KUBECONFIG_SRC $KUBECONFIG
+                    # Исправляем пути на контейнерные
+                    sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
                     sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
                     echo "Kubeconfig prepared"
                 '''
