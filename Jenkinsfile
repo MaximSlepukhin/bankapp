@@ -2069,7 +2069,6 @@ pipeline {
             args """
                 -v /var/run/docker.sock:/var/run/docker.sock
                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
-                -v /tmp/jenkins-exported-images:/tmp/jenkins-exported-images
                 -w /var/jenkins_home/workspace/BankAppCICD
             """
         }
@@ -2080,7 +2079,7 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        EXPORT_DIR = '/tmp/jenkins-exported-images'
+        MINIKUBE_REGISTRY = "${sh(script: 'minikube ip', returnStdout: true).trim()}:5000"
     }
 
     stages {
@@ -2100,7 +2099,6 @@ pipeline {
                 sh 'kubectl version --client'
                 sh 'helm version'
                 sh 'docker --version'
-                sh 'minikube version || echo "minikube not found"'
             }
         }
 
@@ -2121,7 +2119,21 @@ pipeline {
             }
         }
 
-        stage('Build Docker Images') {
+        stage('Debug Target JARs') {
+            steps {
+                sh '''
+                    echo "Listing all target directories and JAR files:"
+                    for dir in "$HARDCODED_WORKSPACE"/*/target; do
+                        if [ -d "$dir" ]; then
+                            echo "Contents of $dir:"
+                            ls -l "$dir"
+                        fi
+                    done
+                '''
+            }
+        }
+
+        stage('Build and Push Docker Images to Minikube Registry') {
             steps {
                 sh '''
                     set -e
@@ -2132,46 +2144,20 @@ pipeline {
                             exit 1
                         fi
                         cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
-                        echo "Building Docker image $svc:latest..."
-                        docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
+                        imageName="${MINIKUBE_REGISTRY}/$svc:latest"
+                        echo "Building Docker image $imageName..."
+                        docker build -t "$imageName" "${HARDCODED_WORKSPACE}/$svc"
+                        echo "Pushing $imageName to Minikube registry..."
+                        docker push "$imageName"
                     done
-                    echo "Docker images built successfully."
-                '''
-            }
-        }
-
-        stage('Export Docker Images') {
-            steps {
-                sh '''
-                    set -e
-                    mkdir -p $EXPORT_DIR
-                    for img in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
-                        docker save "$img:latest" -o "$EXPORT_DIR/$img.tar"
-                    done
-                    echo "Docker images exported to $EXPORT_DIR"
-                '''
-            }
-        }
-
-        stage('Load Images into Minikube (Host)') {
-            steps {
-                sh '''
-                    set -e
-                    echo "Loading images into host Minikube..."
-                    for img_tar in $EXPORT_DIR/*.tar; do
-                        minikube image load "$img_tar"
-                    done
-                    echo "Docker images loaded into Minikube"
+                    echo "Docker images built and pushed successfully."
                 '''
             }
         }
 
         stage('Prepare kubeconfig') {
             steps {
-                sh '''
-                    cp $KUBECONFIG_SRC $KUBECONFIG
-                    echo "Kubeconfig prepared"
-                '''
+                sh 'cp $KUBECONFIG_SRC $KUBECONFIG && echo "Kubeconfig prepared"'
             }
         }
 
