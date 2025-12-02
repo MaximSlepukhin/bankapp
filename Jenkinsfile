@@ -2246,7 +2246,7 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
-        MINIKUBE_REGISTRY = "localhost:51970"
+        MINIKUBE_REGISTRY = "localhost:5000"   // <── используем порт-форвард
     }
 
     stages {
@@ -2304,25 +2304,40 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    services="accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service"
+
+                    # запускаем порт-форвард в фоне
+                    echo "Starting port-forward to minikube registry..."
+                    kubectl port-forward -n kube-system service/registry 5000:80 &
+                    PF_PID=$!
+                    sleep 2
+
+                    services="accounts-service blocker-service cash-service \
+                              exchange-generator-service exchange-service \
+                              front-ui notifications-service transfer-service"
 
                     for svc in $services; do
+
                         jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
 
                         if [ ! -f "$jarPath" ]; then
                             echo "ERROR: JAR not found for $svc at $jarPath!"
+                            kill $PF_PID
                             exit 1
                         fi
 
                         cp "$jarPath" "${HARDCODED_WORKSPACE}/$svc/app.jar"
 
                         imageName="${MINIKUBE_REGISTRY}/$svc:latest"
+
                         echo "Building Docker image $imageName..."
                         docker build -t "$imageName" "${HARDCODED_WORKSPACE}/$svc"
 
                         echo "Pushing $imageName..."
                         docker push "$imageName"
                     done
+
+                    # останавливаем порт-форвард
+                    kill $PF_PID
                 '''
             }
         }

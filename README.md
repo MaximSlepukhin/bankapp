@@ -491,3 +491,7 @@ kubectl logs front-ui-54bfb846f7-bxq88
 minikube addons enable registry
 minikube addons enable registry-aliases
 kubectl port-forward -n kube-system svc/registry 54611:80
+
+
+docker network connect minikube jenkins-k8s
+kubectl port-forward -n kube-system service/registry 5000:80
