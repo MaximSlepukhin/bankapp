@@ -2069,6 +2069,7 @@ pipeline {
             args """
                 -v /var/run/docker.sock:/var/run/docker.sock
                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
+                -v /tmp/jenkins-exported-images:/tmp/jenkins-exported-images
                 -w /var/jenkins_home/workspace/BankAppCICD
             """
         }
@@ -2079,6 +2080,7 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
+        EXPORT_DIR = '/tmp/jenkins-exported-images'
     }
 
     stages {
@@ -2119,20 +2121,6 @@ pipeline {
             }
         }
 
-        stage('Debug Target JARs') {
-            steps {
-                sh '''
-                    echo "Listing all target directories and JAR files:"
-                    for dir in "$HARDCODED_WORKSPACE"/*/target; do
-                        if [ -d "$dir" ]; then
-                            echo "Contents of $dir:"
-                            ls -l "$dir"
-                        fi
-                    done
-                '''
-            }
-        }
-
         stage('Build Docker Images') {
             steps {
                 sh '''
@@ -2156,23 +2144,24 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    mkdir -p $WORKSPACE/exported-images
+                    mkdir -p $EXPORT_DIR
                     for img in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
-                        docker save "$img:latest" -o "$WORKSPACE/exported-images/$img.tar"
+                        docker save "$img:latest" -o "$EXPORT_DIR/$img.tar"
                     done
-                    echo "Docker images exported"
+                    echo "Docker images exported to $EXPORT_DIR"
                 '''
             }
         }
 
-        stage('Load Images into Minikube') {
+        stage('Load Images into Minikube (Host)') {
             steps {
                 sh '''
                     set -e
-                    for img in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
-                        minikube image load "$WORKSPACE/exported-images/$img.tar"
+                    echo "Loading images into host Minikube..."
+                    for img_tar in $EXPORT_DIR/*.tar; do
+                        minikube image load "$img_tar"
                     done
-                    echo "Docker images loaded into minikube"
+                    echo "Docker images loaded into Minikube"
                 '''
             }
         }
@@ -2180,7 +2169,6 @@ pipeline {
         stage('Prepare kubeconfig') {
             steps {
                 sh '''
-                    set -e
                     cp $KUBECONFIG_SRC $KUBECONFIG
                     echo "Kubeconfig prepared"
                 '''
