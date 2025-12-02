@@ -2136,18 +2136,7 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    services=(
-                        accounts-service
-                        blocker-service
-                        cash-service
-                        exchange-generator-service
-                        exchange-service
-                        front-ui
-                        notifications-service
-                        transfer-service
-                    )
-
-                    for svc in "${services[@]}"; do
+                    for svc in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
                         jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
                         if [ ! -f "$jarPath" ]; then
                             echo "ERROR: JAR not found for $svc at $jarPath!"
@@ -2157,7 +2146,6 @@ pipeline {
                         echo "Building Docker image $svc:latest..."
                         docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
                     done
-
                     echo "Docker images built successfully."
                 '''
             }
