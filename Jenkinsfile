@@ -1988,6 +1988,16 @@ for svc in "${services[@]}"; do
     echo "Building Docker image $svc:latest в Minikube..."
     docker build -t "$svc:latest" "${HARDCODED_WORKSPACE}/$svc"
 done
+
+# Проверка, что все образы реально собраны
+echo "Проверяем наличие образов в Minikube..."
+for svc in "${services[@]}"; do
+    if ! docker images | grep -q "$svc"; then
+        echo "ERROR: Docker image $svc:latest не найден в Minikube!"
+        exit 1
+    fi
+done
+echo "Все Docker образы присутствуют в Minikube."
 '''
             }
         }
@@ -1996,14 +2006,14 @@ done
             steps {
                 sh '''#!/bin/bash
 set -e
-echo "Copying kubeconfig to /tmp..."
+echo "Копируем kubeconfig в /tmp..."
 cp $KUBECONFIG_SRC $KUBECONFIG
 
-echo "Fixing absolute paths..."
+echo "Фиксим абсолютные пути..."
 sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
 sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
 
-echo "Validating kubeconfig с kubectl..."
+echo "Проверяем kubectl..."
 kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify get nodes || echo "kubectl test failed, но pipeline продолжает"
 '''
             }
@@ -2013,7 +2023,7 @@ kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify get nodes || echo "k
             steps {
                 sh '''#!/bin/bash
 set -e
-echo "Applying namespaces..."
+echo "Применяем namespace..."
 kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify apply -f ./namespaces.yaml
 '''
             }
