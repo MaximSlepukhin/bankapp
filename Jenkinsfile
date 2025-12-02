@@ -2079,6 +2079,8 @@ pipeline {
         KUBECONFIG_SRC = '/var/jenkins_home/.kube/config'
         KUBECONFIG = '/tmp/kubeconfig'
         HARDCODED_WORKSPACE = '/var/jenkins_home/workspace/BankAppCICD@2'
+        SERVICES = 'accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service'
+        IMAGE_TMP_DIR = '/tmp/docker-images'
     }
 
     stages {
@@ -2098,6 +2100,7 @@ pipeline {
                 sh 'kubectl version --client'
                 sh 'helm version'
                 sh 'docker --version'
+                sh 'minikube version'
             }
         }
 
@@ -2136,7 +2139,7 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    for svc in accounts-service blocker-service cash-service exchange-generator-service exchange-service front-ui notifications-service transfer-service; do
+                    for svc in $SERVICES; do
                         jarPath="${HARDCODED_WORKSPACE}/$svc/target/$svc-1.0-SNAPSHOT.jar"
                         if [ ! -f "$jarPath" ]; then
                             echo "ERROR: JAR not found for $svc at $jarPath!"
@@ -2151,12 +2154,36 @@ pipeline {
             }
         }
 
+        stage('Export Docker Images') {
+            steps {
+                sh '''
+                    set -e
+                    mkdir -p $IMAGE_TMP_DIR
+                    for svc in $SERVICES; do
+                        echo "Saving $svc:latest to tar..."
+                        docker save -o $IMAGE_TMP_DIR/$svc.tar $svc:latest
+                    done
+                '''
+            }
+        }
+
+        stage('Load Images into Minikube') {
+            steps {
+                sh '''
+                    set -e
+                    for svc in $SERVICES; do
+                        echo "Loading $svc into Minikube..."
+                        minikube image load $IMAGE_TMP_DIR/$svc.tar
+                    done
+                '''
+            }
+        }
+
         stage('Prepare kubeconfig') {
             steps {
                 sh '''
                     set -e
                     cp $KUBECONFIG_SRC $KUBECONFIG
-                    # Не меняем 127.0.0.1 на host.docker.internal
                     echo "Kubeconfig prepared"
                 '''
             }
