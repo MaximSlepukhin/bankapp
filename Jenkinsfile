@@ -2069,7 +2069,6 @@ pipeline {
             args """
                 -v /var/run/docker.sock:/var/run/docker.sock
                 -v /Users/maksim/.kube:/var/jenkins_home/.kube:ro
-                -v /Users/maksim/.minikube:/var/jenkins_home/.minikube:ro
                 -w /var/jenkins_home/workspace/BankAppCICD
             """
         }
@@ -2157,9 +2156,7 @@ pipeline {
                 sh '''
                     set -e
                     cp $KUBECONFIG_SRC $KUBECONFIG
-                    # Исправляем пути на контейнерные
-                    sed -i 's|/Users/maksim/.minikube|/var/jenkins_home/.minikube|g' $KUBECONFIG
-                    sed -i 's|127.0.0.1|host.docker.internal|g' $KUBECONFIG
+                    # Не меняем 127.0.0.1 на host.docker.internal
                     echo "Kubeconfig prepared"
                 '''
             }
@@ -2167,7 +2164,7 @@ pipeline {
 
         stage('Apply Namespaces') {
             steps {
-                sh 'kubectl --kubeconfig=$KUBECONFIG apply -f ./namespaces.yaml'
+                sh 'kubectl --kubeconfig=$KUBECONFIG --insecure-skip-tls-verify apply -f ./namespaces.yaml'
             }
         }
 
@@ -2177,7 +2174,8 @@ pipeline {
                     helm upgrade --install accounts-db ./helm/bankapp/charts/accounts-db \
                         --namespace dev \
                         --wait \
-                        --kubeconfig=$KUBECONFIG
+                        --kubeconfig=$KUBECONFIG \
+                        --kube-insecure-skip-tls-verify
                 '''
             }
         }
@@ -2188,7 +2186,8 @@ pipeline {
                     helm upgrade --install bankapp ./helm/bankapp \
                         --namespace dev \
                         -f ./helm/bankapp/values-dev.yaml \
-                        --kubeconfig=$KUBECONFIG
+                        --kubeconfig=$KUBECONFIG \
+                        --kube-insecure-skip-tls-verify
                 '''
             }
         }
