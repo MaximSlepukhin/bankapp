@@ -71,14 +71,14 @@ cash-service:
 exchange-generator-service:
   enabled: true
   image:
-    repository: localhost:5000//exchange-generator-service
+    repository: localhost:5000/exchange-generator-service
     tag: latest
     pullPolicy: IfNotPresent
 
 exchange-service:
   enabled: true
   image:
-    repository: localhost:5000//exchange-service
+    repository: localhost:5000/exchange-service
     tag: latest
     pullPolicy: IfNotPresent
 
