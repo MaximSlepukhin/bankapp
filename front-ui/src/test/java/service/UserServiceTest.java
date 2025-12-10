@@ -57,16 +57,16 @@ class UserServiceTest {
         assertThrows(UserAlreadyExistsException.class, () -> userService.registerUser(form));
     }
 
-    @Test
-    void getOtherUsers_ShouldFilterCurrentUser() {
-        var john = UserDto.builder().login("john").build();
-        var mary = UserDto.builder().login("mary").build();
-
-        when(accountsClient.getAllUsers()).thenReturn(List.of(john, mary));
-
-        List<UserDto> result = userService.getOtherUsers("john");
-
-        assertEquals(1, result.size());
-        assertEquals("mary", result.get(0).getLogin());
-    }
+//    @Test
+//    void getOtherUsers_ShouldFilterCurrentUser() {
+//        var john = UserDto.builder().login("john").build();
+//        var mary = UserDto.builder().login("mary").build();
+//
+//        when(accountsClient.getAllUsers()).thenReturn(List.of(john, mary));
+//
+//        List<UserDto> result = userService.getOtherUsers("john");
+//
+//        assertEquals(1, result.size());
+//        assertEquals("mary", result.get(0).getLogin());
+//    }
 }

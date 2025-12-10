@@ -3,6 +3,7 @@ package com.github.maximslepukhin.controller;
 import com.github.maximslepukhin.model.dto.UserDto;
 import com.github.maximslepukhin.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,11 +30,19 @@ public class UserController {
 
     @GetMapping("/keycloak/{keycloakId}")
     public ResponseEntity<UserDto> getByKeycloakId(@PathVariable String keycloakId) {
+        log.info("Получен запрос на поиск пользователя с keycloakId={}", keycloakId);
         try {
-            return ResponseEntity.ok(userService.findByKeycloakId(keycloakId));
+            UserDto user = userService.findByKeycloakId(keycloakId);
+            if (user != null) {
+                log.info("Пользователь с keycloakId={} найден: {}", keycloakId, user);
+                return ResponseEntity.ok(user);
+            } else {
+                log.warn("Пользователь с keycloakId={} не найден", keycloakId);
+                return ResponseEntity.notFound().build();
+            }
         } catch (RuntimeException e) {
-            log.warn("Пользователь с keycloakId={} не найден", keycloakId);
-            return ResponseEntity.notFound().build();
+            log.error("Ошибка при поиске пользователя с keycloakId={}", keycloakId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

@@ -1,36 +1,26 @@
-# --- Реплика ---
 replicaCount: 1
 
-# --- Контейнер образ ---
 image:
-  repository: accounts-service             # имя твоего образа (например, собранного через Dockerfile)
+  repository: accounts-service
   tag: "latest"
-  pullPolicy: Never                        # чтобы использовать локальный образ из minikube
+  pullPolicy: Never
 
-# --- Сервис ---
 service:
   name: accounts-service
   port: 8081
   targetPort: 8081
   type: ClusterIP
 
-# --- Ресурсы ---
 resources: {}
 
-# --- Профиль среды приложения ---
-env:
-  SPRING_PROFILES_ACTIVE: "dev"
-
-# --- Настройки PostgreSQL ---
 postgres:
-  host: accounts-db-accounts-db.default.svc.cluster.local
+  host: accounts-db-accounts-db
   port: 5432
   database: accountsdb
   username: accounts_user
   password: strongpassword123
   schema: accounts_service
 
-# --- Настройки Keycloak ---
 keycloak:
   url: http://keycloak:80
   realm: bank-realm
@@ -44,30 +34,8 @@ keycloak:
     tokenUri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/token
     authorizationUri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/auth
 
-# --- Настройки Eureka (если используется) ---
-eureka:
-  serviceUrl: http://discovery-server:8761/eureka/
-
-# --- Ingress (если планируешь добавить внешний доступ) ---
 ingress:
   enabled: false
   host: accounts.dev.bankapp.local
   annotations: {}
-
-# --- Пробы здоровья приложения ---
-probes:
-  readiness:
-    path: /actuator/health
-    port: 8081
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    failureThreshold: 3
-
-  liveness:
-    path: /actuator/health
-    port: 8081
-    initialDelaySeconds: 30
-    periodSeconds: 20
-    failureThreshold: 5
-
 

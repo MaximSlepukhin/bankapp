@@ -1,231 +1,4 @@
 
-# 🏦 BankApp — Микросервисное банковское приложение "Банк"
-
-Микросервисный проект с использованием **Spring Boot**, **Spring Cloud**, **Keycloak**, **PostgreSQL**,
-**Docker Compose**, **Eureka Discovery**, **API Gateway** и **Frontend UI**.
-
----
-
-##  Локальный запуск проекта
-
-### 📋 Требования
-
-Перед запуском убедись, что установлены:
-
-- **Docker**
-- **Docker Compose**
-- **Make** (для удобного запуска)
-- **Java** ≥ 21
-
----
-
-##  1. Сборка проекта
-
-Сначала собери все JAR-файлы проекта:
-
-```bash
-mvn clean install -DskipTests
-```
-
----
-
-## 🏗️ 2. Запуск контейнеров
-
-### ✅ Вариант 1 — через Makefile (рекомендуется)
-
-Просто выполни:
-
-```bash
-make all
-```
-
-Эта команда автоматически:
-
-1. Поднимет **PostgreSQL** для Keycloak
-2. Поднимет **Keycloak** и дождётся его готовности
-3. Импортирует `bank-realm.json`
-4. Поднимет **PostgreSQL** для банковских сервисов
-5. Запустит **Config Server** и **Discovery Server**
-6. Запустит все микросервисы:  
-   `accounts-service`, `cash-service`, `transfer-service`,  
-   `exchange-service`, `blocker-service`, `notifications-service`, `exchange-generator-service`
-7. Запустит **Gateway** и **Frontend UI**
-
-## ✅ Готово!
-
-После запуска можно открыть:
-- Frontend → [http://localhost:8080/signup]
-- Авторизация через Keycloak (`bank-realm`)
-- Все микросервисы зарегистрированы в Eureka и доступны через Gateway.
-
----
-
-### ⚙️ Вариант 2 — вручную
-
-Если нет `make`, можно запускать вручную:
-
-```bash
-docker compose up -d --build postgres-keycloak
-docker compose up -d --build keycloak
-# дождаться готовности Keycloak (~30 секунд)
-docker compose up -d --build postgres
-docker compose up -d --build config-server discovery-server
-docker compose up -d --build accounts-service cash-service transfer-service exchange-service blocker-service notifications-service exchange-generator-service
-docker compose up -d --build gateway front-ui
-```
-
----
-
-## 🌍 3. Основные URL
-
-| Компонент | URL |
-|------------|-----|
-| 🦸 Keycloak Admin Console | [http://localhost:8082/admin](http://localhost:8082/admin) |
-| ⚙️ Config Server | [http://localhost:8888](http://localhost:8888) |
-| 🔍 Discovery Server (Eureka) | [http://localhost:8761](http://localhost:8761) |
-| 🌐 Gateway API | [http://localhost:8090](http://localhost:8090) |
-| 🖥️ Frontend UI | [http://localhost:8080](http://localhost:8080) |
-
-🔑 **Keycloak credentials:**
-```
-Username: admin
-Password: admin
-```
-
----
-
-## 🧱 4. Описание микросервисов
-
-| Сервис | Назначение | Порт |
-|---------|-------------|------|
-| 🐘 **postgres** | БД для банковских сервисов | 5433 |
-| 🐘 **postgres-keycloak** | БД для Keycloak | 5434 |
-| 🦸 **keycloak** | OAuth2 / OpenID Connect сервер авторизации | 8082 |
-| ⚙️ **config-server** | Spring Cloud Config Server | 8888 |
-| 🔍 **discovery-server** | Eureka Server для регистрации микросервисов | 8761 |
-| 💳 **accounts-service** | Управление банковскими счетами | 8081 |
-| 💰 **cash-service** | Наличные операции | 8091 |
-| 💸 **transfer-service** | Денежные переводы | 8083 |
-| 💱 **exchange-service** | Обмен валют | 8085 |
-| 🚫 **blocker-service** | Блокировка счетов и карт | 8086 |
-| 📢 **notifications-service** | Уведомления | 8087 |
-| 📊 **exchange-generator-service** | Генерация валютных курсов | 8088 |
-| 🌐 **gateway** | API Gateway (входная точка для фронта и клиентов) | 8090 |
-| 🖥️ **front-ui** | Веб-интерфейс приложения | 8080 |
-
----
-
-## 🔑 5. Импорт Keycloak Realm
-
-При первом старте Keycloak автоматически импортирует `bank-realm.json` из директории:
-
-```
-./keycloak-export → /opt/keycloak/data/import
-```
-
-Это создаёт:
-- Realm: `bank-realm`
-- Клиентов (front-ui и др.)
-- Роли, пользователей и настройки аутентификации.
-
----
-
-## 🧰 6. Полезные команды Makefile
-
-| Команда | Описание |
-|----------|-----------|
-| `make all` | Полный запуск всех сервисов в нужном порядке |
-| `make down` | Остановка всех контейнеров |
-| `make rebuild` | Полная пересборка и перезапуск |
-| `make ps` | Проверка статуса всех контейнеров |
-| `make logs` | Просмотр логов |
-| `make clean` | Полное удаление контейнеров и volume’ов |
-
----
-
-## 🧹 7. Очистка окружения
-
-Если нужно удалить всё (контейнеры, volume и кэш):
-
-```bash
-make clean
-```
-
-или
-
-```bash
-docker compose down -v --remove-orphans
-docker system prune -f
-```
-
----
-
-
-# 1️⃣ Основная структура
-mkdir -p helm/bankapp/{templates,charts}
-
-# 2️⃣ Основные файлы чарта
-touch helm/bankapp/{Chart.yaml,values.yaml,values-dev.yaml,values-test.yaml,values-prod.yaml}
-touch helm/bankapp/templates/{_helpers.tpl,ingress.yaml,configmap.yaml,secrets.yaml,postgres-statefulset.yaml,namespace.yaml}
-
-# 3️⃣ Сабчарты для микросервисов
-for svc in accounts-service cash-service transfer-service exchange-service exchange-generator-service blocker-service notifications-service front-ui; do
-mkdir -p helm/bankapp/charts/$svc/templates
-touch helm/bankapp/charts/$svc/{Chart.yaml,values.yaml}
-touch helm/bankapp/charts/$svc/templates/{deployment.yaml,service.yaml}
-done
-
-# 4️⃣ Сабчарт для Keycloak (внутренний или заглушка, если потом подключишь внешний)
-mkdir -p helm/bankapp/charts/keycloak/templates
-touch helm/bankapp/charts/keycloak/{Chart.yaml,values.yaml}
-touch helm/bankapp/charts/keycloak/templates/{deployment.yaml,service.yaml}
-
-# 5️⃣ Тесты Helm (helm test)
-mkdir -p helm/bankapp/templates/tests
-touch helm/bankapp/templates/tests/{test-connection.yaml,test-pods.yaml}
-
-# 6️⃣ Jenkinsfiles
-touch Jenkinsfile
-for svc in accounts-service cash-service transfer-service exchange-service exchange-generator-service blocker-service notifications-service front-ui; do
-mkdir -p $svc
-touch $svc/Jenkinsfile
-done
-
-
-
-
-
-## Требования
-
-Для работы с данным проектом необходимо установить **Helm** версии **3.0** или выше. Чтобы проверить,
-что Helm устанволен и работает корректно, выполните команду: helm version
-
-Для локальной разработки и тестирования необходимо установить Minikube. Minikube создаст локальный кластер Kubernetes,
-в котором будут развернуты все сервисы вашего приложения.
-
-Убедитесь, что у вас установлен kubectl для взаимодействия с Kubernetes. Это нужно для управления вашим локальным кластером и развертываниями.
-kubectl version --client
-
-Для сборки Docker-образов, которые будут развернуты в Minikube, необходимо установить Docker.
-docker --version
-
-Убедитесь, что у вас установлен Git, чтобы клонировать репозиторий и работать с ним локально.
-git --version
-
-
-### Установка Helm
-
-1. Скачайте и установите последнюю стабильную версию Helm для вашей операционной системы, следуя инструкциям на официальном сайте:
-
-    - [Установка Helm для Linux](https://helm.sh/docs/intro/install/#from-script)
-    - [Установка Helm для macOS](https://helm.sh/docs/intro/install/#from-homebrew)
-    - [Установка Helm для Windows](https://helm.sh/docs/intro/install/#from-chocolatey)
-
-2. Проверьте версию Helm, убедившись, что она соответствует требуемой:
-
-   ```bash
-   helm version
-
 
 docker build -f Dockerfile.jenkins -t jenkins-k8s:latest .
 docker images
@@ -495,3 +268,204 @@ kubectl port-forward -n kube-system svc/registry 54611:80
 
 docker network connect minikube jenkins-k8s
 kubectl port-forward -n kube-system service/registry 5000:80
+
+
+
+
+
+
+kubectl apply -f namespaces.yaml
+kubectl get namespaces
+
+
+nano ~/.docker/config.json
+FRONT-UI
+cd front-ui
+mvn clean package -DskipTests
+cd ..
+eval $(minikube docker-env)
+docker build -t front-ui:latest -f front-ui/Dockerfile front-ui
+cd helm/bankapp/charts/front-ui
+minikube ssh
+docker images | grep front-ui
+
+
+из папки bankapp/helm/charts/front-ui
+helm install front-ui . --namespace dev --force
+helm upgrade front-ui . --namespace dev --force
+kubectl rollout restart deployment front-ui -n dev
+kubectl port-forward -n dev svc/front-ui 8081:8080
+
+
+helm list
+kubectl get pods
+kubectl get svc
+
+kubectl port-forward -n dev svc/front-ui 8081:8080
+
+
+
+БАЗА ДАННЫХ ACCOUNTS-DB
+cd helm/bankapp/charts/accounts-db
+helm install accounts-db . --namespace dev --force
+helm upgrade accounts-db . --namespace dev --force
+kubectl rollout restart deployment accounts-service-accounts -n dev
+
+kubectl run pg-client --rm -it --image=postgres:15 --namespace dev -- bash
+kubectl delete pod pg-client -n dev
+psql -h accounts-db-accounts-db.dev.svc.cluster.local -U accounts_user -d accountsdb
+\dn
+\dt accounts_service.*
+SELECT * FROM accounts_service.users;
+SELECT * FROM accounts_service.accounts;
+
+DELETE FROM accounts_service.accounts WHERE owner_id IN (SELECT id FROM accounts_service.users);
+DELETE FROM accounts_service.users;
+
+
+SELECT *
+FROM accounts_service.accounts
+WHERE owner_id = (SELECT id FROM accounts_service.users WHERE login = 'Максим Слепухин');
+
+
+БАЗА ДАННЫХ keycloak-db
+cd helm/bankapp/charts/keycloak-db
+helm install keycloak-db . --namespace dev --force
+helm upgrade keycloak-db . --namespace dev --force
+kubectl get all -n dev
+
+
+
+BLOCKER-SERVICE
+cd blocker-service
+mvn clean package -DskipTests
+cd ..
+eval $(minikube docker-env)
+docker build -t blocker-service:latest -f blocker-service/Dockerfile blocker-service
+cd helm/bankapp/charts/blocker-service
+helm install blocker-service . --namespace dev --force
+helm upgrade blocker-service . --namespace dev --force
+
+
+minikube ssh
+docker images | grep blocker-service
+
+
+
+
+kubectl get all -n dev
+
+
+
+ACCOUNTS-SERVICE
+cd accounts-service
+mvn clean package -DskipTests
+cd ..
+eval $(minikube docker-env)
+docker build -t accounts-service:latest -f accounts-service/Dockerfile accounts-service
+docker images | grep accounts-service
+cd helm/bankapp/charts/accounts-service
+helm install accounts-service . --namespace dev --force
+helm upgrade accounts-service . --namespace dev --force
+kubectl rollout restart deployment accounts-service-accounts -n dev
+kubectl get all -n dev
+kubectl logs -n dev accounts-service-accounts-7484d59bdc-jsj9c
+
+
+
+CASH-SERVICE
+cd cash-service
+mvn clean package -DskipTests
+cd ..
+eval $(minikube docker-env)
+docker build -t cash-service:latest -f cash-service/Dockerfile cash-service
+docker images | grep cash-service
+cd helm/bankapp/charts/cash-service
+helm install cash-service . --namespace dev --force
+kubectl get all -n dev
+helm upgrade cash-service . --namespace dev --force
+kubectl rollout restart deployment cash-service -n dev
+
+
+
+EXCHANGE-GENERATOR-SERVICE
+cd exchange-generator-service
+mvn clean package -DskipTests
+cd ..
+eval $(minikube docker-env)
+docker build -t exchange-generator-service:latest -f exchange-generator-service/Dockerfile exchange-generator-service
+docker images | grep exchange-generator-service
+cd helm/bankapp/charts/exchange-generator-service
+helm install exchange-generator-service . --namespace dev --force
+kubectl get all -n dev
+kubectl get secret keycloak-tls-secret -n dev -o yaml
+helm upgrade exchange-generator-service . --namespace dev --force
+kubectl rollout restart deployment exchange-generator-service -n dev
+
+
+EXCHANGE-SERVICE
+cd exchange-service
+mvn clean package -DskipTests
+cd ..
+eval $(minikube docker-env)
+docker build -t exchange-service:latest -f exchange-service/Dockerfile exchange-service
+docker images | grep exchange-service
+cd helm/bankapp/charts/exchange-service
+helm install exchange-service . --namespace dev --force
+kubectl get all -n dev
+helm upgrade exchange-service . --namespace dev --force
+kubectl rollout restart deployment exchange-service -n dev
+
+
+NOTIFICATIONS-SERVICE
+cd notifications-service
+mvn clean package -DskipTests
+cd ..
+eval $(minikube docker-env)
+docker build -t notifications-service:latest -f notifications-service/Dockerfile notifications-service
+docker images | grep notifications-service
+cd helm/bankapp/charts/notifications-service
+helm install notifications-service . --namespace dev --force
+kubectl get all -n dev
+helm upgrade notifications-service . --namespace dev --force
+kubectl rollout restart deployment notifications-service -n dev
+
+
+TRANSFER-SERVICE
+cd transfer-service
+mvn clean package -DskipTests
+cd ..
+eval $(minikube docker-env)
+docker build -t transfer-service:latest -f transfer-service/Dockerfile transfer-service
+docker images | grep transfer-service
+cd helm/bankapp/charts/transfer-service
+helm install transfer-service . --namespace dev --force
+kubectl get all -n dev
+helm upgrade transfer-service . --namespace dev --force
+kubectl rollout restart deployment transfer-service -n dev
+
+kubectl port-forward -n dev svc/front-ui 8081:8080
+kubectl port-forward -n dev svc/keycloak 8080:80
+
+[//]: # (kubectl port-forward -n dev svc/keycloak 8080:8080)
+
+curl http://notifications-service:8080/api/notifications/ping
+
+ KEYCLOAK 
+ cd helm/bankapp/charts/keycloak
+ helm install keycloak . --namespace dev --force
+ helm upgrade keycloak . --namespace dev --force
+kubectl delete deployment keycloak -n dev
+ kubectl get secret keycloak-tls-secret -n dev -o yaml
+ kubectl port-forward -n dev svc/keycloak 8080:80
+ kubectl logs -n dev
+
+
+
+
+
+kubectl logs -n dev blocker-service-5b67b5cb88-dq88w
+nano ~/.docker/config.json
+
+
+kubectl get rs -n dev --no-headers | awk '$2=="0" {print $1}' | xargs -r kubectl delete rs -n dev

@@ -1,114 +1,42 @@
-#spring:
-#  application:
-#    name: notifications-service
-#
-#  datasource:
-#    url: ${SPRING_DATASOURCE_URL}
-#    username: ${SPRING_DATASOURCE_USERNAME}
-#    password: ${SPRING_DATASOURCE_PASSWORD}
-#
-#  jpa:
-#    hibernate:
-#      ddl-auto: none
-#    properties:
-#      hibernate.default_schema: notifications_service
-#
-#  liquibase:
-#    enabled: true
-#    change-log: classpath:db/changelog/notifications-service/master.yaml
-#    default-schema: notifications_service
-#    drop-first: true
-#    clear-checksums: true
-#
-#  security:
-#    oauth2:
-#      resourceserver:
-#        jwt:
-#          jwk-set-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/certs
-#      client:
-#        registration:
-#          keycloak-service:
-#            provider: keycloak
-#            client-id: front-ui-service
-#            client-secret: z1GkjE1Vi9Ba1B91tFPjZtg6CGQiw5ea
-#            authorization-grant-type: client_credentials
-#        provider:
-#          keycloak:
-#            token-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/token
-#            authorization-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/auth
-#
-#server:
-#  port: 8087
-#  address: 0.0.0.0
-#
-#logging:
-#  level:
-#    root: info
-#    org.springframework.security: trace
-#    org.springframework.web: debug
-#    org.springframework.security.oauth2: trace
 spring:
   application:
     name: notifications-service
 
-  # Настройки подключения к базе данных
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}  # Значение будет приходить из Kubernetes через переменные окружения
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+#  datasource:
+#    url: ${SPRING_DATASOURCE_URL}
+#    username: ${SPRING_DATASOURCE_USERNAME}
+#    password: ${SPRING_DATASOURCE_PASSWORD}
 
-  # JPA настройки
   jpa:
     hibernate:
       ddl-auto: none
     properties:
-      hibernate.default_schema: notifications_service  # Это имя схемы, которую использует сервис
+      hibernate.default_schema: notifications_service
 
-  # Liquibase настройки для миграций базы данных
   liquibase:
     enabled: true
-    change-log: classpath:db/changelog/notifications-service/master.yaml  # Путь к changelog
-    default-schema: notifications_service  # Схема базы данных
-    drop-first: true  # Очищаем таблицы при старте, если это необходимо
-    clear-checksums: true  # Очищаем старые контрольные суммы
+    change-log: classpath:db/changelog/notifications-service/master.yaml
+    default-schema: notifications_service
+    drop-first: true
+    clear-checksums: true
 
-  # Настройки безопасности OAuth2 (для работы с Keycloak)
   security:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}  # Ссылка на JWK от Keycloak
-      client:
-        registration:
-          keycloak-service:
-            provider: keycloak
-            client-id: ${KEYCLOAK_CLIENT_ID}  # ID клиента, например, front-ui-service
-            client-secret: ${KEYCLOAK_CLIENT_SECRET}  # Секрет клиента
-            authorization-grant-type: client_credentials
-        provider:
-          keycloak:
-            token-uri: ${KEYCLOAK_TOKEN_URI}  # Ссылка на токен Keycloak
-            authorization-uri: ${KEYCLOAK_AUTHORIZATION_URI}  # Ссылка на авторизацию Keycloak
+          jwk-set-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs
 
-  # Настройки сервера
-  server:
-    port: 8087
-    address: 0.0.0.0  # Чтобы сервис был доступен на всех IP
-
-  # Логирование
 logging:
   level:
-    root: info  # Основной уровень логирования
-    org.springframework.security: trace  # Логирование безопасности (например, OAuth2)
-    org.springframework.web: debug  # Логирование HTTP-запросов
-    org.springframework.security.oauth2: trace  # Логирование OAuth2
-    # Логирование Spring JDBC (для отслеживания соединений с базой данных)
-    org.springframework.jdbc.core: debug  # Логи JDBC, включая создание соединений с базой данных
-    org.springframework.jdbc.datasource: debug  # Логи источников данных (DataSource)
-    org.springframework.boot.jdbc.DataSourceInitializer: debug  # Логи инициализации DataSource
-    org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration: debug  # Логирование Liquibase
-    # Логирование для всех SQL-запросов (Hibernate / JPA)
-    org.hibernate.SQL: debug  # Логирование всех SQL-запросов, отправляемых Hibernate
-    org.hibernate.type.descriptor.sql.BasicBinder: trace  # Логирование значений параметров SQL-запросов
-    org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration: debug  # Логирование автоматической настройки DataSource
+    root: info
+    org.springframework.security: trace
+    org.springframework.web: debug
+    org.springframework.security.oauth2: trace
+    org.springframework.jdbc.core: debug
+    org.springframework.jdbc.datasource: debug
+    org.springframework.boot.jdbc.DataSourceInitializer: debug
+    org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration: debug
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+    org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration: debug
 

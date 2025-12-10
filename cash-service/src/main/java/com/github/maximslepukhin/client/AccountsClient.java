@@ -12,7 +12,6 @@ public class AccountsClient {
 
     private final RestTemplate restTemplate;
 
-    // URL сервиса задается через переменную окружения или application.yaml
     @Value("${clients.accounts-service-url}")
     private String accountsServiceUrl;
 

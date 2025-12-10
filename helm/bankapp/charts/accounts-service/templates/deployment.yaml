@@ -21,36 +21,17 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.targetPort }}
-
           env:
-            # --- ConfigMap ---
             - name: SPRING_PROFILES_ACTIVE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "accounts.configName" . }}
-                  key: SPRING_PROFILES_ACTIVE
+              value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"
             - name: SPRING_DATASOURCE_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "accounts.configName" . }}
-                  key: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ .Values.postgres.host }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "accounts.configName" . }}
-                  key: SPRING_JPA_HIBERNATE_DDL_AUTO
-            - name: SPRING_LIQUIBASE_DEFAULT_SCHEMA
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "accounts.configName" . }}
-                  key: SPRING_LIQUIBASE_DEFAULT_SCHEMA
+              value: "none"
             - name: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "accounts.configName" . }}
-                  key: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
-
-            # --- Secret ---
+              value: "{{ .Values.postgres.schema }}"
+            - name: SPRING_LIQUIBASE_DEFAULT_SCHEMA
+              value: "{{ .Values.postgres.schema }}"
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -61,41 +42,16 @@ spec:
                 secretKeyRef:
                   name: {{ include "accounts.secretName" . }}
                   key: POSTGRES_PASSWORD
-
-            # --- Keycloak ---
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
               value: "{{ .Values.keycloak.endpoints.jwkSetUri }}"
-
             - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI
               value: "{{ .Values.keycloak.endpoints.tokenUri }}"
-
             - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI
               value: "{{ .Values.keycloak.endpoints.authorizationUri }}"
-
             - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_SERVICE_CLIENT_ID
               value: "{{ .Values.keycloak.client.id }}"
-
             - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_SERVICE_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "accounts.secretName" . }}
                   key: KEYCLOAK_CLIENT_SECRET
-
-          readinessProbe:
-            httpGet:
-              path: {{ .Values.probes.readiness.path }}
-              port: {{ .Values.probes.readiness.port }}
-            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
-            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
-
-          livenessProbe:
-            httpGet:
-              path: {{ .Values.probes.liveness.path }}
-              port: {{ .Values.probes.liveness.port }}
-            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
-            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
-
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}

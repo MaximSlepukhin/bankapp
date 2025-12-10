@@ -22,7 +22,7 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:postgresql://{{ .Values.env.POSTGRES_HOST }}:{{ .Values.env.POSTGRES_PORT }}/{{ .Values.env.POSTGRES_DATABASE }}?currentSchema={{ .Values.env.POSTGRES_SCHEMA }}"
+              value: "jdbc:postgresql://{{ .Values.env.POSTGRES_HOST }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.env.POSTGRES_PORT }}/{{ .Values.env.POSTGRES_DATABASE }}?currentSchema={{ .Values.env.POSTGRES_SCHEMA }}"
             - name: SPRING_DATASOURCE_USERNAME
               value: "{{ .Values.env.POSTGRES_USERNAME }}"
             - name: SPRING_DATASOURCE_PASSWORD
@@ -34,3 +34,23 @@ spec:
                   key: KEYCLOAK_CLIENTSECRET
             - name: SPRING_CLOUD_CONFIG_ENABLED
               value: "false"
+            - name: ACCOUNTS_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-transfer-config
+                  key: ACCOUNTS_SERVICE_URL
+            - name: BLOCKER_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-transfer-config
+                  key: BLOCKER_SERVICE_URL
+            - name: NOTIFICATIONS_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-transfer-config
+                  key: NOTIFICATIONS_SERVICE_URL
+            - name: EXCHANGE_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-transfer-config
+                  key: EXCHANGE_SERVICE_URL

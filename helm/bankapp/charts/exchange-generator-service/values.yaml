@@ -1,10 +1,11 @@
+springProfile: dev
+
 replicaCount: 1
 
 image:
   repository: exchange-generator-service
   pullPolicy: IfNotPresent
   tag: "latest"
-
 
 service:
   type: ClusterIP
@@ -19,5 +20,5 @@ resources:
     memory: 256Mi
 
 env:
-  - name: SPRING_PROFILES_ACTIVE
-    value: dev
+  SPRING_PROFILES_ACTIVE: dev
+  EXCHANGE_SERVICE_URL: "http://exchange-service:8084/api/exchange/rates"

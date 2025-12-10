@@ -14,7 +14,7 @@ resources: {}
 
 env:
   SPRING_PROFILES_ACTIVE: "dev"
-  POSTGRES_HOST: "accounts-db-accounts-db.default.svc.cluster.local"
+  POSTGRES_HOST: "accounts-db-accounts-db"
   POSTGRES_PORT: "5432"
   POSTGRES_DATABASE: "accountsdb"
   POSTGRES_USERNAME: "accounts_user"
@@ -22,7 +22,7 @@ env:
   POSTGRES_SCHEMA: "notifications_service"
 
 postgres:
-  host: "accounts-db-accounts-db.default.svc.cluster.local"
+  host: "accounts-db-accounts-db"
   port: 5432
   database: "accountsdb"
   username: "accounts_user"
@@ -30,15 +30,16 @@ postgres:
   schema: "notifications_service"
 
 keycloak:
-  jwkSetUri: "http://keycloak:8080/realms/bank-realm/protocol/openid-connect/certs"
-  clientId: "front-ui-service"
-  tokenUri: "http://keycloak:8080/realms/bank-realm/protocol/openid-connect/token"
-  authorizationUri: "http://keycloak:8080/realms/bank-realm/protocol/openid-connect/auth"
+  jwkSetUri: "http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs"
+#  clientId: "front-ui-service"
+#  tokenUri: "http://keycloak:8080/realms/bank-realm/protocol/openid-connect/token"
+#  authorizationUri: "http://keycloak:8080/realms/bank-realm/protocol/openid-connect/auth"
 
 secrets:
   POSTGRES_USERNAME: "admin"
   POSTGRES_PASSWORD: "password"
   KEYCLOAK_CLIENTSECRET: "z1GkjE1Vi9Ba1B91tFPjZtg6CGQiw5ea"
+
 
 logging:
   level:

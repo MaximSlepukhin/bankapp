@@ -20,36 +20,42 @@ spring:
     drop-first: true
     clear-checksums: true
 
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          jwk-set-uri: http://keycloak.default.svc.cluster.local:8080/realms/bank-realm/protocol/openid-connect/certs
+#      client:
+#        registration:
+#          keycloak-service:
+#            provider: keycloak
+#            client-id: front-ui-service
+#            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+#            authorization-grant-type: client_credentials
+#        provider:
+#          keycloak:
+#            token-uri: http://localhost:8080/realms/bank-realm/protocol/openid-connect/token
+##            token-uri: http://keycloak.default.svc.cluster.local:8080/realms/bank-realm/protocol/openid-connect/token
+#            authorization-uri: http://keycloak.default.svc.cluster.local:8080/realms/bank-realm/protocol/openid-connect/auth
+
   security:
     oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: http://keycloak.default.svc.cluster.local:8080/realms/bank-realm/protocol/openid-connect/certs
       client:
         registration:
-          keycloak-service:
+          transfer-service:
+            client-id: transfer-service  # ID клиента, который настроен в Keycloak
+            client-secret: RMU6Vb96Ay0fWnLJ6WEBiyt8yjdjKk24
             provider: keycloak
-            client-id: front-ui-service
-            client-secret: ${KEYCLOAK_CLIENT_SECRET}
-            authorization-grant-type: client_credentials
+            scope: openid
+            authorization-grant-type: client_credentials  # Тип авторизации
         provider:
           keycloak:
-            token-uri: http://keycloak.default.svc.cluster.local:8080/realms/bank-realm/protocol/openid-connect/token
-            authorization-uri: http://keycloak.default.svc.cluster.local:8080/realms/bank-realm/protocol/openid-connect/auth
+            token-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/token
+
 
 server:
   port: 8083
   address: 0.0.0.0
-
-services:
-  accounts:
-    url: http://accounts-service.default.svc.cluster.local:8081
-  blocker:
-    url: http://blocker-service.default.svc.cluster.local:8087
-  exchange:
-    url: http://exchange-service.default.svc.cluster.local:8085
-  notifications:
-    url: http://notifications-service.default.svc.cluster.local:8089
 
 logging:
   level:

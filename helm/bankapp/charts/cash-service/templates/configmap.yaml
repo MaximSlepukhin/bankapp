@@ -4,6 +4,6 @@ metadata:
   name: {{ include "cash-service.fullname" . }}-config
 data:
   SPRING_PROFILES_ACTIVE: "prod"
-  ACCOUNTS_SERVICE_URL: "http://accounts-service:8090"
-  BLOCKER_SERVICE_URL: "http://blocker-service:8092"
-  NOTIFICATIONS_SERVICE_URL: "http://notifications-service:8093"
+  ACCOUNTS_SERVICE_URL: "http://accounts-service:8081"
+  BLOCKER_SERVICE_URL: "http://blocker-service:8087"
+  NOTIFICATIONS_SERVICE_URL: "http://notifications-service:8087"

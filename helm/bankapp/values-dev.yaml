@@ -1,51 +1,3 @@
-#accounts-service:
-#  enabled: true
-#
-#blocker-service:
-#  enabled: true
-#  replicaCount: 1
-#  image:
-#    repository: blocker-service
-#    tag: latest
-#    pullPolicy: IfNotPresent
-#  env:
-#    maintenanceStart: "00:00"
-#    maintenanceEnd: "00:05"
-#  resources:
-#    requests:
-#      cpu: "100m"
-#      memory: "128Mi"
-#    limits:
-#      cpu: "200m"
-#      memory: "256Mi"
-#
-#
-#cash-service:
-#  enabled: true
-#
-#exchange-generator-service:
-#  enabled: true
-#
-#exchange-service:
-#  enabled: true
-#
-#front-ui:
-#  enabled: true
-#
-#notifications-service:
-#  enabled: true
-#
-#transfer-service:
-#  enabled: true
-#
-#keycloak:
-#  enabled: true
-#
-#accounts-db:
-#  enabled: true
-#
-#keycloak-db:
-#  enabled: true
 accounts-service:
   enabled: true
   image:
@@ -102,3 +54,34 @@ transfer-service:
     repository: localhost:5000/transfer-service
     tag: latest
     pullPolicy: IfNotPresent
+
+
+
+
+
+
+
+
+
+
+
+
+    # values-dev.yaml
+    springProfile: dev
+
+    image:
+      repository: exchange-generator-service
+      pullPolicy: IfNotPresent
+      tag: "latest"
+
+    service:
+      type: ClusterIP
+      port: 8080
+
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi

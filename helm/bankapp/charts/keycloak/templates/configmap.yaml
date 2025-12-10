@@ -5,5 +5,6 @@ metadata:
   name: keycloak-realm
 data:
   {{ .Values.realmImport.file }}: |-
-    {{ .Files.Get .Values.realmImport.file | nindent 4 }}
+    {{ .Files.Get "files/bank-realm-realm.json" | nindent 4 }}
+    {{ .Files.Get "files/bank-realm-гыукы-0.json" | nindent 4 }}
 {{- end }}

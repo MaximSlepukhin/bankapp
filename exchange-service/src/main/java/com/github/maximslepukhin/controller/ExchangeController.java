@@ -23,7 +23,7 @@ public class ExchangeController {
         return exchangeService.getRates();
     }
 
-    @PostMapping("/rates") // ✅ новый эндпоинт
+    @PostMapping("/rates")
     public void updateRates(@RequestBody List<CurrencyRate> rates) {
         exchangeService.updateRates(rates);
     }

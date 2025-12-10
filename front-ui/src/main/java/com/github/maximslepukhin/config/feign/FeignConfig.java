@@ -1,9 +1,9 @@
 package com.github.maximslepukhin.config.feign;
 
 import com.github.maximslepukhin.config.security.KeycloakTokenService;
-import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class FeignConfig {
@@ -14,13 +14,14 @@ public class FeignConfig {
         this.keycloakTokenService = keycloakTokenService;
     }
 
-    @Bean
-    public RequestInterceptor requestInterceptor() {
-        return requestTemplate -> {
-            // Получаем сервисный токен
+    @Bean(name = "restTemplateWithAuth")
+    public RestTemplate restTemplateWithAuth() {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getInterceptors().add((request, body, execution) -> {
             String token = keycloakTokenService.getAccessToken();
-            requestTemplate.header("Authorization", "Bearer " + token);
-        };
+            request.getHeaders().setBearerAuth(token);
+            return execution.execute(request, body);
+        });
+        return restTemplate;
     }
 }
-

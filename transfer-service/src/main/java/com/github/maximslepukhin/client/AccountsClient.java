@@ -15,7 +15,7 @@ public class AccountsClient {
     private final String accountsServiceUrl;
 
     public AccountsClient(RestTemplate restTemplate,
-                          @Value("${services.accounts.url}") String accountsServiceUrl) {
+                          @Value("${ACCOUNTS_SERVICE_URL}") String accountsServiceUrl) {
         this.restTemplate = restTemplate;
         this.accountsServiceUrl = accountsServiceUrl; // например: http://accounts-service.default.svc.cluster.local:8081
     }

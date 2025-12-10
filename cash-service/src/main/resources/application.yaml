@@ -1,34 +1,3 @@
-#spring:
-#  application:
-#    name: cash-service
-#
-#  security:
-#    oauth2:
-#      resourceserver:
-#        jwt:
-#          jwk-set-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/certs
-#      client:
-#        registration:
-#          keycloak-service:
-#            provider: keycloak
-#            client-id: front-ui-service
-#            client-secret: z1GkjE1Vi9Ba1B91tFPjZtg6CGQiw5ea
-#            authorization-grant-type: client_credentials
-#        provider:
-#          keycloak:
-#            token-uri: http://keycloak:8080/realms/bank-realm/protocol/openid-connect/token
-#
-#server:
-#  port: 8091
-#  address: 0.0.0.0
-#
-#
-#logging:
-#  level:
-#    root: info
-#    org.springframework.security: trace
-#    org.springframework.web: debug
-#    org.springframework.security.oauth2: trace
 spring:
   application:
     name: cash-service

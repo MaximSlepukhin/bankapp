@@ -123,7 +123,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.7.1</version> <!-- последняя стабильная на октябрь 2025 -->
+                <version>3.7.1</version>
             </plugin>
         </plugins>
     </build>

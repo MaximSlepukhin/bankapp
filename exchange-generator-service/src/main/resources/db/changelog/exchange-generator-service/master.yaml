@@ -1,3 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: db/changelog/exchange-generator-service/changesets/001-create-generated-rates-table.yaml

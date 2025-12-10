@@ -12,7 +12,7 @@ public class NotificationsClient {
     private final String notificationsServiceUrl;
 
     public NotificationsClient(RestTemplate restTemplate,
-                               @Value("${services.notifications.url}") String notificationsServiceUrl) {
+                               @Value("${NOTIFICATIONS_SERVICE_URL}") String notificationsServiceUrl) {
         this.restTemplate = restTemplate;
         this.notificationsServiceUrl = notificationsServiceUrl;
     }
