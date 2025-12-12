@@ -1,37 +1,44 @@
-# Берём официальный Jenkins LTS с JDK17
-FROM jenkins/jenkins:lts-jdk17
+# Берем официальный Jenkins с OpenJDK 21
+FROM jenkins/jenkins:2.528.2-jdk21
 
+# Переключаемся на root для установки пакетов
 USER root
 
-# Устанавливаем базовые утилиты
+# Обновляем репозитории и устанавливаем базовые утилиты
 RUN apt-get update && apt-get install -y \
     curl \
-    bash \
-    apt-transport-https \
-    ca-certificates \
+    git \
+    unzip \
+    wget \
     gnupg \
     lsb-release \
     sudo \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем kubectl
-RUN curl -LO "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
-    && chmod +x kubectl \
-    && mv kubectl /usr/local/bin/
-
-# Устанавливаем Helm
-RUN curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+# Устанавливаем Maven
+ARG MAVEN_VERSION=3.9.5
+RUN wget https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip \
+    && unzip apache-maven-${MAVEN_VERSION}-bin.zip -d /opt/ \
+    && rm apache-maven-${MAVEN_VERSION}-bin.zip \
+    && ln -s /opt/apache-maven-${MAVEN_VERSION}/bin/mvn /usr/bin/mvn
 
 # Устанавливаем Docker CLI
-RUN apt-get update && apt-get install -y docker.io \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y docker.io && rm -rf /var/lib/apt/lists/*
 
-# Даем пользователю jenkins права на docker и sudo
-RUN usermod -aG sudo jenkins \
-    && usermod -aG docker jenkins
+# Устанавливаем Kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
+    && rm kubectl
 
+# Устанавливаем Helm
+RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# Даем Jenkins права на Docker (если понадобятся)
+RUN usermod -aG docker jenkins
+
+# Возвращаемся на пользователя jenkins
 USER jenkins
 
-# Устанавливаем рабочую директорию
-WORKDIR /var/jenkins_home
+# Устанавливаем переменные окружения (по желанию)
+ENV MAVEN_HOME=/opt/apache-maven-${MAVEN_VERSION}
+ENV PATH=$MAVEN_HOME/bin:$PATH
