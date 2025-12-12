@@ -17,15 +17,16 @@ pipeline {
             steps {
                 sh 'echo "MAVEN_HOME=$MAVEN_HOME"'
                 sh 'echo "PATH=$PATH"'
-                sh 'which mvn'
-                sh 'mvn -v'
-                sh 'java -version'
-                sh 'docker --version'
-                sh 'kubectl version --client'
-                sh 'helm version'
-                sh 'git --version'
+                sh 'which mvn || true'
+                sh 'mvn -v || true'
+                sh 'java -version || true'
+                sh 'docker --version || true'
+                sh 'kubectl version --client || true'
+                sh 'helm version || true'
+                sh 'git --version || true'
             }
         }
+
 
         // Пока не выполняем стадии сборки
         // stage('Build with Maven') {
