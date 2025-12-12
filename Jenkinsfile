@@ -1,14 +1,13 @@
 pipeline {
     agent {
-        docker {
-            image 'maven:3.9.8-eclipse-temurin-21'
+        kubernetes {
+            label 'jenkins'
         }
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Клонируем репозиторий
                 git branch: 'feature/sprint-10', url: 'https://github.com/MaximSlepukhin/bankapp.git'
             }
         }
@@ -30,7 +29,9 @@ pipeline {
                     for (service in services) {
                         dir(service) {
                             echo "Building ${service}..."
-                            sh 'mvn clean package'
+                            container('maven') {  // выполняем этот шаг в контейнере maven
+                                sh 'mvn clean package'
+                            }
                         }
                     }
                 }
