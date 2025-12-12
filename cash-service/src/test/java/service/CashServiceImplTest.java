@@ -39,8 +39,6 @@ class CashServiceImplTest {
         dto = new CashOperationDto(Currency.RUB, BigDecimal.valueOf(100), "user1");
     }
 
-    // ======== deposit() ========
-
     @Test
     void deposit_ShouldThrow_WhenBlocked() {
         when(blockerClient.isBlocked(any(), any(), any())).thenReturn(true);
@@ -73,8 +71,6 @@ class CashServiceImplTest {
 
         verify(notificationsClient, never()).notify(any(), any());
     }
-
-    // ======== withdraw() ========
 
     @Test
     void withdraw_ShouldThrow_WhenInsufficientFunds() {

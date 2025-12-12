@@ -15,9 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class NotificationServiceImplTest {
 
@@ -34,7 +32,6 @@ class NotificationServiceImplTest {
 
     @Test
     void create_shouldSaveAndReturnNotification() {
-        // given
         NotificationRequest request = new NotificationRequest("user1", "Hello!");
         Notification saved = Notification.builder()
                 .id(1L)
@@ -45,10 +42,8 @@ class NotificationServiceImplTest {
 
         when(repository.save(any(Notification.class))).thenReturn(saved);
 
-        // when
         Notification result = service.create(request);
 
-        // then
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getLogin()).isEqualTo("user1");
         assertThat(result.getMessage()).isEqualTo("Hello!");
@@ -57,19 +52,30 @@ class NotificationServiceImplTest {
 
     @Test
     void getForUser_shouldReturnNotificationsFromRepository() {
-        // given
         List<Notification> expected = List.of(
                 new Notification(1L, "user1", "msg1", OffsetDateTime.now()),
                 new Notification(2L, "user1", "msg2", OffsetDateTime.now())
         );
         when(repository.findByLoginOrderByCreatedAtDesc("user1")).thenReturn(expected);
 
-        // when
         List<Notification> result = service.getForUser("user1");
 
-        // then
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getMessage()).isEqualTo("msg1");
         verify(repository, times(1)).findByLoginOrderByCreatedAtDesc("user1");
+    }
+
+    @Test
+    void create_shouldThrowException_whenRepositoryThrowsException() {
+        NotificationRequest request = new NotificationRequest("user1", "Hello!");
+
+        when(repository.save(any(Notification.class))).thenThrow(new RuntimeException("Database error"));
+
+        try {
+            service.create(request);
+        } catch (RuntimeException e) {
+            assertThat(e.getMessage()).isEqualTo("Database error");
+        }
+        verify(repository, times(1)).save(any(Notification.class));  // Проверка, что метод save был вызван 1 раз
     }
 }

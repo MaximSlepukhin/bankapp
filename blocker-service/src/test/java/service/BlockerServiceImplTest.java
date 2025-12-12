@@ -24,20 +24,15 @@ class BlockerServiceImplTest {
 
     @Test
     void shouldBlockDuringMaintenance() {
-        // given
         props.setStart(LocalTime.of(1, 0));
         props.setEnd(LocalTime.of(5, 0));
 
-        // simulate current time manually
         LocalTime now = LocalTime.of(3, 0);
         BlockerRequest request = new BlockerRequest("user");
 
-        // when
-        // hack: замена System time невозможна напрямую, но тестируем логику через диапазон
         boolean blocked = now.isAfter(props.getStart()) && now.isBefore(props.getEnd());
         BlockerStatus result = new BlockerStatus(blocked, blocked ? "Blocked" : "Allowed");
 
-        // then
         assertTrue(result.isBlocked());
     }
 

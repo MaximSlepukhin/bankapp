@@ -1,7 +1,7 @@
 accounts-service:
   enabled: true
   image:
-    repository: localhost:5000/accounts-service
+    repository: accounts-service
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -9,79 +9,48 @@ blocker-service:
   enabled: true
   replicaCount: 1
   image:
-    repository: localhost:5000/blocker-service
+    repository: blocker-service
     tag: latest
     pullPolicy: IfNotPresent
 
 cash-service:
   enabled: true
   image:
-    repository: localhost:5000/cash-service
+    repository: cash-service
     tag: latest
     pullPolicy: IfNotPresent
 
 exchange-generator-service:
   enabled: true
   image:
-    repository: localhost:5000/exchange-generator-service
+    repository: exchange-generator-service
     tag: latest
     pullPolicy: IfNotPresent
 
 exchange-service:
   enabled: true
   image:
-    repository: localhost:5000/exchange-service
+    repository: exchange-service
     tag: latest
     pullPolicy: IfNotPresent
 
 front-ui:
   enabled: true
   image:
-    repository: localhost:5000/front-ui
+    repository: front-ui
     tag: latest
     pullPolicy: IfNotPresent
 
 notifications-service:
   enabled: true
   image:
-    repository: localhost:5000/notifications-service
+    repository: notifications-service
     tag: latest
     pullPolicy: IfNotPresent
 
 transfer-service:
   enabled: true
   image:
-    repository: localhost:5000/transfer-service
+    repository: transfer-service
     tag: latest
     pullPolicy: IfNotPresent
-
-
-
-
-
-
-
-
-
-
-
-
-    # values-dev.yaml
-    springProfile: dev
-
-    image:
-      repository: exchange-generator-service
-      pullPolicy: IfNotPresent
-      tag: "latest"
-
-    service:
-      type: ClusterIP
-      port: 8080
-
-    resources:
-      limits:
-        cpu: 500m
-        memory: 512Mi
-      requests:
-        cpu: 250m
-        memory: 256Mi

@@ -5,6 +5,7 @@ import com.github.maximslepukhin.controller.NotificationController;
 import com.github.maximslepukhin.model.dto.NotificationRequest;
 import com.github.maximslepukhin.model.entity.Notification;
 import com.github.maximslepukhin.service.NotificationService;
+import config.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(NotificationController.class)
-@ContextConfiguration(classes = com.github.maximslepukhin.NotificationsServiceApplication.class)
+@ContextConfiguration(classes = {com.github.maximslepukhin.NotificationsServiceApplication.class, TestSecurityConfig.class})
 class NotificationControllerTest {
 
     @Autowired
@@ -50,10 +51,11 @@ class NotificationControllerTest {
         mockMvc.perform(post("/api/notifications")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isOk()) // Expecting HTTP 200 OK
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.login").value("user1"))
-                .andExpect(jsonPath("$.message").value("Hello!"));
+                .andExpect(jsonPath("$.message").value("Hello!"))
+                .andExpect(jsonPath("$.createdAt").exists());
     }
 
     @Test
@@ -62,11 +64,36 @@ class NotificationControllerTest {
                 new Notification(1L, "user1", "msg1", OffsetDateTime.now()),
                 new Notification(2L, "user1", "msg2", OffsetDateTime.now())
         );
+
         Mockito.when(service.getForUser(eq("user1"))).thenReturn(notifications);
 
         mockMvc.perform(get("/api/notifications/user1"))
-                .andExpect(status().isOk())
+                .andExpect(status().isOk()) // Expecting HTTP 200 OK
                 .andExpect(jsonPath("$[0].message").value("msg1"))
                 .andExpect(jsonPath("$[1].message").value("msg2"));
+    }
+
+    @Test
+    void create_shouldReturnInternalServerError_whenExceptionOccurs() throws Exception {
+        NotificationRequest request = new NotificationRequest("user1", "Hello!");
+
+        Mockito.when(service.create(any(NotificationRequest.class)))
+                .thenThrow(new RuntimeException("Internal server error"));
+
+        mockMvc.perform(post("/api/notifications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)))
+                .andExpect(status().isInternalServerError()) // Expecting HTTP 500
+                .andExpect(content().string("Error while creating notification: Internal server error")); // Verifying the error message
+    }
+
+    @Test
+    void getForUser_shouldReturnEmptyList_whenExceptionOccurs() throws Exception {
+        Mockito.when(service.getForUser(eq("user1")))
+                .thenThrow(new RuntimeException("Error fetching notifications"));
+
+        mockMvc.perform(get("/api/notifications/user1"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().string("[]"));
     }
 }
