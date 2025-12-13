@@ -39,5 +39,25 @@ pipeline {
                 }
             }
         }
+
+        stage('Build Docker Images') {
+            steps {
+                script {
+                    // переключаемся на Docker внутри Minikube
+                    sh """
+                        eval \$(minikube docker-env)
+
+                        docker build -t accounts-service:latest ./accounts-service
+                        docker build -t blocker-service:latest ./blocker-service
+                        docker build -t cash-service:latest ./cash-service
+                        docker build -t exchange-generator-service:latest ./exchange-generator-service
+                        docker build -t exchange-service:latest ./exchange-service
+                        docker build -t front-ui:latest ./front-ui
+                        docker build -t notifications-service:latest ./notifications-service
+                        docker build -t transfer-service:latest ./transfer-service
+                    """
+                }
+            }
+        }
     }
 }
