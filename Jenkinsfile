@@ -13,5 +13,31 @@ pipeline {
                 sh 'git --version'
             }
         }
+
+        stage('Build All Services') {
+            steps {
+                script {
+                    // список микросервисов
+                    def services = [
+                        'accounts-service',
+                        'blocker-service',
+                        'cash-service',
+                        'exchange-generator-service',
+                        'exchange-service',
+                        'front-ui',
+                        'notifications-service',
+                        'transfer-service'
+                    ]
+
+                    // сборка каждого сервиса
+                    services.each { service ->
+                        echo "Сборка ${service}"
+                        dir(service) {
+                            sh 'mvn clean package'
+                        }
+                    }
+                }
+            }
+        }
     }
 }
