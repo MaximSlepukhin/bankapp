@@ -23,17 +23,13 @@ public class ExchangeClient {
     }
 
     public List<CurrencyRate> getRates() {
-        log.info("Using exchange service URL: {}", exchangeServiceUrl);
         String url = exchangeServiceUrl + "/api/rates";
-
         CurrencyRate[] rates = restTemplate.getForObject(url, CurrencyRate[].class);
-
         if (rates != null && rates.length > 0) {
             log.info("Received {} currency rates: {}", rates.length, Arrays.toString(rates));
         } else {
             log.warn("No rates received or response is empty.");
         }
-
         return rates != null ? Arrays.asList(rates) : List.of();
     }
 }

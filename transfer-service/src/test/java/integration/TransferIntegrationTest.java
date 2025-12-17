@@ -1,6 +1,5 @@
 package integration;
 
-import com.github.maximslepukhin.TransferServiceApplication;
 import com.github.maximslepukhin.client.*;
 import com.github.maximslepukhin.model.dto.*;
 import com.github.maximslepukhin.model.entity.TransferEntity;

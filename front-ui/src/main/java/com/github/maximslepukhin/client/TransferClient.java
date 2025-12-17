@@ -21,12 +21,7 @@ public class TransferClient {
 
     public void transfer(TransferRequestDto dto) {
         String url = transferServiceUrl + "/api/transfer";
-
-        log.info("Отправка запроса на перевод. URL: {}", url);
-        log.info("Данные для перевода: {}", dto);
-
         try {
-            // Выполняем POST запрос
             restTemplate.postForObject(url, dto, Void.class);
             log.info("Запрос успешно выполнен");
         } catch (Exception e) {

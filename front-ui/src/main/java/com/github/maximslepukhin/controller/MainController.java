@@ -43,54 +43,26 @@ public class MainController {
 
     @GetMapping("/main")
     public String mainPage(Model model, @AuthenticationPrincipal OidcUser oidcUser) {
-        log.info("Received OIDC user: {}", oidcUser);
-
         if (oidcUser == null) {
-            log.error("OIDC user is null! The user is not authenticated.");
-            return "redirect:/login";  // Если пользователя нет, перенаправляем на страницу входа
+            return "redirect:/login";
         }
-
-        log.info("OIDC user attributes: {}", oidcUser.getAttributes());
-
         UserDto user = null;
         try {
             user = userService.getUserFromOidc(oidcUser);
-            log.info("User data obtained from OIDC: {}", user);
         } catch (Exception e) {
-            log.error("Error getting user data from OIDC: {}", e.getMessage());
-            return "redirect:/login";  // если ошибка при получении данных, перенаправляем на вход
+            return "redirect:/login";
         }
 
         if (user == null) {
-            log.error("User is null after getting data from OIDC!");
-            return "redirect:/login"; // Перенаправляем, если данных нет
+            return "redirect:/login";
         }
-
-        log.info("User login: {}", user.getLogin());
-        log.info("User name: {}", user.getName());
-        log.info("User birthdate: {}", user.getBirthdate());
-        log.info("User accounts: {}", user.getAccounts());
-
-        // Добавляем атрибуты в модель для отображения на странице
         model.addAttribute("login", user.getLogin());
         model.addAttribute("name", user.getName());
         model.addAttribute("birthdate", user.getBirthdate());
         model.addAttribute("accounts", user.getAccounts());
         model.addAttribute("currency", List.of(Currency.USD, Currency.RUB, Currency.CNY));
-
-        // Логируем запрос других пользователей
-        log.info("Fetching other users for: {}", user.getLogin());
         List<UserDto> otherUsers = userService.getOtherUsers(user.getLogin());
-        log.info("Other users: {}", otherUsers);
         model.addAttribute("users", otherUsers);
-
-        // Логируем ошибки, если они есть
-        log.info("Password errors: {}", model.getAttribute("passwordErrors"));
-        log.info("User accounts errors: {}", model.getAttribute("userAccountsErrors"));
-        log.info("Cash operation errors: {}", model.getAttribute("cashErrors"));
-        log.info("Transfer errors: {}", model.getAttribute("transferErrors"));
-        log.info("Other transfer errors: {}", model.getAttribute("transferOtherErrors"));
-
         return "main";
     }
 
@@ -103,7 +75,6 @@ public class MainController {
 
     @PostMapping("/signup")
     public String signup(@ModelAttribute SignupForm form, RedirectAttributes redirectAttrs) {
-        log.info("Полученные данные при регистрации: {}", form);
         userService.registerUser(form);
         redirectAttrs.addFlashAttribute("signupSuccess", "Регистрация успешна! Войдите через Keycloak.");
         return "redirect:/oauth2/authorization/keycloak";
@@ -118,20 +89,13 @@ public class MainController {
             @RequestParam String action,
             RedirectAttributes redirectAttrs) {
 
-        log.info("Запрос cashOperation: login={}, currency={}, value={}, action={}",
-                login, currency, value, action);
-
         try {
             financeService.cashOperation(login, currency, value, action);
-            log.info("Операция успешно выполнена для пользователя {}", login);
         } catch (IllegalArgumentException e) {
-            log.warn("Ошибка при cashOperation для пользователя {}: {}", login, e.getMessage());
             redirectAttrs.addFlashAttribute("cashErrors", List.of(e.getMessage()));
         } catch (Exception e) {
-            log.error("Непредвиденная ошибка при cashOperation для пользователя {}", login, e);
             redirectAttrs.addFlashAttribute("cashErrors", List.of("Ошибка при операции: " + e.getMessage()));
         }
-
         return "redirect:/main";
     }
 
@@ -167,7 +131,6 @@ public class MainController {
     @GetMapping("/api/rates")
     @ResponseBody
     public List<CurrencyRate> getRates() {
-        log.info("Получение курсов валют");
         return exchangeService.getRates();
     }
 

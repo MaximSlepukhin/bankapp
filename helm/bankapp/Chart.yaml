@@ -5,42 +5,53 @@ type: application
 version: 1.0.0
 appVersion: 1.0.0
 
-# Зависимости чарта (sub-charts), которые будут установлены в рамках зонтичного Helm-чарта
 dependencies:
   - name: accounts-service
     version: "1.0.0"
     repository: "file://charts/accounts-service"
-    dependsOn:
-      - name: accounts-db
+
   - name: blocker-service
     version: "1.0.0"
     repository: "file://charts/blocker-service"
+
   - name: cash-service
     version: "1.0.0"
     repository: "file://charts/cash-service"
+
   - name: exchange-generator-service
     version: "1.0.0"
     repository: "file://charts/exchange-generator-service"
+
   - name: exchange-service
     version: "1.0.0"
     repository: "file://charts/exchange-service"
+
   - name: front-ui
     version: "1.0.0"
     repository: "file://charts/front-ui"
+
   - name: notifications-service
     version: "1.0.0"
     repository: "file://charts/notifications-service"
+
   - name: transfer-service
     version: "1.0.0"
     repository: "file://charts/transfer-service"
+
   - name: keycloak
     version: "1.0.0"
     repository: "file://charts/keycloak"
 
-  # Базы данных
+  # Databases
   - name: accounts-db
     version: "1.0.0"
     repository: "file://charts/accounts-db"
+
   - name: keycloak-db
     version: "1.0.0"
     repository: "file://charts/keycloak-db"
+
+  # ✅ Apache Kafka (Bitnami)
+  - name: kafka
+    version: "32.4.3"
+    repository: "https://charts.bitnami.com/bitnami"

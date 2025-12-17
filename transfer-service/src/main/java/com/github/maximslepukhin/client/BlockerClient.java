@@ -15,11 +15,10 @@ public class BlockerClient {
     public BlockerClient(RestTemplate restTemplate,
                          @Value("${BLOCKER_SERVICE_URL}") String blockerServiceUrl) {
         this.restTemplate = restTemplate;
-        this.blockerServiceUrl = blockerServiceUrl; // например http://blocker-service.default.svc.cluster.local:8087/api/blocker
+        this.blockerServiceUrl = blockerServiceUrl;
     }
 
     public BlockerStatus check(BlockerRequest request) {
-        // Отправляем POST запрос на сервер blocker-service
         return restTemplate.postForObject(blockerServiceUrl + "/api/blocker/check", request, BlockerStatus.class);
     }
 }

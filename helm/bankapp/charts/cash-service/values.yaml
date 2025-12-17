@@ -19,6 +19,14 @@ resources:
 
 env:
   SPRING_PROFILES_ACTIVE: "prod"
+#  # Kafka connection variables
+#  KAFKA_BOOTSTRAP_SERVERS: "my-kafka.default.svc.cluster.local:9092"
+#  KAFKA_USERNAME: "user1"
+#  KAFKA_PASSWORD:
+#    valueFrom:
+#      secretKeyRef:
+#        name: my-kafka-user-passwords
+#        key: client-passwords
 
 clients:
   accounts-service-url: "http://accounts-service:8081"

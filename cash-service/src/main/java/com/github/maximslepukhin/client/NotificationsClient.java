@@ -11,7 +11,6 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -24,14 +23,10 @@ public class NotificationsClient {
     private String notificationsServiceUrl;
 
     public void notify(String login, String message) {
-        log.info("Preparing to send notification to user: {}, message: {}", login, message);
-
         try {
             NotificationRequest request = new NotificationRequest(login, message);
 
             String url = notificationsServiceUrl + "/api/notifications";
-            log.info("POST URL: {}", url);
-            log.info("Request body: {}", request);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -46,7 +41,6 @@ public class NotificationsClient {
 
             log.info("Notification response status: {}", response.getStatusCode());
             log.info("Notification response body: {}", response.getBody());
-
             log.info("Notification successfully sent to user: {}", login);
 
         } catch (HttpClientErrorException | HttpServerErrorException e) {

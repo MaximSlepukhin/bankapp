@@ -12,10 +12,10 @@ public class TestSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .anyRequest().permitAll()  // Разрешаем все запросы без аутентификации
+                .anyRequest().permitAll()
                 .and()
-                .csrf(csrf -> csrf.disable());  // Отключаем CSRF для тестов
+                .csrf(csrf -> csrf.disable());
 
-        return http.build();  // Возвращаем конфигурированный фильтр безопасности
+        return http.build();
     }
 }

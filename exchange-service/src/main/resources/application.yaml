@@ -8,7 +8,6 @@ spring:
           issuer-uri: http://keycloak:80/realms/bank-realm
           jwk-set-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs
 
-
 server:
   port: 8084
   address: 0.0.0.0

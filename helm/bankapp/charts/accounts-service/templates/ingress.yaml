@@ -1,3 +1,24 @@
+{{/*apiVersion: networking.k8s.io/v1*/}}
+{{/*kind: Ingress*/}}
+{{/*metadata:*/}}
+{{/*  name: accounts-ingress*/}}
+{{/*  annotations:*/}}
+{{/*    {{- range $k, $v := .Values.ingress.annotations }}*/}}
+{{/*    {{ $k }}: "{{ $v }}"*/}}
+{{/*    {{- end }}*/}}
+{{/*spec:*/}}
+{{/*  rules:*/}}
+{{/*    - host: {{ .Values.ingress.host }}*/}}
+{{/*      http:*/}}
+{{/*        paths:*/}}
+{{/*          - path: /*/}}
+{{/*            pathType: Prefix*/}}
+{{/*            backend:*/}}
+{{/*              service:*/}}
+{{/*                name: {{ .Values.service.name }}*/}}
+{{/*                port:*/}}
+{{/*                  number: {{ .Values.service.port }}*/}}
+{{/*{{- end }}*/}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -18,4 +39,3 @@ spec:
                 name: {{ .Values.service.name }}
                 port:
                   number: {{ .Values.service.port }}
-{{- end }}

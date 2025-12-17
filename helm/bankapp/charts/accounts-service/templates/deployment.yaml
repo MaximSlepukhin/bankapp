@@ -22,8 +22,8 @@ spec:
           ports:
             - containerPort: {{ .Values.service.targetPort }}
           env:
-            - name: SPRING_PROFILES_ACTIVE
-              value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"
+{{/*            - name: SPRING_PROFILES_ACTIVE*/}}
+{{/*              value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"*/}}
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:postgresql://{{ .Values.postgres.host }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO

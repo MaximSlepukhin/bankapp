@@ -22,13 +22,9 @@ public class CashClient {
 
     public void deposit(CashOperationDto dto) {
         String url = cashServiceUrl + "/api/cash/deposit";
-        log.info("Выполняется депозит: URL={}, dto={}", url, dto);
-
         try {
             restTemplate.postForObject(url, dto, Void.class);
-            log.info("Депозит успешно выполнен: dto={}", dto);
         } catch (HttpClientErrorException e) {
-            log.error("Ошибка при депозите: статус={}, тело ответа={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw e;
         } catch (Exception e) {
             log.error("Неожиданная ошибка при депозите: {}", e.getMessage(), e);
@@ -38,13 +34,9 @@ public class CashClient {
 
     public void withdraw(CashOperationDto dto) {
         String url = cashServiceUrl + "/api/cash/withdraw";
-        log.info("Выполняется снятие: URL={}, dto={}", url, dto);
-
         try {
             restTemplate.postForObject(url, dto, Void.class);
-            log.info("Снятие успешно выполнено: dto={}", dto);
         } catch (HttpClientErrorException e) {
-            log.error("Ошибка при снятии: статус={}, тело ответа={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw e;
         } catch (Exception e) {
             log.error("Неожиданная ошибка при снятии: {}", e.getMessage(), e);

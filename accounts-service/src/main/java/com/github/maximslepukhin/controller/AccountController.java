@@ -24,13 +24,9 @@ public class AccountController {
             @PathVariable String login,
             @PathVariable String currency
     ) {
-        try {
-            return ResponseEntity.ok(accountService.getBalance(login, currency));
-        } catch (RuntimeException e) {
-            log.warn("Счёт для login={}, currency={} не найден", login, currency);
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(accountService.getBalance(login, currency));
     }
+
 
     // 🟠 Списать средства (debit)
     @PostMapping("/{login}/{currency}/debit")
@@ -39,14 +35,8 @@ public class AccountController {
             @PathVariable String currency,
             @RequestParam BigDecimal amount
     ) {
-        log.info("➡️ debit: login={}, currency={}, amount={}", login, currency, amount);
-        try {
-            accountService.debit(login, currency, amount);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            log.error("Ошибка в debit: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        accountService.debit(login, currency, amount);
+        return ResponseEntity.ok().build();
     }
 
     // 🟢 Зачислить средства (credit)
@@ -56,14 +46,8 @@ public class AccountController {
             @PathVariable String currency,
             @RequestParam BigDecimal amount
     ) {
-        log.info("➡️ credit: login={}, currency={}, amount={}", login, currency, amount);
-        try {
-            accountService.credit(login, currency, amount);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            log.error("Ошибка в credit: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        accountService.credit(login, currency, amount);
+        return ResponseEntity.ok().build();
     }
 
     // 🟡 Обновить баланс (универсальный метод)
@@ -73,25 +57,14 @@ public class AccountController {
             @PathVariable String currency,
             @RequestBody BigDecimal amount
     ) {
-        log.info("➡️ updateBalance: login={}, currency={}, amount={}", login, currency, amount);
-        try {
-            BigDecimal updatedBalance = accountService.updateAccountBalance(login, currency, amount);
-            return ResponseEntity.ok(Map.of("balance", updatedBalance));
-        } catch (RuntimeException e) {
-            log.error("❌ Ошибка в updateBalance: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        BigDecimal updatedBalance = accountService.updateAccountBalance(login, currency, amount);
+        return ResponseEntity.ok(Map.of("balance", updatedBalance));
     }
 
     // 🧾 Получить список валют пользователя
     @GetMapping("/{login}/currencies")
     public ResponseEntity<List<String>> getCurrencies(@PathVariable String login) {
-        try {
-            List<String> currencies = accountService.getCurrencies(login);
-            return ResponseEntity.ok(currencies);
-        } catch (RuntimeException e) {
-            log.warn("❌ У пользователя login={} нет доступных валют", login);
-            return ResponseEntity.notFound().build();
-        }
+        List<String> currencies = accountService.getCurrencies(login);
+        return ResponseEntity.ok(currencies);
     }
 }

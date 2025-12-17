@@ -35,11 +35,11 @@ env:
 keycloak:
   realm: bank-realm
   url: http://keycloak:8080
-  clientSecret: "replace-me"
+  clientSecret: "RMU6Vb96Ay0fWnLJ6WEBiyt8yjdjKk24"
 
 resources: {}
 secrets:
-  KEYCLOAK_CLIENTSECRET: "replace-me"
+  KEYCLOAK_CLIENTSECRET: "RMU6Vb96Ay0fWnLJ6WEBiyt8yjdjKk24"
 
 
 

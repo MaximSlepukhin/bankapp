@@ -26,7 +26,6 @@ public class KeycloakAdminClient {
     private String realm;
 
     public String createUser(String username, String password) {
-        log.debug("Создание пользователя в Keycloak: {}", username);
 
         UserRepresentation user = new UserRepresentation();
         user.setUsername(username);

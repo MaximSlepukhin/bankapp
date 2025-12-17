@@ -15,19 +15,6 @@ blocker-service:
       cpu: "400m"
       memory: "512Mi"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 # values-test.yaml
 springProfile: test
 

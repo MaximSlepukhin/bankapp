@@ -1,12 +1,18 @@
+# Все базы данных выключаем, чтобы Helm их не трогал
+accounts-db:
+  enabled: false
+keycloak-db:
+  enabled: false
+
 accounts-service:
-  enabled: true
+  enabled: false
   image:
     repository: accounts-service
     tag: latest
     pullPolicy: IfNotPresent
 
 blocker-service:
-  enabled: true
+  enabled: false
   replicaCount: 1
   image:
     repository: blocker-service
@@ -14,42 +20,42 @@ blocker-service:
     pullPolicy: IfNotPresent
 
 cash-service:
-  enabled: true
+  enabled: false
   image:
     repository: cash-service
     tag: latest
     pullPolicy: IfNotPresent
 
 exchange-generator-service:
-  enabled: true
+  enabled: false
   image:
     repository: exchange-generator-service
     tag: latest
     pullPolicy: IfNotPresent
 
 exchange-service:
-  enabled: true
+  enabled: false
   image:
     repository: exchange-service
     tag: latest
     pullPolicy: IfNotPresent
 
 front-ui:
-  enabled: true
+  enabled: false
   image:
     repository: front-ui
     tag: latest
     pullPolicy: IfNotPresent
 
 notifications-service:
-  enabled: true
+  enabled: false
   image:
     repository: notifications-service
     tag: latest
     pullPolicy: IfNotPresent
 
 transfer-service:
-  enabled: true
+  enabled: false
   image:
     repository: transfer-service
     tag: latest

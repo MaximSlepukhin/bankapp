@@ -30,8 +30,6 @@ public class ExchangeController {
 
     @PostMapping("/convert")
     public ConvertResponse convert(@RequestBody ConvertRequest request) {
-        log.info("📩 Получен запрос на конвертацию: amount={}, from={}, to={}",
-                request.getAmount(), request.getFrom(), request.getTo());
         return exchangeService.convert(request);
     }
 }

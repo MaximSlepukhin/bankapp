@@ -202,3 +202,16 @@ kubectl port-forward -n dev svc/keycloak 8080:80
 После проброса портов:
 - Front UI будет доступен по адресу: http://localhost:8081
 - Keycloak будет доступен по адресу: http://localhost:808
+
+
+
+
+cd helm/bankapp/charts/kafka
+helm install kafka . --namespace dev --force
+helm upgrade kafka . --namespace dev --force
+kubectl get all -n dev
+helm upgrade kafka . --namespace dev --force
+
+nano ~/.docker/config.json
+# или
+vi ~/.docker/config.json

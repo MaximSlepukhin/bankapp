@@ -1,4 +1,4 @@
-package com.github.maximslepukhin.config;
+package com.github.maximslepukhin.config.security;
 
 
 import org.springframework.context.annotation.Bean;

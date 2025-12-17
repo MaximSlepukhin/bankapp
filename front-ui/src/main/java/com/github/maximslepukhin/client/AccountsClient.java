@@ -25,8 +25,6 @@ public class AccountsClient {
     }
 
     public UserDto getUserByKeycloakId(String keycloakId) {
-        log.info("Отправка GET запроса в accounts-service на URL: {}/api/users/keycloak/{}", accountsServiceUrl, keycloakId);
-
         try {
             UserDto user = restTemplate.getForObject(accountsServiceUrl + "/api/users/keycloak/" + keycloakId, UserDto.class);
 
@@ -38,7 +36,6 @@ public class AccountsClient {
 
             return user;
         } catch (Exception e) {
-            log.error("Ошибка при выполнении GET запроса в accounts-service для keycloakId={}", keycloakId, e);
             throw new RuntimeException("Ошибка при получении данных пользователя", e);
         }
     }
