@@ -1,92 +1,59 @@
 pipeline {
-    agent { label 'role=jenkins-master' }
+    agent any
 
     stages {
-        stage('Test Tools') {
+        stage('Checkout') {
             steps {
-                echo "Проверим доступность инструментов на агенте"
-                sh 'java -version'
-                sh 'mvn -version'
-                sh 'docker --version'
-                sh 'kubectl version --client'
-                sh 'helm version'
-                sh 'git --version'
+                git url: 'https://github.com/MaximSlepukhin/bankapp.git', branch: 'feature/sprint-10'
             }
         }
 
-        stage('Build All Services') {
+        stage('Check Versions') {
+            steps {
+                sh '''
+                    echo "Checking tool versions..."
+                    /usr/local/bin/docker --version
+                    /opt/homebrew/bin/helm version --short
+                    /usr/local/bin/kubectl version --client
+                    /Users/maksim/apps/apache-maven-3.9.9/bin/mvn -v
+                '''
+            }
+        }
+
+        stage('Build With Maven') {
             steps {
                 script {
-                    // список микросервисов
+                    // Список микросервисов
                     def services = [
-                        'accounts-service',
-                        'blocker-service',
-                        'cash-service',
-                        'exchange-generator-service',
-                        'exchange-service',
-                        'front-ui',
-                        'notifications-service',
-                        'transfer-service'
+                        "accounts-service",
+                        "blocker-service",
+                        "cash-service",
+                        "exchange-generator-service",
+                        "exchange-service",
+                        "front-ui",
+                        "notifications-service",
+                        "transfer-service"
                     ]
 
-                    // сборка каждого сервиса
                     services.each { service ->
-                        echo "Сборка ${service}"
-                        dir(service) {
-                            sh 'mvn clean package'
-                        }
+                        sh """
+                            echo "Building ${service}..."
+                            cd ${service}
+                            /Users/maksim/apps/apache-maven-3.9.9/bin/mvn clean package -DskipTests
+                            cd ..
+                        """
                     }
                 }
             }
         }
+    }
 
-        stage('Build Docker Images') {
-            steps {
-                script {
-                    sh """
-                        eval \$(minikube docker-env)
-
-                        docker build -t accounts-service:latest ./accounts-service
-                        docker build -t blocker-service:latest ./blocker-service
-                        docker build -t cash-service:latest ./cash-service
-                        docker build -t exchange-generator-service:latest ./exchange-generator-service
-                        docker build -t exchange-service:latest ./exchange-service
-                        docker build -t front-ui:latest ./front-ui
-                        docker build -t notifications-service:latest ./notifications-service
-                        docker build -t transfer-service:latest ./transfer-service
-                    """
-                }
-            }
+    post {
+        success {
+            echo "Pipeline завершён успешно."
         }
-
-        stage('Deploy Services with Helm') {
-            steps {
-                script {
-                    // список микросервисов и их Helm-чартов
-                    def services = [
-                        'accounts-service',
-                        'blocker-service',
-                        'cash-service',
-                        'exchange-generator-service',
-                        'exchange-service',
-                        'front-ui',
-                        'notifications-service',
-                        'transfer-service'
-                    ]
-
-                    services.each { service ->
-                        echo "Deploying ${service} with Helm"
-                        dir("helm/${service}") {
-                            sh """
-                                helm upgrade --install ${service} . \
-                                    --namespace default \
-                                    --set image.repository=${service} \
-                                    --set image.tag=latest
-                            """
-                        }
-                    }
-                }
-            }
+        failure {
+            echo "Pipeline завершился с ошибкой."
         }
     }
 }
