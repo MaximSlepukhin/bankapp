@@ -2,6 +2,16 @@ spring:
   application:
     name: cash-service
 
+  kafka:
+    bootstrap-servers: my-kafka.default.svc.cluster.local:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    properties:
+      security.protocol: SASL_PLAINTEXT
+      sasl.mechanism: SCRAM-SHA-256
+      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="user1" password="hA6uwPNxFI";
+
   security:
     oauth2:
       resourceserver:

@@ -5,12 +5,11 @@ import com.github.maximslepukhin.model.dto.ConvertResponse;
 import com.github.maximslepukhin.model.dto.CurrencyRate;
 import com.github.maximslepukhin.model.enums.Currency;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,22 +19,24 @@ public class ExchangeService {
 
     private final Map<String, BigDecimal> rates = new ConcurrentHashMap<>();
 
-    public void updateRates(List<CurrencyRate> newRates) {
-        log.info("POST запрос на /api/exchange/rates получен с телом: {}", rates);
-        for (CurrencyRate rate : newRates) {
-            rates.put(rate.getFrom() + "-" + rate.getTo(), rate.getRate());
+    @KafkaListener(topics = "exchange-rates", groupId = "exchange-service-group")
+    public void consumeRates(CurrencyRate rate) {
+        if (rate == null) {
+            log.warn("⚠️ Получен null rate из Kafka");
+            return;
         }
-        rates.put("RUB-RUB", BigDecimal.ONE);
-    }
 
-    public List<CurrencyRate> getRates() {
-        log.info("GET запрос на /api/exchange/rates получен");
-        List<CurrencyRate> result = new ArrayList<>();
-        for (Map.Entry<String, BigDecimal> entry : rates.entrySet()) {
-            String[] parts = entry.getKey().split("-");
-            result.add(new CurrencyRate(Currency.valueOf(parts[0]), Currency.valueOf(parts[1]), entry.getValue()));
+        try {
+            String key = rate.getFrom() + "-" + rate.getTo();
+            rates.put(key, rate.getRate());
+            rates.put("RUB-RUB", BigDecimal.ONE); // базовая валюта (можно и вынести в init)
+
+            log.info("📥 Принят курс из Kafka: {} → {} = {}",
+                    rate.getFrom(), rate.getTo(), rate.getRate());
+
+        } catch (Exception e) {
+            log.error("Ошибка при обработке курса из Kafka: {}", rate, e);
         }
-        return result;
     }
 
     public ConvertResponse convert(ConvertRequest request) {

@@ -1,6 +1,8 @@
 package com.github.maximslepukhin.service;
 
+import com.github.maximslepukhin.config.security.kafka.KafkaUserRegistrationProducer;
 import com.github.maximslepukhin.model.dto.AccountDto;
+import com.github.maximslepukhin.model.dto.NotificationRequest;
 import com.github.maximslepukhin.model.dto.UserDto;
 import com.github.maximslepukhin.mapper.UserMapper;
 import com.github.maximslepukhin.model.entity.Account;
@@ -22,10 +24,13 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final KafkaUserRegistrationProducer kafkaUserRegistrationProducer;
 
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
+
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, KafkaUserRegistrationProducer kafkaUserRegistrationProducer) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.kafkaUserRegistrationProducer = kafkaUserRegistrationProducer;
     }
 
     @Override
@@ -54,6 +59,7 @@ public class UserServiceImpl implements UserService {
         );
         user.setAccounts(accounts);
         userRepository.save(user);
+        kafkaUserRegistrationProducer.send(new NotificationRequest(user.getLogin(), "Зарегистрирован пользователь " + user.getLogin()));
         return getUserByLogin(user.getLogin());
     }
 

@@ -2,10 +2,11 @@ package com.github.maximslepukhin.service;
 
 import com.github.maximslepukhin.client.AccountsClient;
 import com.github.maximslepukhin.client.BlockerClient;
-import com.github.maximslepukhin.client.NotificationsClient;
+import com.github.maximslepukhin.config.security.kafka.KafkaNotificationProducer;
 import com.github.maximslepukhin.exception.OperationBlockedException;
 import com.github.maximslepukhin.exception.OperationFailedException;
 import com.github.maximslepukhin.model.dto.CashOperationDto;
+import com.github.maximslepukhin.model.dto.NotificationRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -18,7 +19,7 @@ public class CashServiceImpl implements CashService {
 
     private final AccountsClient accountsClient;
     private final BlockerClient blockerClient;
-    private final NotificationsClient notificationsClient;
+    private final KafkaNotificationProducer kafkaProducer;
 
     @Override
     public void deposit(CashOperationDto dto) {
@@ -28,8 +29,8 @@ public class CashServiceImpl implements CashService {
 
         try {
             accountsClient.updateBalance(dto.getLogin(), dto.getCurrency(), dto.getAmount());
-            notificationsClient.notify(dto.getLogin(),
-                    "Пополнение на " + dto.getAmount() + " " + dto.getCurrency());
+            kafkaProducer.send(new NotificationRequest(dto.getLogin(),
+                    "Пополнение на " + dto.getAmount() + " " + dto.getCurrency()));
         } catch (HttpClientErrorException e) {
             String message = extractErrorMessage(e.getResponseBodyAsString());
             throw new OperationFailedException(message != null ? message :
@@ -53,7 +54,8 @@ public class CashServiceImpl implements CashService {
         }
 
         accountsClient.updateBalance(dto.getLogin(), dto.getCurrency(), dto.getAmount().negate());
-        notificationsClient.notify(dto.getLogin(), "Снятие " + dto.getAmount() + " " + dto.getCurrency());
+        kafkaProducer.send(new NotificationRequest(dto.getLogin(),
+                "Снятие " + dto.getAmount() + " " + dto.getCurrency()));
     }
 
     private String extractErrorMessage(String responseBody) {

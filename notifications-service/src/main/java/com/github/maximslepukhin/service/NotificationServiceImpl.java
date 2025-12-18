@@ -22,8 +22,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .message(request.getMessage())
                 .createdAt(OffsetDateTime.now())
                 .build();
-        Notification saved = repository.save(n);
-        return saved;
+        return repository.save(n);
     }
 
     @Override
@@ -31,4 +30,3 @@ public class NotificationServiceImpl implements NotificationService {
         return repository.findByLoginOrderByCreatedAtDesc(login);
     }
 }
-

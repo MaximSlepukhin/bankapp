@@ -2,6 +2,18 @@ spring:
   application:
     name: notifications-service
 
+  kafka:
+    bootstrap-servers: my-kafka.default.svc.cluster.local:9092
+    consumer:
+      group-id: notifications-service-consumer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.JsonDeserializer
+      properties:
+        security.protocol: SASL_PLAINTEXT
+        sasl.mechanism: SCRAM-SHA-256
+        sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="user1" password="hA6uwPNxFI";
+
+
   jpa:
     hibernate:
       ddl-auto: none

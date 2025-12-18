@@ -11,8 +11,5 @@ public enum Currency {
         this.title = title;
     }
 
-    public String getTitle() {
-        return title;
-    }
 }
 

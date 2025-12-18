@@ -3,7 +3,7 @@ package com.github.maximslepukhin.service;
 import com.github.maximslepukhin.client.AccountsClient;
 import com.github.maximslepukhin.client.BlockerClient;
 import com.github.maximslepukhin.client.ExchangeClient;
-import com.github.maximslepukhin.client.NotificationsClient;
+import com.github.maximslepukhin.config.security.kafka.NotificationKafkaProducer;
 import com.github.maximslepukhin.exception.TransferBlockedException;
 import com.github.maximslepukhin.model.dto.*;
 import com.github.maximslepukhin.model.entity.TransferEntity;
@@ -30,10 +30,9 @@ public class TransferServiceImpl implements TransferService {
 
     private final AccountsClient accountsClient;
     private final ExchangeClient exchangeClient;
-    private final NotificationsClient notificationsClient;
     private final BlockerClient blockerClient;
     private final TransferRepository transferRepository;
-
+    private final NotificationKafkaProducer notificationKafkaProducer;
 
     @Override
     @Retry(name = "transferService")
@@ -93,15 +92,12 @@ public class TransferServiceImpl implements TransferService {
         accountsClient.credit(request.getToLogin(), request.getToCurrency().name(), credited);
 
         // ✅ Уведомление
-        try {
-            notificationsClient.notify(new NotificationRequest(
-                    request.getFromLogin(),
-                    "Перевод на пользователя " + request.getToLogin() +
-                    " на сумму " + credited + " " + request.getToCurrency()
-            ));
-        } catch (Exception e) {
-            log.error("Transfer {}: уведомление не доставлено: {}", txId, e.getMessage());
-        }
+        NotificationRequest notificationRequest = new NotificationRequest(
+                request.getFromLogin(),
+                "Перевод на пользователя " + request.getToLogin() +
+                " на сумму " + credited + " " + request.getToCurrency()
+        );
+        notificationKafkaProducer.send(notificationRequest);
 
         // ✅ Сохраняем успешный перевод
         TransferEntity entity = TransferEntity.builder()
