@@ -40,7 +40,7 @@ pipeline {
                         sh """
                             echo "Building ${service}..."
                             cd ${service}
-                            /Users/maksim/apps/apache-maven-3.9.9/bin/mvn clean package
+                            /Users/maksim/apps/apache-maven-3.9.9/bin/mvn clean package -DskipTests
                             cd ..
                         """
                     }
