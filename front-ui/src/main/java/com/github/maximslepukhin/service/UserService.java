@@ -52,15 +52,15 @@ public class UserService {
                 .login(form.getLogin())
                 .name(form.getName())
                 .birthdate(LocalDate.parse(form.getBirthdate()))
-                .accounts(List.of()) // Пустой список аккаунтов на момент регистрации
+                .accounts(List.of())
                 .build();
 
         log.info("Отправка данных пользователя в accounts-service: {}", dto);
 
         try {
-            HttpEntity<UserDto> requestEntity = new HttpEntity<>(dto);  // Создаем тело запроса
+            HttpEntity<UserDto> requestEntity = new HttpEntity<>(dto);
             ResponseEntity<String> response = restTemplateWithAuth.exchange(
-                    "http://accounts-service:8081/api/users", HttpMethod.POST, requestEntity, String.class);  // Отправляем запрос
+                    "http://accounts-service:8081/api/users", HttpMethod.POST, requestEntity, String.class);
 
             log.info("Ответ от accounts-service: {}", response.getStatusCode());
             log.info("Ответное тело: {}", response.getBody());

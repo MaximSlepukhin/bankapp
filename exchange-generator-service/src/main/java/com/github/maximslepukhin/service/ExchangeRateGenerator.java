@@ -42,6 +42,7 @@ public class ExchangeRateGenerator {
         }
         return rates;
     }
+
     private BigDecimal calculateRate(Currency from, Currency to, Map<Currency, BigDecimal> baseRates) {
         return baseRates.get(from).divide(baseRates.get(to), 6, RoundingMode.HALF_UP);
     }

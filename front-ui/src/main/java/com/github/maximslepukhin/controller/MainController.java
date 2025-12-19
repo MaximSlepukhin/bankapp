@@ -99,7 +99,6 @@ public class MainController {
         return "redirect:/main";
     }
 
-
     // ------------------ Переводы ------------------
     @PostMapping("/user/{login}/transfer")
     public String transferMoney(

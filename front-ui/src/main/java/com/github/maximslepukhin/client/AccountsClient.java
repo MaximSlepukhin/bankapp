@@ -42,7 +42,7 @@ public class AccountsClient {
 
     public UserDto getUserByLogin(String login) {
         String url = accountsServiceUrl + "/api/users/login/" + login;
-        return restTemplate.getForObject(url, UserDto.class);  // Выполняем GET запрос
+        return restTemplate.getForObject(url, UserDto.class);
     }
 
     public List<UserDto> getAllUsers() {
@@ -61,6 +61,6 @@ public class AccountsClient {
 
     public void updateUser(String login, UserDto user) {
         String url = accountsServiceUrl + "/api/users/" + login;
-        restTemplate.put(url, user);  // Выполняем PUT запрос
+        restTemplate.put(url, user);
     }
 }

@@ -7,38 +7,16 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
 
-//@Configuration
-//public class SecurityConfig {
-//
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        http
-//                .csrf(csrf -> csrf.disable())
-//
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/actuator/**").permitAll()
-//                        .requestMatchers("/api/**").authenticated()
-//                        .anyRequest().permitAll()
-//                )
-//
-//                .oauth2ResourceServer(oauth2 ->
-//                        oauth2.jwt(jwt -> {
-//                        })
-//                );
-//
-//        return http.build();
-//    }
-//}
 @Configuration
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Отключаем CSRF защиту
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // Разрешаем все запросы без аутентификации
-                ); // Все запросы доступны без аутентификации
+                        .anyRequest().permitAll()
+                );
 
         return http.build();
     }

@@ -4,7 +4,6 @@ import com.github.maximslepukhin.exception.UserNotFoundException;
 import com.github.maximslepukhin.model.dto.UserDto;
 import com.github.maximslepukhin.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
