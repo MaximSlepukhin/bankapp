@@ -17,7 +17,7 @@ public class AccountsClient {
     public AccountsClient(RestTemplate restTemplate,
                           @Value("${ACCOUNTS_SERVICE_URL}") String accountsServiceUrl) {
         this.restTemplate = restTemplate;
-        this.accountsServiceUrl = accountsServiceUrl; // например: http://accounts-service.default.svc.cluster.local:8081
+        this.accountsServiceUrl = accountsServiceUrl;
     }
 
     public List<String> getCurrencies(String login) {

@@ -22,14 +22,7 @@ public class KafkaProducerConfig {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "my-kafka.default.svc.cluster.local:9092");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-
-        props.put("security.protocol", "SASL_PLAINTEXT");
-        props.put("sasl.mechanism", "SCRAM-SHA-256");
-        props.put("sasl.jaas.config",
-                "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"user1\" password=\"hA6uwPNxFI\";");
-
         props.put(ProducerConfig.ACKS_CONFIG, "1");
-
         return new DefaultKafkaProducerFactory<>(props);
     }
 

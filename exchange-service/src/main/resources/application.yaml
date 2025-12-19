@@ -17,12 +17,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.github.maximslepukhin.model.dto"
-        security.protocol: SASL_PLAINTEXT
-        sasl.mechanism: SCRAM-SHA-256
-        sasl.jaas.config: >
-          org.apache.kafka.common.security.scram.ScramLoginModule required
-          username="user1"
-          password="hA6uwPNxFI";
+
 
 server:
   port: 8084

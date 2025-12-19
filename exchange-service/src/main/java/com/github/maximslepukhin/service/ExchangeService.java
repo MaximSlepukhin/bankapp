@@ -29,7 +29,7 @@ public class ExchangeService {
         try {
             String key = rate.getFrom() + "-" + rate.getTo();
             rates.put(key, rate.getRate());
-            rates.put("RUB-RUB", BigDecimal.ONE); // базовая валюта (можно и вынести в init)
+            rates.put("RUB-RUB", BigDecimal.ONE);
 
             log.info("📥 Принят курс из Kafka: {} → {} = {}",
                     rate.getFrom(), rate.getTo(), rate.getRate());
