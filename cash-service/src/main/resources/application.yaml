@@ -39,3 +39,11 @@ clients:
   accounts-service-url: ${ACCOUNTS_SERVICE_URL}
   blocker-service-url: ${BLOCKER_SERVICE_URL}
   notifications-service-url: ${NOTIFICATIONS_SERVICE_URL}
+
+management:
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans  # эндпоинт Zipkin
+  tracing:
+    sampling:
+      probability: 1  # трассируем 100% запросов

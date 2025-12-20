@@ -17,6 +17,13 @@ management:
     web:
       exposure:
         include: health,info
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans  # эндпоинт Zipkin
+  tracing:
+    sampling:
+      probability: 1  # трассируем 100% запросов
+
 logging:
   level:
     org.springframework.security: DEBUG
@@ -27,4 +34,3 @@ logging:
     org.springframework.security.oauth2.core.endpoint: DEBUG
     org.keycloak: DEBUG
     org.keycloak.adapters: DEBUG
-

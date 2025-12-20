@@ -70,3 +70,11 @@ resilience4j:
         minimum-number-of-calls: 5
         failure-rate-threshold: 50
         wait-duration-in-open-state: 10s
+
+management:
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans  # эндпоинт Zipkin
+  tracing:
+    sampling:
+      probability: 1  # трассируем 100% запросов

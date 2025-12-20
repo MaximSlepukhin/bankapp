@@ -16,3 +16,11 @@ blocker:
   maintenance:
     start: "00:00"
     end: "00:05"
+
+management:
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans  # эндпоинт Zipkin
+  tracing:
+    sampling:
+      probability: 1  # трассируем 100% запросов

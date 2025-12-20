@@ -14,7 +14,7 @@ public class OAuth2ClientConfig {
             ClientRegistrationRepository clients) {
 
         var provider = OAuth2AuthorizedClientProviderBuilder.builder()
-                .clientCredentials()  // Используем client_credentials flow
+                .clientCredentials()
                 .build();
 
         var service = new InMemoryOAuth2AuthorizedClientService(clients);
