@@ -118,13 +118,10 @@ pipeline {
             }
         }
 
-        stage('Build Docker Images') {
+        stage('Build Docker Images in Minikube') {
             steps {
                 script {
-                    env.PATH = "/usr/local/bin:/opt/homebrew/bin:${env.PATH}"
-                    sh 'eval "$(/opt/homebrew/bin/minikube docker-env)"'
-
-                    [
+                    def services = [
                         "accounts-service",
                         "blocker-service",
                         "cash-service",
@@ -133,13 +130,18 @@ pipeline {
                         "front-ui",
                         "notifications-service",
                         "transfer-service"
-                    ].each { service ->
-                        sh """
-                            /usr/local/bin/docker build \
-                              -t ${service}:latest \
-                              -f ${service}/Dockerfile ${service}
-                        """
+                    ]
+
+                    def minikubeEnv = sh(
+                        script: '/opt/homebrew/bin/minikube docker-env --shell bash',
+                        returnStdout: true
+                    ).trim()
+
+                    def buildCmd = "${minikubeEnv}\n"
+                    services.each { service ->
+                        buildCmd += "docker build -t ${service}:latest -f ${service}/Dockerfile ${service}\n"
                     }
+                    sh buildCmd
                 }
             }
         }
@@ -176,9 +178,7 @@ pipeline {
                     services.each { service ->
                         sh """
                             echo "Deleting pods for ${service}..."
-                            # Удаляем по app.kubernetes.io/name
                             /usr/local/bin/kubectl delete pod -l app.kubernetes.io/name=${service} -n dev --ignore-not-found
-                            # Удаляем по app (для сервисов с этим лейблом)
                             /usr/local/bin/kubectl delete pod -l app=${service} -n dev --ignore-not-found
                         """
                     }

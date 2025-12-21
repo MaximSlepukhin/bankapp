@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -23,10 +22,5 @@ public class NotificationServiceImpl implements NotificationService {
                 .createdAt(OffsetDateTime.now())
                 .build();
         return repository.save(n);
-    }
-
-    @Override
-    public List<Notification> getForUser(String login) {
-        return repository.findByLoginOrderByCreatedAtDesc(login);
     }
 }
