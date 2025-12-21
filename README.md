@@ -48,8 +48,7 @@
 - Развёртывание: **Helm (Bitnami Kafka)**
 - Namespace: `default`
 - Brokers: **1**
-- Zookeeper: включён
-- KRaft: отключён
+- KRaft: включен
 - Протокол: `PLAINTEXT`
 - Хранение данных: `PersistentVolumeClaim`
 

@@ -132,6 +132,7 @@ pipeline {
                         "transfer-service"
                     ]
 
+                    // Получаем переменные окружения Docker для Minikube
                     def minikubeEnv = sh(
                         script: '/opt/homebrew/bin/minikube docker-env --shell bash',
                         returnStdout: true
@@ -141,6 +142,8 @@ pipeline {
                     services.each { service ->
                         buildCmd += "docker build -t ${service}:latest -f ${service}/Dockerfile ${service}\n"
                     }
+
+                    // Выполняем сборку в одном шелле
                     sh buildCmd
                 }
             }
@@ -207,6 +210,23 @@ pipeline {
                         """
                     }
                 }
+            }
+        }
+
+        // Финальная стадия с инструкцией по доступу
+        stage('Access Information') {
+            steps {
+                echo """
+                =====================================================
+                Front-end доступен на: http://localhost:8081/signup
+                Keycloak доступен на: http://localhost:8080
+
+                Чтобы открыть сервисы локально, используй:
+
+                kubectl port-forward -n dev svc/front-ui 8081:8080
+                kubectl port-forward -n dev svc/keycloak 8080:80
+                =====================================================
+                """
             }
         }
     }
