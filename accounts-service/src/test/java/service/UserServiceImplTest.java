@@ -27,7 +27,7 @@ class UserServiceImplTest {
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
-        kafkaUserRegistrationProducer = mock(KafkaUserRegistrationProducer.class); // <-- мокируем
+        kafkaUserRegistrationProducer = mock(KafkaUserRegistrationProducer.class);
         userMapper = new UserMapper();
         userService = new UserServiceImpl(userRepository, userMapper, kafkaUserRegistrationProducer);
     }
