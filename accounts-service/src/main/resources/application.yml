@@ -39,7 +39,7 @@ logging:
 management:
   zipkin:
     tracing:
-      endpoint: http://zipkin:9411/api/v2/spans  # эндпоинт Zipkin
+      endpoint: http://zipkin.monitoring.svc.cluster.local:9411/api/v2/spans  # эндпоинт Zipkin
   tracing:
     sampling:
       probability: 1  # трассируем 100% запросов

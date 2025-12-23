@@ -1,5 +1,6 @@
 package com.github.maximslepukhin.config.rest;
 
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -8,14 +9,7 @@ import org.springframework.web.client.RestTemplate;
 public class RestTemplateConfig {
 
     @Bean
-    public RestTemplate restTemplate() {
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.getInterceptors().add((request, body, execution) -> {
-            System.out.println("Запрос: " + request.getMethod() + " " + request.getURI());
-            var response = execution.execute(request, body);
-            System.out.println("Ответ: " + response.getStatusCode());
-            return response;
-        });
-        return restTemplate;
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return builder.build();
     }
 }
