@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: bankapp-services
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - dev
+  selector:
+    matchLabels:
+      prometheus: "true"  # Мы будем добавлять этот лейбл к каждому сервису, который хотим мониторить
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /actuator/prometheus

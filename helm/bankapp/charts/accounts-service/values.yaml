@@ -10,6 +10,10 @@ service:
   port: 8081
   targetPort: 8081
   type: ClusterIP
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8081"
 
 resources: {}
 

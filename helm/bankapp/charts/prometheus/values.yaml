@@ -1,0 +1,14 @@
+# Namespace, где искать сервисы
+namespace: dev
+
+# Namespace, где установлен Prometheus
+prometheusNamespace: monitoring
+
+# Путь метрик
+metricsPath: /actuator/prometheus
+
+# Интервал опроса
+scrapeInterval: 15s
+
+# Метка для выбора сервисов, которые мониторим
+monitoringLabel: monitoring

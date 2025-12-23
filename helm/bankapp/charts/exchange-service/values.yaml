@@ -10,6 +10,10 @@ service:
   type: ClusterIP
   port: 8084
   targetPort: 8084
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8084"
 
 ingress:
   enabled: false

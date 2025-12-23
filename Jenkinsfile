@@ -239,6 +239,42 @@ pipeline {
             }
         }
 
+        stage('Add Prometheus Helm Repo') {
+            steps {
+                sh '''
+                    echo "Adding Prometheus Helm repository..."
+                    /opt/homebrew/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+                '''
+            }
+        }
+
+        stage('Add Grafana Helm Repo') {
+            steps {
+                sh '''
+                    echo "Adding Grafana Helm repository..."
+                    /opt/homebrew/bin/helm repo add grafana https://grafana.github.io/helm-charts
+                '''
+            }
+        }
+
+        stage('Update Helm Repos') {
+            steps {
+                sh '''
+                    echo "Updating all Helm repositories..."
+                    /opt/homebrew/bin/helm repo update
+                '''
+            }
+        }
+
+        stage('Install Prometheus Stack') {
+            steps {
+                sh '''
+                    echo "Installing kube-prometheus-stack..."
+                    /opt/homebrew/bin/helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
+                '''
+            }
+        }
+
         stage('Access Information') {
             steps {
                 echo """
