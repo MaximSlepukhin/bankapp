@@ -41,9 +41,19 @@ clients:
   notifications-service-url: ${NOTIFICATIONS_SERVICE_URL}
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+
+  metrics:
+    enable:
+      all: true
+
+  tracing:
+    sampling:
+      probability: 1
+
   zipkin:
     tracing:
       endpoint: http://zipkin.monitoring.svc.cluster.local:9411/api/v2/spans
-  tracing:
-    sampling:
-      probability: 1  # трассируем 100% запросов

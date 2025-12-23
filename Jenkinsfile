@@ -5,7 +5,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/MaximSlepukhin/bankapp.git', branch: 'feature/sprint-11'
+                git url: 'https://github.com/MaximSlepukhin/bankapp.git', branch: 'feature/sprint-12'
             }
         }
 
@@ -132,7 +132,6 @@ pipeline {
                         "transfer-service"
                     ]
 
-                    // Получаем переменные окружения Docker для Minikube
                     def minikubeEnv = sh(
                         script: '/opt/homebrew/bin/minikube docker-env --shell bash',
                         returnStdout: true
@@ -143,7 +142,6 @@ pipeline {
                         buildCmd += "docker build -t ${service}:latest -f ${service}/Dockerfile ${service}\n"
                     }
 
-                    // Выполняем сборку в одном шелле
                     sh buildCmd
                 }
             }
@@ -213,7 +211,34 @@ pipeline {
             }
         }
 
-        // Финальная стадия с инструкцией по доступу
+        stage('Deploy Zipkin with Helm') {
+            steps {
+                sh '''
+                    echo "Deploying Zipkin..."
+
+                    /opt/homebrew/bin/helm upgrade --install zipkin \
+                      ./helm/bankapp/charts/zipkin \
+                      --namespace monitoring \
+                      --create-namespace \
+                      --wait --timeout 300s
+                '''
+            }
+        }
+
+        stage('Wait for Zipkin Ready') {
+            steps {
+                sh '''
+                    echo "Waiting for Zipkin pod to be Ready..."
+
+                    /usr/local/bin/kubectl wait \
+                      --for=condition=Ready pod \
+                      -l app=zipkin \
+                      -n monitoring \
+                      --timeout=300s
+                '''
+            }
+        }
+
         stage('Access Information') {
             steps {
                 echo """
@@ -221,8 +246,11 @@ pipeline {
                 Front-end доступен на: http://localhost:8081/signup
                 Keycloak доступен на: http://localhost:8080
 
-                Чтобы открыть сервисы локально, используй:
+                Zipkin:
+                kubectl port-forward -n monitoring svc/zipkin 9411:9411
+                http://localhost:9411
 
+                Чтобы открыть сервисы локально:
                 kubectl port-forward -n dev svc/front-ui 8081:8080
                 kubectl port-forward -n dev svc/keycloak 8080:80
                 =====================================================
