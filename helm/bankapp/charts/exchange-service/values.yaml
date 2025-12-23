@@ -10,6 +10,8 @@ service:
   type: ClusterIP
   port: 8084
   targetPort: 8084
+  labels:
+    app.kubernetes.io/name: exchange-service
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/path: "/actuator/prometheus"

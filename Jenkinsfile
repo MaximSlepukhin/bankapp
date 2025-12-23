@@ -270,7 +270,7 @@ pipeline {
             steps {
                 sh '''
                     echo "Installing kube-prometheus-stack..."
-                    /opt/homebrew/bin/helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
+                    /opt/homebrew/bin/helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring --create-namespace --wait --timeout 300s
                 '''
             }
         }

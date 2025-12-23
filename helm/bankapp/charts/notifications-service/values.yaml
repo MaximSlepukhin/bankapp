@@ -9,6 +9,8 @@ service:
   type: ClusterIP
   port: 8087
   targetPort: 8087
+  labels:
+    app.kubernetes.io/name: notifications-service
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/path: "/actuator/prometheus"

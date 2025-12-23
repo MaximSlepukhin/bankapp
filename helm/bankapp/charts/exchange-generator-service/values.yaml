@@ -10,6 +10,8 @@ image:
 service:
   type: ClusterIP
   port: 8080
+  labels:
+    app.kubernetes.io/name: exchange-generator-service
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/path: "/actuator/prometheus"
