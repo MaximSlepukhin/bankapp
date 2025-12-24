@@ -275,6 +275,15 @@ pipeline {
             }
         }
 
+        stage('Apply ServiceMonitor') {
+            steps {
+                sh '''
+                    echo "Applying ServiceMonitor..."
+                    /usr/local/bin/kubectl apply -f helm/bankapp/charts/prometheus/templates/servicemonitor.yaml
+                '''
+            }
+        }
+
         stage('Access Information') {
             steps {
                 echo """
@@ -285,6 +294,10 @@ pipeline {
                 Zipkin:
                 kubectl port-forward -n monitoring svc/zipkin 9411:9411
                 http://localhost:9411
+
+                Prometheus:
+                kubectl port-forward -n monitoring svc/prometheus-stack-kube-prom-prometheus 9090:9090
+                http://localhost:9090
 
                 Чтобы открыть сервисы локально:
                 kubectl port-forward -n dev svc/front-ui 8081:8080

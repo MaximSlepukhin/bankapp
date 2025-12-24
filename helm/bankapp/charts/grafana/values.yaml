@@ -1,0 +1,46 @@
+adminUser: admin
+adminPassword: admin
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-stack-kube-prom-prometheus.monitoring.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
+
+persistence:
+  enabled: true
+  size: 10Gi
+
+service:
+  type: ClusterIP
+
+# Пример: включаем стандартные дашборды для JVM и Spring Boot
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+
+dashboards:
+  default:
+    jvm-micrometer:
+      file: /var/lib/grafana/dashboards/jvm-micrometer.json
+    jvm-micrometer-overview:
+      file: /var/lib/grafana/dashboards/jvm-micrometer-overview.json
+    springboot-http:
+      file: /var/lib/grafana/dashboards/spring-boot-http.json
+    springboot-kafka:
+      file: /var/lib/grafana/dashboards/spring-boot-kafka-listeners.json
+    springboot-statistics:
+      file: /var/lib/grafana/dashboards/spring-boot-statistics.json
