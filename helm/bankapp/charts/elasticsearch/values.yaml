@@ -12,14 +12,14 @@ resources:
     memory: "1Gi"
     cpu: "1"
 
-volumeClaimTemplate:
-  accessModes: ["ReadWriteOnce"]
-  resources:
-    requests:
-      storage: 1Gi
-
-persistence:
-  enabled: true
+#volumeClaimTemplate:
+#  accessModes: ["ReadWriteOnce"]
+#  resources:
+#    requests:
+#      storage: 1Gi
+#
+#persistence:
+#  enabled: true
 
 service:
   type: ClusterIP
