@@ -5,19 +5,25 @@ import com.github.maximslepukhin.model.dto.ConvertResponse;
 import com.github.maximslepukhin.model.dto.CurrencyRate;
 import com.github.maximslepukhin.model.enums.Currency;
 import com.github.maximslepukhin.service.ExchangeService;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 class ExchangeServiceTest {
+
     private ExchangeService exchangeService;
+    private MeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
-        exchangeService = new ExchangeService();
+        meterRegistry = mock(MeterRegistry.class); // создаём мок
+        exchangeService = new ExchangeService(meterRegistry); // передаем мок
+
         exchangeService.consumeRates(new CurrencyRate(Currency.USD, Currency.RUB, BigDecimal.valueOf(95)));
         exchangeService.consumeRates(new CurrencyRate(Currency.CNY, Currency.RUB, BigDecimal.valueOf(15)));
     }
