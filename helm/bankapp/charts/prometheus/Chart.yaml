@@ -1,6 +1,0 @@
-apiVersion: v2
-name: dev-servicemonitor
-description: Helm-чарт для мониторинга всех сервисов в namespace dev
-type: application
-version: 0.1.0
-appVersion: "1.0.0"
