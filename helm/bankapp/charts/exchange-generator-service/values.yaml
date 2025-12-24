@@ -1,3 +1,33 @@
+#springProfile: dev
+#
+#replicaCount: 1
+#
+#image:
+#  repository: exchange-generator-service
+#  pullPolicy: IfNotPresent
+#  tag: "latest"
+#
+#service:
+#  type: ClusterIP
+#  port: 8080
+#  labels:
+#    app.kubernetes.io/name: exchange-generator-service
+#  annotations:
+#    prometheus.io/scrape: "true"
+#    prometheus.io/path: "/actuator/prometheus"
+#    prometheus.io/port: "8080"
+#
+#resources:
+#  limits:
+#    cpu: 500m
+#    memory: 512Mi
+#  requests:
+#    cpu: 250m
+#    memory: 256Mi
+#
+#env:
+#  SPRING_PROFILES_ACTIVE: dev
+#  EXCHANGE_SERVICE_URL: "http://exchange-service:8084/api/exchange/rates"
 springProfile: dev
 
 replicaCount: 1

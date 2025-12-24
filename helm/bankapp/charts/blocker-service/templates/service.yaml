@@ -1,7 +1,26 @@
+{{/*apiVersion: v1*/}}
+{{/*kind: Service*/}}
+{{/*metadata:*/}}
+{{/*  name: {{ .Release.Name }}*/}}
+{{/*spec:*/}}
+{{/*  selector:*/}}
+{{/*    app: {{ .Release.Name }}*/}}
+{{/*  ports:*/}}
+{{/*    - protocol: TCP*/}}
+{{/*      port: {{ .Values.service.port }}*/}}
+{{/*      targetPort: {{ .Values.service.targetPort }}*/}}
+{{/*  type: ClusterIP*/}}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}
+  labels:
+    app.kubernetes.io/name: blocker-service
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8087"
 spec:
   selector:
     app: {{ .Release.Name }}
