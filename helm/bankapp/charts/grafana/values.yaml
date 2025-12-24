@@ -1,6 +1,10 @@
+# helm/bankapp/charts/grafana/values.yaml
+
+# Админ-пользователь Grafana
 adminUser: admin
 adminPassword: admin
 
+# Источники данных
 datasources:
   datasources.yaml:
     apiVersion: 1
@@ -11,36 +15,21 @@ datasources:
         access: proxy
         isDefault: true
 
+# Хранение данных
 persistence:
   enabled: true
   size: 10Gi
 
+# Тип сервиса Grafana
 service:
   type: ClusterIP
 
-# Пример: включаем стандартные дашборды для JVM и Spring Boot
-dashboardProviders:
-  dashboardproviders.yaml:
-    apiVersion: 1
-    providers:
-      - name: 'default'
-        orgId: 1
-        folder: ''
-        type: file
-        disableDeletion: false
-        editable: true
-        options:
-          path: /var/lib/grafana/dashboards
+# Sidecar для автоматического подхвата ConfigMap с дашбордами
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard   # все ConfigMap с этой меткой будут монтироваться
+    folder: /var/lib/grafana/dashboards
 
-dashboards:
-  default:
-    jvm-micrometer:
-      file: /var/lib/grafana/dashboards/jvm-micrometer.json
-    jvm-micrometer-overview:
-      file: /var/lib/grafana/dashboards/jvm-micrometer-overview.json
-    springboot-http:
-      file: /var/lib/grafana/dashboards/spring-boot-http.json
-    springboot-kafka:
-      file: /var/lib/grafana/dashboards/spring-boot-kafka-listeners.json
-    springboot-statistics:
-      file: /var/lib/grafana/dashboards/spring-boot-statistics.json
+initChownData:
+  enabled: false
