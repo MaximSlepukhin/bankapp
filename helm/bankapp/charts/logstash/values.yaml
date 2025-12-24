@@ -1,7 +1,8 @@
 replicaCount: 1
 
 image:
-  repository: docker.elastic.co/logstash/logstash
+  registry: docker.io
+  repository: bitnami/logstash
   tag: 8.10.0
   pullPolicy: IfNotPresent
 
@@ -37,7 +38,6 @@ config:
     }
 
     filter {
-      # пример: если нужно можно фильтровать или добавлять поля
       mutate {
         add_field => { "[@metadata][received_at]" => "%{@timestamp}" }
       }
