@@ -1,0 +1,25 @@
+replicas: 1
+
+minimumMasterNodes: 1
+
+esJavaOpts: "-Xms512m -Xmx512m"
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+  limits:
+    cpu: "500m"
+    memory: "1Gi"
+
+volumeClaimTemplate:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi
+
+persistence:
+  enabled: true
+
+service:
+  type: ClusterIP

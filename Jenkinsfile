@@ -25,8 +25,7 @@ pipeline {
         stage('Deploy Kafka (PLAINTEXT, 1 broker)') {
             steps {
                 sh '''
-                    echo "Deploying Kafka (PLAINTEXT, no SASL, no KRaft)..."
-
+                    echo "Deploying Kafka..."
                     /opt/homebrew/bin/helm upgrade --install my-kafka bitnami/kafka \
                       --namespace default \
                       --set image.repository=bitnamilegacy/kafka \
@@ -59,13 +58,11 @@ pipeline {
             steps {
                 sh '''
                     /usr/local/bin/kubectl delete pod kafka-client -n default --ignore-not-found
-
                     /usr/local/bin/kubectl run kafka-client \
                       --restart=Never \
                       --image=bitnamilegacy/kafka:4.0.0 \
                       --namespace default \
                       -- sleep infinity
-
                     /usr/local/bin/kubectl wait \
                       --for=condition=Ready pod/kafka-client \
                       -n default \
@@ -78,7 +75,6 @@ pipeline {
             steps {
                 script {
                     def topics = ["exchange-rates", "notifications"]
-
                     topics.each { topic ->
                         sh """
                             echo "Creating topic ${topic}..."
@@ -215,7 +211,6 @@ pipeline {
             steps {
                 sh '''
                     echo "Deploying Zipkin..."
-
                     /opt/homebrew/bin/helm upgrade --install zipkin \
                       ./helm/bankapp/charts/zipkin \
                       --namespace monitoring \
@@ -229,7 +224,6 @@ pipeline {
             steps {
                 sh '''
                     echo "Waiting for Zipkin pod to be Ready..."
-
                     /usr/local/bin/kubectl wait \
                       --for=condition=Ready pod \
                       -l app=zipkin \
@@ -239,28 +233,19 @@ pipeline {
             }
         }
 
-        stage('Add Prometheus Helm Repo') {
+        stage('Add Helm Repos') {
             steps {
                 sh '''
-                    echo "Adding Prometheus Helm repository..."
+                    echo "Adding Helm repos..."
+
+                    # Prometheus и Grafana
                     /opt/homebrew/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-                '''
-            }
-        }
-
-        stage('Add Grafana Helm Repo') {
-            steps {
-                sh '''
-                    echo "Adding Grafana Helm repository..."
                     /opt/homebrew/bin/helm repo add grafana https://grafana.github.io/helm-charts
-                '''
-            }
-        }
 
-        stage('Update Helm Repos') {
-            steps {
-                sh '''
-                    echo "Updating all Helm repositories..."
+                    # Elasticsearch
+                    /opt/homebrew/bin/helm repo add elastic https://helm.elastic.co
+
+                    # Обновление индексов всех репозиториев
                     /opt/homebrew/bin/helm repo update
                 '''
             }
@@ -270,7 +255,37 @@ pipeline {
             steps {
                 sh '''
                     echo "Installing kube-prometheus-stack..."
-                    /opt/homebrew/bin/helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring --create-namespace --wait --timeout 300s
+                    /opt/homebrew/bin/helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-stack \
+                      -n monitoring --create-namespace --wait --timeout 300s
+                '''
+            }
+        }
+
+        stage('Install Grafana with dashboards') {
+            steps {
+                sh '''
+                    echo "Creating ConfigMaps for Grafana dashboards..."
+
+                    kubectl create configmap jvm-micrometer --from-file=helm/bankapp/charts/grafana/dashboards/jvm-micrometer.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
+                    kubectl label configmap jvm-micrometer grafana_dashboard=1 -n monitoring
+
+                    kubectl create configmap jvm-micrometer-overview --from-file=helm/bankapp/charts/grafana/dashboards/jvm-micrometer-overview.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
+                    kubectl label configmap jvm-micrometer-overview grafana_dashboard=1 -n monitoring
+
+                    kubectl create configmap springboot-http --from-file=helm/bankapp/charts/grafana/dashboards/spring-boot-http.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
+                    kubectl label configmap springboot-http grafana_dashboard=1 -n monitoring
+
+                    kubectl create configmap springboot-kafka --from-file=helm/bankapp/charts/grafana/dashboards/spring-boot-kafka-listeners.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
+                    kubectl label configmap springboot-kafka grafana_dashboard=1 -n monitoring
+
+                    kubectl create configmap springboot-statistics --from-file=helm/bankapp/charts/grafana/dashboards/spring-boot-statistics.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
+                    kubectl label configmap springboot-statistics grafana_dashboard=1 -n monitoring
+
+                    echo "Installing Grafana..."
+                    /opt/homebrew/bin/helm upgrade --install grafana grafana/grafana \
+                      -n monitoring --create-namespace \
+                      -f ./helm/bankapp/charts/grafana/values.yaml \
+                      --wait --timeout 300s
                 '''
             }
         }
@@ -298,6 +313,10 @@ pipeline {
                 Prometheus:
                 kubectl port-forward -n monitoring svc/prometheus-stack-kube-prom-prometheus 9090:9090
                 http://localhost:9090
+
+                Grafana:
+                kubectl port-forward -n monitoring svc/grafana 3000:80
+                http://localhost:3000
 
                 Чтобы открыть сервисы локально:
                 kubectl port-forward -n dev svc/front-ui 8081:8080
