@@ -23,15 +23,13 @@ class UserServiceImplTest {
     private UserMapper userMapper;
     private UserServiceImpl userService;
     private  KafkaUserRegistrationProducer kafkaUserRegistrationProducer;
-    private MeterRegistry meterRegistry;
-
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         kafkaUserRegistrationProducer = mock(KafkaUserRegistrationProducer.class);
         userMapper = new UserMapper();
-        userService = new UserServiceImpl(userRepository, userMapper, kafkaUserRegistrationProducer, meterRegistry);
+        userService = new UserServiceImpl(userRepository, userMapper, kafkaUserRegistrationProducer);
     }
 
 
