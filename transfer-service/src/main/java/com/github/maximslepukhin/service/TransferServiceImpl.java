@@ -12,6 +12,9 @@ import com.github.maximslepukhin.model.record.BlockerStatus;
 import com.github.maximslepukhin.repository.TransferRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +36,20 @@ public class TransferServiceImpl implements TransferService {
     private final BlockerClient blockerClient;
     private final TransferRepository transferRepository;
     private final NotificationKafkaProducer notificationKafkaProducer;
+    private final MeterRegistry meterRegistry;
+    private Counter successfulTransfers;
+    private Counter failedTransfers;
+
+    @PostConstruct
+    public void initMetrics() {
+        successfulTransfers = Counter.builder("transfer.success")
+                .description("Количество успешных переводов")
+                .register(meterRegistry);
+
+        failedTransfers = Counter.builder("transfer.failed")
+                .description("Количество неуспешных переводов")
+                .register(meterRegistry);
+    }
 
     @Override
     @Retry(name = "transferService")
@@ -48,6 +65,10 @@ public class TransferServiceImpl implements TransferService {
         // ✅ Проверка бизнес-правил
         if (request.getFromLogin().equals(request.getToLogin()) &&
             request.getFromCurrency().equals(request.getToCurrency())) {
+            failedTransfers.increment();
+            meterRegistry.counter("transfer_blocked_total",
+                    "login", request.getFromLogin(),
+                    "toLogin", request.getToLogin()).increment();
             throw new TransferBlockedException("Перевод самому себе в одной валюте невозможен");
         }
 
@@ -55,6 +76,10 @@ public class TransferServiceImpl implements TransferService {
         BlockerStatus status = blockerClient.check(new BlockerRequest(request.getFromLogin()));
         if (status.blocked()) {
             log.warn("Transfer {} blocked: {}", txId, status.reason());
+            failedTransfers.increment();
+            meterRegistry.counter("transfer_blocked_total",
+                    "login", request.getFromLogin(),
+                    "toLogin", request.getToLogin()).increment();
             throw new TransferBlockedException(status.reason());
         }
 
@@ -63,9 +88,11 @@ public class TransferServiceImpl implements TransferService {
         List<String> toCurrencies = accountsClient.getCurrencies(request.getToLogin());
 
         if (!fromCurrencies.contains(request.getFromCurrency().name())) {
+            failedTransfers.increment();
             throw new IllegalArgumentException("У отправителя нет счёта в валюте " + request.getFromCurrency());
         }
         if (!toCurrencies.contains(request.getToCurrency().name())) {
+            failedTransfers.increment();
             throw new IllegalArgumentException("У получателя нет счёта в валюте " + request.getToCurrency());
         }
 
@@ -115,7 +142,7 @@ public class TransferServiceImpl implements TransferService {
         transferRepository.save(entity);
 
         log.info("Transfer {} completed successfully", txId);
-
+        successfulTransfers.increment();
         return TransferResponse.builder()
                 .transactionId(txId.toString())
                 .status(TransferStatus.SUCCESS)
@@ -137,6 +164,10 @@ public class TransferServiceImpl implements TransferService {
         log.error("Transfer fallback {}, причина={}, тип={}",
                 txId, ex.getMessage(), ex.getClass().getName());
 
+        failedTransfers.increment();
+        meterRegistry.counter("transfer_blocked_total",
+                "login", request.getFromLogin(),
+                "toLogin", request.getToLogin()).increment();
         TransferEntity entity = TransferEntity.builder()
                 .id(txId)
                 .fromAccountId(request.getFromLogin())

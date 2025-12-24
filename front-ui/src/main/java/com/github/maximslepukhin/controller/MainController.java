@@ -8,6 +8,7 @@ import com.github.maximslepukhin.model.dto.SignupForm;
 import com.github.maximslepukhin.service.ExchangeService;
 import com.github.maximslepukhin.service.FinanceService;
 import com.github.maximslepukhin.service.UserService;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,6 +34,7 @@ public class MainController {
     private final UserService userService;
     private final FinanceService financeService;
     private final ExchangeService exchangeService;
+    private final MeterRegistry meterRegistry;
 
 
     // ------------------ Главная страница ------------------
@@ -43,27 +45,39 @@ public class MainController {
 
     @GetMapping("/main")
     public String mainPage(Model model, @AuthenticationPrincipal OidcUser oidcUser) {
+        String login = (oidcUser != null) ? oidcUser.getPreferredUsername() : "unknown";
+
         if (oidcUser == null) {
-            return "redirect:/login";
-        }
-        UserDto user = null;
-        try {
-            user = userService.getUserFromOidc(oidcUser);
-        } catch (Exception e) {
+            meterRegistry.counter("user_login_total", "status", "failed", "login", login).increment();
             return "redirect:/login";
         }
 
-        if (user == null) {
+        UserDto user;
+        try {
+            user = userService.getUserFromOidc(oidcUser);
+
+            if (user == null || user.getLogin().isBlank()) {
+                meterRegistry.counter("user_login_total", "status", "failed", "login", login).increment();
+                return "redirect:/login";
+            }
+
+            meterRegistry.counter("user_login_total", "status", "success", "login", user.getLogin()).increment();
+
+            model.addAttribute("login", user.getLogin());
+            model.addAttribute("name", user.getName());
+            model.addAttribute("birthdate", user.getBirthdate());
+            model.addAttribute("accounts", user.getAccounts());
+            model.addAttribute("currency", List.of(Currency.USD, Currency.RUB, Currency.CNY));
+
+            List<UserDto> otherUsers = userService.getOtherUsers(user.getLogin());
+            model.addAttribute("users", otherUsers);
+
+            return "main";
+
+        } catch (Exception e) {
+            meterRegistry.counter("user_login_total", "status", "failed", "login", login).increment();
             return "redirect:/login";
         }
-        model.addAttribute("login", user.getLogin());
-        model.addAttribute("name", user.getName());
-        model.addAttribute("birthdate", user.getBirthdate());
-        model.addAttribute("accounts", user.getAccounts());
-        model.addAttribute("currency", List.of(Currency.USD, Currency.RUB, Currency.CNY));
-        List<UserDto> otherUsers = userService.getOtherUsers(user.getLogin());
-        model.addAttribute("users", otherUsers);
-        return "main";
     }
 
     // ------------------ Регистрация ------------------

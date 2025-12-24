@@ -7,6 +7,7 @@ import com.github.maximslepukhin.exception.OperationBlockedException;
 import com.github.maximslepukhin.exception.OperationFailedException;
 import com.github.maximslepukhin.model.dto.CashOperationDto;
 import com.github.maximslepukhin.model.dto.NotificationRequest;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -20,10 +21,13 @@ public class CashServiceImpl implements CashService {
     private final AccountsClient accountsClient;
     private final BlockerClient blockerClient;
     private final KafkaNotificationProducer kafkaProducer;
+    private final MeterRegistry meterRegistry;
 
     @Override
     public void deposit(CashOperationDto dto) {
         if (blockerClient.isBlocked(dto.getLogin(), dto.getCurrency(), dto.getAmount())) {
+            meterRegistry.counter("transfer_blocked_total",
+                    "login", dto.getLogin()).increment();
             throw new OperationBlockedException("Операция заблокирована");
         }
 
@@ -50,6 +54,8 @@ public class CashServiceImpl implements CashService {
 
         boolean blocked = blockerClient.isBlocked(dto.getLogin(), dto.getCurrency(), dto.getAmount());
         if (blocked) {
+            meterRegistry.counter("transfer_blocked_total",
+                    "login", dto.getLogin()).increment();
             throw new RuntimeException("Операция заблокирована");
         }
 

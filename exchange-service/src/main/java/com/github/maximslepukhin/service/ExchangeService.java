@@ -4,6 +4,8 @@ import com.github.maximslepukhin.model.dto.ConvertRequest;
 import com.github.maximslepukhin.model.dto.ConvertResponse;
 import com.github.maximslepukhin.model.dto.CurrencyRate;
 import com.github.maximslepukhin.model.enums.Currency;
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -15,14 +17,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ExchangeService {
 
     private final Map<String, BigDecimal> rates = new ConcurrentHashMap<>();
+    private final MeterRegistry meterRegistry;
 
     @KafkaListener(topics = "exchange-rates", groupId = "exchange-service-group")
     public void consumeRates(CurrencyRate rate) {
         if (rate == null) {
-            log.warn("⚠️ Получен null rate из Kafka");
+            log.warn("⚠️ Получен null rate из Kafka для {} → {}",
+                    rate.getFrom(), rate.getTo());
+
+            meterRegistry.counter("exchange_rate_missing_total",
+                    "from", rate.getFrom().name(),
+                    "to", rate.getTo().name()
+            ).increment();
             return;
         }
 
@@ -36,6 +46,10 @@ public class ExchangeService {
 
         } catch (Exception e) {
             log.error("Ошибка при обработке курса из Kafka: {}", rate, e);
+            meterRegistry.counter("exchange_rate_failed_total",
+                    "from", rate.getFrom().name(),
+                    "to", rate.getTo().name()
+            ).increment();
         }
     }
 

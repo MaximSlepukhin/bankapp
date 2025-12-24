@@ -26,15 +26,12 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final KafkaUserRegistrationProducer kafkaUserRegistrationProducer;
-    private final MeterRegistry meterRegistry;
 
     public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
-                           KafkaUserRegistrationProducer kafkaUserRegistrationProducer,
-                           MeterRegistry meterRegistry) {
+                           KafkaUserRegistrationProducer kafkaUserRegistrationProducer) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.kafkaUserRegistrationProducer = kafkaUserRegistrationProducer;
-        this.meterRegistry = meterRegistry;
     }
 
     @Override
@@ -66,11 +63,9 @@ public class UserServiceImpl implements UserService {
             userRepository.save(user);
             kafkaUserRegistrationProducer.send(new NotificationRequest(user.getLogin(), "Зарегистрирован пользователь " + user.getLogin()));
 
-            meterRegistry.counter("user_registration_total", "status", "success").increment();
             return getUserByLogin(user.getLogin());
 
         } catch (Exception e) {
-            meterRegistry.counter("user_registration_total", "status", "failed").increment();
             throw e;
         }
     }
