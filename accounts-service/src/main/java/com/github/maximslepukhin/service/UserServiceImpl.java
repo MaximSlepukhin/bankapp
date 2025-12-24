@@ -9,6 +9,7 @@ import com.github.maximslepukhin.model.entity.Account;
 import com.github.maximslepukhin.model.entity.User;
 import com.github.maximslepukhin.model.enums.Currency;
 import com.github.maximslepukhin.repository.UserRepository;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,42 +26,53 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final KafkaUserRegistrationProducer kafkaUserRegistrationProducer;
+    private final MeterRegistry meterRegistry;
 
-
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, KafkaUserRegistrationProducer kafkaUserRegistrationProducer) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
+                           KafkaUserRegistrationProducer kafkaUserRegistrationProducer,
+                           MeterRegistry meterRegistry) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.kafkaUserRegistrationProducer = kafkaUserRegistrationProducer;
+        this.meterRegistry = meterRegistry;
     }
 
     @Override
     @Transactional
     public UserDto createUser(UserDto userDto) {
-        if (userDto.getLogin() == null || userDto.getLogin().isBlank()) {
-            throw new IllegalArgumentException("Логин не может быть пустым");
-        }
-        if (userDto.getKeycloakId() == null || userDto.getKeycloakId().isBlank()) {
-            throw new IllegalArgumentException("KeycloakId не может быть пустым");
-        }
-        if (userRepository.existsByLogin(userDto.getLogin())) {
-            throw new RuntimeException("User with this login already exists");
-        }
+        try {
+            if (userDto.getLogin() == null || userDto.getLogin().isBlank()) {
+                throw new IllegalArgumentException("Логин не может быть пустым");
+            }
+            if (userDto.getKeycloakId() == null || userDto.getKeycloakId().isBlank()) {
+                throw new IllegalArgumentException("KeycloakId не может быть пустым");
+            }
+            if (userRepository.existsByLogin(userDto.getLogin())) {
+                throw new RuntimeException("User with this login already exists");
+            }
 
-        User user = new User();
-        user.setLogin(userDto.getLogin());
-        user.setKeycloakId(userDto.getKeycloakId());
-        user.setName(userDto.getName());
-        user.setBirthdate(userDto.getBirthdate());
+            User user = new User();
+            user.setLogin(userDto.getLogin());
+            user.setKeycloakId(userDto.getKeycloakId());
+            user.setName(userDto.getName());
+            user.setBirthdate(userDto.getBirthdate());
 
-        List<Account> accounts = List.of(
-                new Account(Currency.RUB, BigDecimal.ZERO, user),
-                new Account(Currency.USD, BigDecimal.ZERO, user),
-                new Account(Currency.CNY, BigDecimal.ZERO, user)
-        );
-        user.setAccounts(accounts);
-        userRepository.save(user);
-        kafkaUserRegistrationProducer.send(new NotificationRequest(user.getLogin(), "Зарегистрирован пользователь " + user.getLogin()));
-        return getUserByLogin(user.getLogin());
+            List<Account> accounts = List.of(
+                    new Account(Currency.RUB, BigDecimal.ZERO, user),
+                    new Account(Currency.USD, BigDecimal.ZERO, user),
+                    new Account(Currency.CNY, BigDecimal.ZERO, user)
+            );
+            user.setAccounts(accounts);
+            userRepository.save(user);
+            kafkaUserRegistrationProducer.send(new NotificationRequest(user.getLogin(), "Зарегистрирован пользователь " + user.getLogin()));
+
+            meterRegistry.counter("user_registration_total", "status", "success").increment();
+            return getUserByLogin(user.getLogin());
+
+        } catch (Exception e) {
+            meterRegistry.counter("user_registration_total", "status", "failed").increment();
+            throw e;
+        }
     }
 
     @Override

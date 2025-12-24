@@ -6,6 +6,7 @@ import com.github.maximslepukhin.model.dto.UserDto;
 import com.github.maximslepukhin.model.entity.User;
 import com.github.maximslepukhin.repository.UserRepository;
 import com.github.maximslepukhin.service.UserServiceImpl;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,6 +23,7 @@ class UserServiceImplTest {
     private UserMapper userMapper;
     private UserServiceImpl userService;
     private  KafkaUserRegistrationProducer kafkaUserRegistrationProducer;
+    private MeterRegistry meterRegistry;
 
 
     @BeforeEach
@@ -29,7 +31,7 @@ class UserServiceImplTest {
         userRepository = mock(UserRepository.class);
         kafkaUserRegistrationProducer = mock(KafkaUserRegistrationProducer.class);
         userMapper = new UserMapper();
-        userService = new UserServiceImpl(userRepository, userMapper, kafkaUserRegistrationProducer);
+        userService = new UserServiceImpl(userRepository, userMapper, kafkaUserRegistrationProducer, meterRegistry);
     }
 
 
