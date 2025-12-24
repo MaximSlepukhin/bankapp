@@ -21,4 +21,10 @@ env:
   maintenanceStart: "00:00"
   maintenanceEnd: "00:05"
 
-resources: {}
+resources:
+  requests:
+    memory: "100Mi"
+    cpu: "100m"
+  limits:
+    memory: "200Mi"
+    cpu: "200m"

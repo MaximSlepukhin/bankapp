@@ -238,15 +238,24 @@ pipeline {
                 sh '''
                     echo "Adding Helm repos..."
 
-                    # Prometheus и Grafana
                     /opt/homebrew/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
                     /opt/homebrew/bin/helm repo add grafana https://grafana.github.io/helm-charts
-
-                    # Elasticsearch
                     /opt/homebrew/bin/helm repo add elastic https://helm.elastic.co
 
-                    # Обновление индексов всех репозиториев
                     /opt/homebrew/bin/helm repo update
+                '''
+            }
+        }
+
+        stage('Deploy Elasticsearch') {
+            steps {
+                sh '''
+                    echo "Deploying Elasticsearch..."
+
+                    /opt/homebrew/bin/helm upgrade --install elasticsearch elastic/elasticsearch \
+                      -n monitoring --create-namespace \
+                      -f helm/bankapp/charts/elasticsearch/values.yaml \
+                      --wait --timeout 300s
                 '''
             }
         }
@@ -264,23 +273,6 @@ pipeline {
         stage('Install Grafana with dashboards') {
             steps {
                 sh '''
-                    echo "Creating ConfigMaps for Grafana dashboards..."
-
-                    kubectl create configmap jvm-micrometer --from-file=helm/bankapp/charts/grafana/dashboards/jvm-micrometer.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
-                    kubectl label configmap jvm-micrometer grafana_dashboard=1 -n monitoring
-
-                    kubectl create configmap jvm-micrometer-overview --from-file=helm/bankapp/charts/grafana/dashboards/jvm-micrometer-overview.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
-                    kubectl label configmap jvm-micrometer-overview grafana_dashboard=1 -n monitoring
-
-                    kubectl create configmap springboot-http --from-file=helm/bankapp/charts/grafana/dashboards/spring-boot-http.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
-                    kubectl label configmap springboot-http grafana_dashboard=1 -n monitoring
-
-                    kubectl create configmap springboot-kafka --from-file=helm/bankapp/charts/grafana/dashboards/spring-boot-kafka-listeners.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
-                    kubectl label configmap springboot-kafka grafana_dashboard=1 -n monitoring
-
-                    kubectl create configmap springboot-statistics --from-file=helm/bankapp/charts/grafana/dashboards/spring-boot-statistics.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
-                    kubectl label configmap springboot-statistics grafana_dashboard=1 -n monitoring
-
                     echo "Installing Grafana..."
                     /opt/homebrew/bin/helm upgrade --install grafana grafana/grafana \
                       -n monitoring --create-namespace \
@@ -296,33 +288,6 @@ pipeline {
                     echo "Applying ServiceMonitor..."
                     /usr/local/bin/kubectl apply -f helm/bankapp/charts/prometheus/templates/servicemonitor.yaml
                 '''
-            }
-        }
-
-        stage('Access Information') {
-            steps {
-                echo """
-                =====================================================
-                Front-end доступен на: http://localhost:8081/signup
-                Keycloak доступен на: http://localhost:8080
-
-                Zipkin:
-                kubectl port-forward -n monitoring svc/zipkin 9411:9411
-                http://localhost:9411
-
-                Prometheus:
-                kubectl port-forward -n monitoring svc/prometheus-stack-kube-prom-prometheus 9090:9090
-                http://localhost:9090
-
-                Grafana:
-                kubectl port-forward -n monitoring svc/grafana 3000:80
-                http://localhost:3000
-
-                Чтобы открыть сервисы локально:
-                kubectl port-forward -n dev svc/front-ui 8081:8080
-                kubectl port-forward -n dev svc/keycloak 8080:80
-                =====================================================
-                """
             }
         }
     }

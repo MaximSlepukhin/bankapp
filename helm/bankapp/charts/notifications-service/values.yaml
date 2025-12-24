@@ -16,7 +16,13 @@ service:
     prometheus.io/path: "/actuator/prometheus"
     prometheus.io/port: "8087"
 
-resources: {}
+resources:
+  requests:
+    memory: "100Mi"
+    cpu: "100m"
+  limits:
+    memory: "200Mi"
+    cpu: "200m"
 
 env:
   SPRING_PROFILES_ACTIVE: "dev"

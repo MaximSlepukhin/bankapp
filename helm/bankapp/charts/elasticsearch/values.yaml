@@ -6,11 +6,12 @@ esJavaOpts: "-Xms512m -Xmx512m"
 
 resources:
   requests:
-    cpu: "250m"
-    memory: "512Mi"
+    memory: "100Mi"
+    cpu: "100m"
   limits:
-    cpu: "500m"
-    memory: "1Gi"
+    memory: "200Mi"
+    cpu: "200m"
+
 
 volumeClaimTemplate:
   accessModes: ["ReadWriteOnce"]

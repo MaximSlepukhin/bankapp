@@ -42,7 +42,13 @@ keycloak:
   url: http://keycloak:8080
   clientSecret: "RMU6Vb96Ay0fWnLJ6WEBiyt8yjdjKk24"
 
-resources: {}
+resources:
+  requests:
+    memory: "100Mi"
+    cpu: "100m"
+  limits:
+    memory: "200Mi"
+    cpu: "200m"
 
 secrets:
   KEYCLOAK_CLIENTSECRET: "RMU6Vb96Ay0fWnLJ6WEBiyt8yjdjKk24"

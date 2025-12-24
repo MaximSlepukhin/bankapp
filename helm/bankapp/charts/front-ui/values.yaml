@@ -16,12 +16,13 @@ service:
     prometheus.io/port: "8080"
 
 resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
   requests:
-    cpu: 50m
-    memory: 64Mi
+    memory: "100Mi"
+    cpu: "100m"
+  limits:
+    memory: "200Mi"
+    cpu: "200m"
+
 
 env:
   # Spring profile
