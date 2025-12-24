@@ -1,0 +1,51 @@
+replicaCount: 1
+
+image:
+  repository: docker.elastic.co/logstash/logstash
+  tag: 8.10.0
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+service:
+  type: ClusterIP
+  port: 5044
+
+config:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    xpack.monitoring.enabled: false
+
+  pipelines.yml: |
+    - pipeline.id: kafka_to_es
+      path.config: "/usr/share/logstash/pipeline/kafka_to_es.conf"
+
+  kafka_to_es.conf: |
+    input {
+      kafka {
+        bootstrap_servers => "my-kafka.default.svc.cluster.local:9092"
+        topics => ["logs"]
+        group_id => "logstash"
+        codec => "json"
+      }
+    }
+
+    filter {
+      # пример: если нужно можно фильтровать или добавлять поля
+      mutate {
+        add_field => { "[@metadata][received_at]" => "%{@timestamp}" }
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch-master.monitoring.svc.cluster.local:9200"]
+        index => "microservices-logs-%{+YYYY.MM.dd}"
+      }
+    }
