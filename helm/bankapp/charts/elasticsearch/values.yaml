@@ -1,14 +1,14 @@
-replicaCount: 1
+replicas: 1
 
-esJavaOpts: "-Xms256m -Xmx256m"
+minimumMasterNodes: 1
 
 resources:
   requests:
-    memory: "512Mi"
     cpu: "250m"
+    memory: "512Mi"
   limits:
-    memory: "1Gi"
     cpu: "500m"
+    memory: "1Gi"
 
-service:
-  type: ClusterIP
+# отключаем pod anti-affinity, чтобы на одном узле всё поднималось
+podAntiAffinity: "soft"
