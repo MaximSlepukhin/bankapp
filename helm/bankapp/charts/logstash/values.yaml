@@ -1,11 +1,5 @@
 replicaCount: 1
 
-image:
-  registry: docker.io
-  repository: bitnami/logstash
-  tag: 8.10.0
-  pullPolicy: IfNotPresent
-
 resources:
   requests:
     memory: "256Mi"

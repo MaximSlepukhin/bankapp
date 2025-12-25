@@ -1,9 +1,8 @@
 replicaCount: 1
 
-image:
-  repository: docker.elastic.co/kibana/kibana
-  tag: 8.10.0
-  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 5601
 
 resources:
   requests:
@@ -13,8 +12,4 @@ resources:
     memory: "512Mi"
     cpu: "500m"
 
-service:
-  type: ClusterIP
-  port: 5601
-
-elasticsearchHosts: "http://elasticsearch-master.monitoring.svc.cluster.local:9200"
+elasticsearchHosts: "http://elasticsearch-master:9200"
