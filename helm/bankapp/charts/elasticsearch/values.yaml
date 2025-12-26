@@ -1,34 +1,20 @@
-# Устанавливаем количество реплик и мастер-нод в 1
-replicas: 1
-
-minimumMasterNodes: 1
-
-discovery:
-  type: single-node
-
-# Настройки JVM
-esJavaOpts: "-Xms512m -Xmx512m"
-
-# Ресурсы
+replicas: 2
 resources:
   requests:
     cpu: "250m"
     memory: "512Mi"
   limits:
     cpu: "500m"
-    memory: "1Gi"
-
-# Объемы данных
+    memory: "2Gi"
 volumeClaimTemplate:
   accessModes: [ "ReadWriteOnce" ]
   resources:
     requests:
-      storage: 1Gi
-
-# Anti-affinity
-podAntiAffinity: "soft"
-
-# Отключение безопасности
-xpack.security.enabled: false
-xpack.security.transport.ssl.enabled: false
-xpack.security.http.ssl.enabled: false
+      storage: 5Gi
+extraEnvs:
+  - name: ELASTIC_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: elasticsearch-master-credentials
+        key: password
+antiAffinity: "soft"

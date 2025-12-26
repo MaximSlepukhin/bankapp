@@ -1,4 +1,11 @@
 # BankApp — микросервисное приложение «Банк»
+/opt/homebrew/bin/helm upgrade --install elasticsearch elastic/elasticsearch \
+--namespace default \
+-f helm/bankapp/charts/elasticsearch/values.yaml
+
+
+helm install elasticsearch elastic/elasticsearch -f helm/bankapp/charts/elasticsearch/values.yaml
+helm upgrade elasticsearch elastic/elasticsearch -f helm/bankapp/charts/elasticsearch/values.yaml
 
 Микросервисное приложение, разработанное в рамках **11-го спринта**.  
 Приложение развёртывается в **Kubernetes**, взаимодействие между частью микросервисов реализовано через **Apache Kafka**.

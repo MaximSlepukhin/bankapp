@@ -37,6 +37,8 @@ config:
     output {
       elasticsearch {
         hosts => ["http://elasticsearch-master.default.svc.cluster.local:9200"]
+        user => "elastic"               # Имя пользователя (по умолчанию 'elastic')
+        password => "LFpRCoSbMhAXNogv%" # Пароль, который ты декодировал
         index => "bank-logs-%{+YYYY.MM.dd}"
       }
       stdout { codec => rubydebug } # для отладки
