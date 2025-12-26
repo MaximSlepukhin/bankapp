@@ -49,7 +49,7 @@ pipeline {
                     }
                 }
 
-        stage('Add Helm Repos') {
+        stage('Add Helm Repos Elastic') {
             steps {
                 sh '''
                     echo "Adding Helm repos..."
@@ -59,41 +59,41 @@ pipeline {
             }
         }
 
-//         stage('Deploy Elasticsearch') {
-//             steps {
-//                 sh '''
-//                     echo "Deploying Elasticsearch..."
-//                     /opt/homebrew/bin/helm upgrade --install elasticsearch elastic/elasticsearch \
-//                       --namespace default \
-//                       -f helm/bankapp/charts/elasticsearch/values.yaml \
-//                       --wait --timeout 600s
-//                 '''
-//             }
-//         }
-//
-//         stage('Deploy Logstash') {
-//             steps {
-//                 sh '''
-//                     echo "Deploying Logstash..."
-//                     /opt/homebrew/bin/helm upgrade --install logstash elastic/logstash \
-//                       --namespace default
-//                       -f helm/bankapp/charts/logstash/values.yaml \
-//                       --wait --timeout 300s
-//                 '''
-//             }
-//         }
-//
-//         stage('Deploy Kibana') {
-//                     steps {
-//                         sh '''
-//                             echo "Deploying Kibana..."
-//                             /opt/homebrew/bin/helm upgrade --install kibana elastic/kibana \
-//                               --namespace default
-//                               -f helm/bankapp/charts/kibana/values.yaml \
-//                               --wait --timeout 300s
-//                         '''
-//                     }
-//                 }
+        stage('Deploy Elasticsearch') {
+            steps {
+                sh '''
+                    echo "Deploying Elasticsearch..."
+                    /opt/homebrew/bin/helm upgrade --install elasticsearch elastic/elasticsearch \
+                      --namespace default \
+                      -f helm/bankapp/charts/elasticsearch/values.yaml \
+                      --wait --timeout 600s
+                '''
+            }
+        }
+
+        stage('Deploy Logstash') {
+            steps {
+                sh '''
+                    echo "Deploying Logstash..."
+                    /opt/homebrew/bin/helm upgrade --install logstash elastic/logstash \
+                      --namespace default
+                      -f helm/bankapp/charts/logstash/values.yaml \
+                      --wait --timeout 300s
+                '''
+            }
+        }
+
+        stage('Deploy Kibana') {
+                    steps {
+                        sh '''
+                            echo "Deploying Kibana..."
+                            /opt/homebrew/bin/helm upgrade --install kibana elastic/kibana \
+                              --namespace default
+                              -f helm/bankapp/charts/kibana/values.yaml \
+                              --wait --timeout 300s
+                        '''
+                    }
+                }
 
         stage('Deploy Kafka (PLAINTEXT, 1 broker)') {
             steps {

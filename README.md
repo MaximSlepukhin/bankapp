@@ -29,6 +29,12 @@
 - Настроены дашборды:
     - HTTP-метрики
     - JVM-метрики
+
+![grafana.png](images/grafana.png)
+    - 
+![zipkin.png](images/zipkin.png)
+
+![prometheus.png](images/prometheus.png)
 ---
 
 ### Логирование (Kafka + ELK)
@@ -50,22 +56,3 @@
     - деплоит микросервисы в Kubernetes
 
 ---
-
-## Доступ к сервисам
-
-```bash
-Keycloak:
-kubectl port-forward -n dev svc/keycloak 8080:80
-http://localhost:8080
-
-Front UI:
-kubectl port-forward -n dev svc/front-ui 8081:8080
-http://localhost:8081/signup
-
-Zipkin:
-kubectl port-forward -n monitoring svc/zipkin 9411:9411
-http://localhost:9411
-
-Grafana:
-kubectl port-forward -n monitoring svc/grafana 3000:80
-http://localhost:3000
