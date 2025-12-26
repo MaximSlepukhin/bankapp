@@ -10,7 +10,7 @@
                     includeStacktrace="true"
                     includeTimeMillis="true"
             />
-            <Property name="bootstrap.servers">localhost:9092</Property>
+            <Property name="bootstrap.servers">my-kafka.default.svc.cluster.local:9092</Property>
             <Property name="linger.ms">1000</Property>
         </Kafka>
 

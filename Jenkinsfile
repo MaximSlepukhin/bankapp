@@ -74,7 +74,7 @@ pipeline {
         stage('Create Kafka Topics') {
             steps {
                 script {
-                    def topics = ["exchange-rates", "notifications"]
+                    def topics = ["exchange-rates", "notifications", "logs"]
                     topics.each { topic ->
                         sh """
                             echo "Creating topic ${topic}..."
@@ -279,15 +279,27 @@ pipeline {
             steps {
                 sh '''
                     echo "=================================================="
-                    echo "Application access information:"
+                    echo "Application access information"
                     echo ""
                     echo "Keycloak:"
                     echo "  kubectl port-forward -n dev svc/keycloak 8080:80"
-                    echo "  Access URL: http://localhost:8080"
+                    echo "  http://localhost:8080"
                     echo ""
                     echo "Front UI:"
                     echo "  kubectl port-forward -n dev svc/front-ui 8081:8080"
-                    echo "  Access URL: http://localhost:8081/signup"
+                    echo "  http://localhost:8081/signup"
+                    echo ""
+                    echo "Zipkin:"
+                    echo "  kubectl port-forward -n monitoring svc/zipkin 9411:9411"
+                    echo "  http://localhost:9411"
+                    echo ""
+                    echo "Prometheus:"
+                    echo "  kubectl port-forward -n monitoring svc/prometheus-server 9090:80"
+                    echo "  http://localhost:9090"
+                    echo ""
+                    echo "Grafana:"
+                    echo "  kubectl port-forward -n monitoring svc/grafana 3000:80"
+                    echo "  http://localhost:3000"
                     echo "=================================================="
                 '''
             }
