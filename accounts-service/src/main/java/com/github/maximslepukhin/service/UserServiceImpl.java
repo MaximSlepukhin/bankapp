@@ -1,6 +1,6 @@
 package com.github.maximslepukhin.service;
 
-import com.github.maximslepukhin.config.security.kafka.KafkaUserRegistrationProducer;
+import com.github.maximslepukhin.config.kafka.KafkaUserRegistrationProducer;
 import com.github.maximslepukhin.model.dto.AccountDto;
 import com.github.maximslepukhin.model.dto.NotificationRequest;
 import com.github.maximslepukhin.model.dto.UserDto;
@@ -9,7 +9,6 @@ import com.github.maximslepukhin.model.entity.Account;
 import com.github.maximslepukhin.model.entity.User;
 import com.github.maximslepukhin.model.enums.Currency;
 import com.github.maximslepukhin.repository.UserRepository;
-import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

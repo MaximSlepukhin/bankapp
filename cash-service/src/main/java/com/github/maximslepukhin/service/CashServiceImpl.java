@@ -2,7 +2,7 @@ package com.github.maximslepukhin.service;
 
 import com.github.maximslepukhin.client.AccountsClient;
 import com.github.maximslepukhin.client.BlockerClient;
-import com.github.maximslepukhin.config.security.kafka.KafkaNotificationProducer;
+import com.github.maximslepukhin.config.kafka.KafkaNotificationProducer;
 import com.github.maximslepukhin.exception.OperationBlockedException;
 import com.github.maximslepukhin.exception.OperationFailedException;
 import com.github.maximslepukhin.model.dto.CashOperationDto;

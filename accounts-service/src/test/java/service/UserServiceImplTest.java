@@ -1,12 +1,11 @@
 package service;
 
-import com.github.maximslepukhin.config.security.kafka.KafkaUserRegistrationProducer;
+import com.github.maximslepukhin.config.kafka.KafkaUserRegistrationProducer;
 import com.github.maximslepukhin.mapper.UserMapper;
 import com.github.maximslepukhin.model.dto.UserDto;
 import com.github.maximslepukhin.model.entity.User;
 import com.github.maximslepukhin.repository.UserRepository;
 import com.github.maximslepukhin.service.UserServiceImpl;
-import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

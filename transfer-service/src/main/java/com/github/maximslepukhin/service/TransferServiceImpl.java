@@ -3,7 +3,7 @@ package com.github.maximslepukhin.service;
 import com.github.maximslepukhin.client.AccountsClient;
 import com.github.maximslepukhin.client.BlockerClient;
 import com.github.maximslepukhin.client.ExchangeClient;
-import com.github.maximslepukhin.config.security.kafka.NotificationKafkaProducer;
+import com.github.maximslepukhin.config.kafka.NotificationKafkaProducer;
 import com.github.maximslepukhin.exception.TransferBlockedException;
 import com.github.maximslepukhin.model.dto.*;
 import com.github.maximslepukhin.model.entity.TransferEntity;

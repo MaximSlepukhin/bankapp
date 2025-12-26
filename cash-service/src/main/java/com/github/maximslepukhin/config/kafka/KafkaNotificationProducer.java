@@ -1,4 +1,4 @@
-package com.github.maximslepukhin.config.security.kafka;
+package com.github.maximslepukhin.config.kafka;
 
 import com.github.maximslepukhin.model.dto.NotificationRequest;
 import lombok.RequiredArgsConstructor;
