@@ -1,9 +1,12 @@
+# Устанавливаем количество реплик и мастер-нод в 1
 replicas: 1
 
 minimumMasterNodes: 1
 
+# Настройки JVM
 esJavaOpts: "-Xms512m -Xmx512m"
 
+# Ресурсы
 resources:
   requests:
     cpu: "250m"
@@ -12,11 +15,17 @@ resources:
     cpu: "500m"
     memory: "1Gi"
 
+# Объемы данных
 volumeClaimTemplate:
   accessModes: [ "ReadWriteOnce" ]
   resources:
     requests:
       storage: 1Gi
 
-# чтобы pod мог запуститься на одном узле
+# Anti-affinity
 podAntiAffinity: "soft"
+
+# Отключение безопасности
+xpack.security.enabled: false
+xpack.security.transport.ssl.enabled: false
+xpack.security.http.ssl.enabled: false

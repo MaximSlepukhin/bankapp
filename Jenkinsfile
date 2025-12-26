@@ -22,6 +22,56 @@ pipeline {
             }
         }
 
+        stage('Delete Elasticsearch') {
+            steps {
+                sh '''
+                    echo "Deleting Elasticsearch..."
+                    /opt/homebrew/bin/helm uninstall elasticsearch --namespace default || echo "Elasticsearch not found"
+                '''
+            }
+        }
+
+        stage('Delete Logstash') {
+            steps {
+                sh '''
+                    echo "Deleting Logstash..."
+                    /opt/homebrew/bin/helm uninstall logstash --namespace default || echo "Logstash not found"
+                '''
+            }
+        }
+
+        stage('Add Helm Repos') {
+            steps {
+                sh '''
+                    echo "Adding Helm repos..."
+                    /opt/homebrew/bin/helm repo add elastic https://helm.elastic.co
+                    /opt/homebrew/bin/helm repo update
+                '''
+            }
+        }
+
+        stage('Deploy Elasticsearch') {
+            steps {
+                sh '''
+                    echo "Deploying Elasticsearch..."
+                    /opt/homebrew/bin/helm upgrade --install elasticsearch elastic/elasticsearch \
+                      --namespace default \
+                      -f helm/bankapp/charts/elasticsearch/values.yaml \
+                      --wait --timeout 600s
+                '''
+            }
+        }
+
+        stage('Deploy Logstash') {
+            steps {
+                sh '''
+                    echo "Deploying Logstash..."
+                    /opt/homebrew/bin/helm upgrade --install logstash elastic/logstash \
+                      --namespace default --wait --timeout 300s
+                '''
+            }
+        }
+
         stage('Deploy Kafka (PLAINTEXT, 1 broker)') {
             steps {
                 sh '''
@@ -233,6 +283,8 @@ pipeline {
             }
         }
 
+        // ==== PROMETHEUS / GRAFANA (ОСТАВЛЕНО ЗАКОММЕНТИРОВАННЫМ) ====
+
         // stage('Add Helm Repos') {
         //     steps {
         //         sh '''
@@ -292,14 +344,6 @@ pipeline {
                     echo "Zipkin:"
                     echo "  kubectl port-forward -n monitoring svc/zipkin 9411:9411"
                     echo "  http://localhost:9411"
-                    echo ""
-                    echo "Prometheus:"
-                    echo "  kubectl port-forward -n monitoring svc/prometheus-server 9090:80"
-                    echo "  http://localhost:9090"
-                    echo ""
-                    echo "Grafana:"
-                    echo "  kubectl port-forward -n monitoring svc/grafana 3000:80"
-                    echo "  http://localhost:3000"
                     echo "=================================================="
                 '''
             }

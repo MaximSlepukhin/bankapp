@@ -19,27 +19,25 @@ config:
 
   pipelines.yml: |
     - pipeline.id: kafka_to_es
-      path.config: "/usr/share/logstash/pipeline/kafka_to_es.conf"
 
   kafka_to_es.conf: |
     input {
       kafka {
         bootstrap_servers => "my-kafka.default.svc.cluster.local:9092"
         topics => ["logs"]
-        group_id => "logstash"
+        group_id => "logstash-consumer-group"
         codec => "json"
       }
     }
-
     filter {
       mutate {
-        add_field => { "[@metadata][received_at]" => "%{@timestamp}" }
+        copy => { "[@metadata][kafka][topic]" => "source" }
       }
     }
-
     output {
       elasticsearch {
-        hosts => ["http://elasticsearch-master.monitoring.svc.cluster.local:9200"]
-        index => "microservices-logs-%{+YYYY.MM.dd}"
+        hosts => ["http://elasticsearch-master.default.svc.cluster.local:9200"]
+        index => "bank-logs-%{+YYYY.MM.dd}"
       }
+      stdout { codec => rubydebug } # для отладки
     }
