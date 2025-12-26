@@ -40,6 +40,15 @@ pipeline {
             }
         }
 
+        stage('Delete Kibana') {
+                    steps {
+                        sh '''
+                            echo "Deleting Kibana..."
+                            /opt/homebrew/bin/helm uninstall kibana --namespace default || echo "Kibana not found"
+                        '''
+                    }
+                }
+
         stage('Add Helm Repos') {
             steps {
                 sh '''
@@ -50,27 +59,41 @@ pipeline {
             }
         }
 
-        stage('Deploy Elasticsearch') {
-            steps {
-                sh '''
-                    echo "Deploying Elasticsearch..."
-                    /opt/homebrew/bin/helm upgrade --install elasticsearch elastic/elasticsearch \
-                      --namespace default \
-                      -f helm/bankapp/charts/elasticsearch/values.yaml \
-                      --wait --timeout 600s
-                '''
-            }
-        }
-
-        stage('Deploy Logstash') {
-            steps {
-                sh '''
-                    echo "Deploying Logstash..."
-                    /opt/homebrew/bin/helm upgrade --install logstash elastic/logstash \
-                      --namespace default --wait --timeout 300s
-                '''
-            }
-        }
+//         stage('Deploy Elasticsearch') {
+//             steps {
+//                 sh '''
+//                     echo "Deploying Elasticsearch..."
+//                     /opt/homebrew/bin/helm upgrade --install elasticsearch elastic/elasticsearch \
+//                       --namespace default \
+//                       -f helm/bankapp/charts/elasticsearch/values.yaml \
+//                       --wait --timeout 600s
+//                 '''
+//             }
+//         }
+//
+//         stage('Deploy Logstash') {
+//             steps {
+//                 sh '''
+//                     echo "Deploying Logstash..."
+//                     /opt/homebrew/bin/helm upgrade --install logstash elastic/logstash \
+//                       --namespace default
+//                       -f helm/bankapp/charts/logstash/values.yaml \
+//                       --wait --timeout 300s
+//                 '''
+//             }
+//         }
+//
+//         stage('Deploy Kibana') {
+//                     steps {
+//                         sh '''
+//                             echo "Deploying Kibana..."
+//                             /opt/homebrew/bin/helm upgrade --install kibana elastic/kibana \
+//                               --namespace default
+//                               -f helm/bankapp/charts/kibana/values.yaml \
+//                               --wait --timeout 300s
+//                         '''
+//                     }
+//                 }
 
         stage('Deploy Kafka (PLAINTEXT, 1 broker)') {
             steps {
@@ -285,47 +308,47 @@ pipeline {
 
         // ==== PROMETHEUS / GRAFANA (ОСТАВЛЕНО ЗАКОММЕНТИРОВАННЫМ) ====
 
-        // stage('Add Helm Repos') {
-        //     steps {
-        //         sh '''
-        //             echo "Adding Helm repos..."
-        //             /opt/homebrew/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-        //             /opt/homebrew/bin/helm repo add grafana https://grafana.github.io/helm-charts
-        //             /opt/homebrew/bin/helm repo update
-        //         '''
-        //     }
-        // }
+        stage('Add Helm Repos') {
+            steps {
+                sh '''
+                    echo "Adding Helm repos..."
+                    /opt/homebrew/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+                    /opt/homebrew/bin/helm repo add grafana https://grafana.github.io/helm-charts
+                    /opt/homebrew/bin/helm repo update
+                '''
+            }
+        }
 
-        // stage('Install Prometheus Stack') {
-        //     steps {
-        //         sh '''
-        //             echo "Installing kube-prometheus-stack..."
-        //             /opt/homebrew/bin/helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-stack \
-        //               -n monitoring --create-namespace --wait --timeout 300s
-        //         '''
-        //     }
-        // }
+        stage('Install Prometheus Stack') {
+            steps {
+                sh '''
+                    echo "Installing kube-prometheus-stack..."
+                    /opt/homebrew/bin/helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-stack \
+                      -n monitoring --create-namespace --wait --timeout 300s
+                '''
+            }
+        }
 
-        // stage('Install Grafana with dashboards') {
-        //     steps {
-        //         sh '''
-        //             echo "Installing Grafana..."
-        //             /opt/homebrew/bin/helm upgrade --install grafana grafana/grafana \
-        //               -n monitoring --create-namespace \
-        //               -f ./helm/bankapp/charts/grafana/values.yaml \
-        //               --wait --timeout 300s
-        //         '''
-        //     }
-        // }
+        stage('Install Grafana with dashboards') {
+            steps {
+                sh '''
+                    echo "Installing Grafana..."
+                    /opt/homebrew/bin/helm upgrade --install grafana grafana/grafana \
+                      -n monitoring --create-namespace \
+                      -f ./helm/bankapp/charts/grafana/values.yaml \
+                      --wait --timeout 300s
+                '''
+            }
+        }
 
-        // stage('Apply ServiceMonitor') {
-        //     steps {
-        //         sh '''
-        //             echo "Applying ServiceMonitor..."
-        //             /usr/local/bin/kubectl apply -f helm/bankapp/charts/prometheus/templates/servicemonitor.yaml
-        //         '''
-        //     }
-        // }
+        stage('Apply ServiceMonitor') {
+            steps {
+                sh '''
+                    echo "Applying ServiceMonitor..."
+                    /usr/local/bin/kubectl apply -f helm/bankapp/charts/prometheus/templates/servicemonitor.yaml
+                '''
+            }
+        }
 
         stage('Access Information') {
             steps {
@@ -344,6 +367,14 @@ pipeline {
                     echo "Zipkin:"
                     echo "  kubectl port-forward -n monitoring svc/zipkin 9411:9411"
                     echo "  http://localhost:9411"
+                    echo ""
+                    echo "Prometheus:"
+                    echo "  kubectl port-forward -n monitoring svc/prometheus-stack-kube-prom-prometheus 9090:9090"
+                    echo "  http://localhost:9090"
+                    echo ""
+                    echo "Grafana:"
+                    echo "  kubectl port-forward -n monitoring svc/grafana 3000:80"
+                    echo "  http://localhost:3000"
                     echo "=================================================="
                 '''
             }

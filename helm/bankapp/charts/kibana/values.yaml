@@ -12,4 +12,4 @@ resources:
     memory: "512Mi"
     cpu: "500m"
 
-elasticsearchHosts: "http://elasticsearch-master:9200"
+elasticsearchHosts: "http://elasticsearch-master.default.svc.cluster.local:9200"

@@ -1,87 +1,71 @@
-# BankApp — микросервисное приложение «Банк»
-/opt/homebrew/bin/helm upgrade --install elasticsearch elastic/elasticsearch \
---namespace default \
--f helm/bankapp/charts/elasticsearch/values.yaml
+# Bank Application — Sprint 12
 
+Микросервисное приложение «Банк» с реализованными трейсингом, мониторингом, алертами и централизованным логированием.
 
-helm install elasticsearch elastic/elasticsearch -f helm/bankapp/charts/elasticsearch/values.yaml
-helm upgrade elasticsearch elastic/elasticsearch -f helm/bankapp/charts/elasticsearch/values.yaml
-
-Микросервисное приложение, разработанное в рамках **11-го спринта**.  
-Приложение развёртывается в **Kubernetes**, взаимодействие между частью микросервисов реализовано через **Apache Kafka**.
-
----
-## Сборка и запуск локально (development)
-
-### Требования
-- Docker
-- Minikube
-- kubectl
-- Helm
-- Maven
-- Jenkins
-
-
-## Архитектура приложения
-
-### Микросервисы
-- `front-ui`
-- `accounts-service`
-- `cash-service`
-- `transfer-service`
-- `exchange-service`
-- `exchange-generator-service`
-- `blocker-service`
-- `notifications-service`
-- `keycloak`
+Проект доработан в рамках двенадцатого спринта.
 
 ---
 
-## Взаимодействие через Apache Kafka
+## Реализовано
 
-| Producer → Consumer | Topic | Гарантия доставки |
-|--------------------|-------|-------------------|
-| Accounts → Notifications | `notifications` | at least once |
-| Cash → Notifications | `notifications` | at least once |
-| Transfer → Notifications | `notifications` | at least once |
-| Exchange Generator → Exchange | `exchange-rates` | at most once (ordered) |
-
-- Взаимодействие между `exchange-generator-service` и `exchange-service` реализовано только через Kafka
-
----
-
-## Apache Kafka
-
-- Развёртывание: **Helm (Bitnami Kafka)**
-- Namespace: `default`
-- Brokers: **1**
-- KRaft: включен
-- Протокол: `PLAINTEXT`
-- Хранение данных: `PersistentVolumeClaim`
-
-### Kafka topics
-- `notifications`
-- `exchange-rates`
+### Трейсинг (Zipkin)
+- Zipkin развёрнут в Kubernetes с использованием Helm
+- Используется Micrometer Tracing (Brave)
+- Трейсируются:
+    - входящие и исходящие HTTP-запросы
+    - обращения к БД
+    - взаимодействие с Apache Kafka
+- TraceId и SpanId передаются между сервисами и логируются
 
 ---
 
-## CI/CD (Jenkins)
+### Метрики и алерты (Prometheus + Grafana)
+- Prometheus развёрнут через `kube-prometheus-stack`
+- Метрики поставляются через Spring Boot Actuator и Micrometer
+- Собираются:
+    - HTTP-метрики
+    - JVM-метрики
+- Grafana подключена к Prometheus
+- Настроены дашборды:
+    - HTTP-метрики
+    - JVM-метрики
+---
 
-Развёртывание и обновление приложения выполняется через Jenkins pipeline.
-
-Pipeline выполняет:
-1. Проверку версий инструментов
-2. Развёртывание Apache Kafka через Helm
-3. Создание Kafka topics
-4. Сборку микросервисов с помощью Maven
-5. Сборку Docker-образов внутри Minikube
-6. Развёртывание баз данных
-7. Развёртывание микросервисов через Helm
-
-`Jenkinsfile` хранится в репозитории и может быть использован в CI/CD Jenkins.
+### Логирование (Kafka + ELK)
+- Все микросервисы отправляют логи в общий Kafka-топик `logs`
+- Используется Slf4j + Logback / Log4j2
+- Logstash читает логи из Kafka и отправляет их в Elasticsearch
+- Kibana используется для визуализации и анализа логов
+- Логи содержат `traceId` и `spanId` для корреляции с Zipkin
 
 ---
 
-### Запуск Minikube
+## Развёртывание
+
+- Все компоненты разворачиваются в Kubernetes с помощью Helm
+- CI/CD реализован через Jenkins (`Jenkinsfile`)
+- Pipeline:
+    - разворачивает Kafka, Zipkin, Prometheus, Grafana и ELK
+    - собирает микросервисы
+    - деплоит микросервисы в Kubernetes
+
+---
+
+## Доступ к сервисам
+
 ```bash
-minikube start
+Keycloak:
+kubectl port-forward -n dev svc/keycloak 8080:80
+http://localhost:8080
+
+Front UI:
+kubectl port-forward -n dev svc/front-ui 8081:8080
+http://localhost:8081/signup
+
+Zipkin:
+kubectl port-forward -n monitoring svc/zipkin 9411:9411
+http://localhost:9411
+
+Grafana:
+kubectl port-forward -n monitoring svc/grafana 3000:80
+http://localhost:3000
