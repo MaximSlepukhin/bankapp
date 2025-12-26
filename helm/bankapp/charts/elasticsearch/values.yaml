@@ -2,6 +2,8 @@ replicas: 1
 
 minimumMasterNodes: 1
 
+esJavaOpts: "-Xms512m -Xmx512m"
+
 resources:
   requests:
     cpu: "250m"
@@ -10,5 +12,11 @@ resources:
     cpu: "500m"
     memory: "1Gi"
 
-# отключаем pod anti-affinity, чтобы на одном узле всё поднималось
+volumeClaimTemplate:
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: 1Gi
+
+# чтобы pod мог запуститься на одном узле
 podAntiAffinity: "soft"

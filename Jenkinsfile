@@ -233,47 +233,47 @@ pipeline {
             }
         }
 
-        stage('Add Helm Repos') {
-            steps {
-                sh '''
-                    echo "Adding Helm repos..."
-                    /opt/homebrew/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-                    /opt/homebrew/bin/helm repo add grafana https://grafana.github.io/helm-charts
-                    /opt/homebrew/bin/helm repo update
-                '''
-            }
-        }
+        // stage('Add Helm Repos') {
+        //     steps {
+        //         sh '''
+        //             echo "Adding Helm repos..."
+        //             /opt/homebrew/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        //             /opt/homebrew/bin/helm repo add grafana https://grafana.github.io/helm-charts
+        //             /opt/homebrew/bin/helm repo update
+        //         '''
+        //     }
+        // }
 
-        stage('Install Prometheus Stack') {
-            steps {
-                sh '''
-                    echo "Installing kube-prometheus-stack..."
-                    /opt/homebrew/bin/helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-stack \
-                      -n monitoring --create-namespace --wait --timeout 300s
-                '''
-            }
-        }
+        // stage('Install Prometheus Stack') {
+        //     steps {
+        //         sh '''
+        //             echo "Installing kube-prometheus-stack..."
+        //             /opt/homebrew/bin/helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-stack \
+        //               -n monitoring --create-namespace --wait --timeout 300s
+        //         '''
+        //     }
+        // }
 
-        stage('Install Grafana with dashboards') {
-            steps {
-                sh '''
-                    echo "Installing Grafana..."
-                    /opt/homebrew/bin/helm upgrade --install grafana grafana/grafana \
-                      -n monitoring --create-namespace \
-                      -f ./helm/bankapp/charts/grafana/values.yaml \
-                      --wait --timeout 300s
-                '''
-            }
-        }
+        // stage('Install Grafana with dashboards') {
+        //     steps {
+        //         sh '''
+        //             echo "Installing Grafana..."
+        //             /opt/homebrew/bin/helm upgrade --install grafana grafana/grafana \
+        //               -n monitoring --create-namespace \
+        //               -f ./helm/bankapp/charts/grafana/values.yaml \
+        //               --wait --timeout 300s
+        //         '''
+        //     }
+        // }
 
-        stage('Apply ServiceMonitor') {
-            steps {
-                sh '''
-                    echo "Applying ServiceMonitor..."
-                    /usr/local/bin/kubectl apply -f helm/bankapp/charts/prometheus/templates/servicemonitor.yaml
-                '''
-            }
-        }
+        // stage('Apply ServiceMonitor') {
+        //     steps {
+        //         sh '''
+        //             echo "Applying ServiceMonitor..."
+        //             /usr/local/bin/kubectl apply -f helm/bankapp/charts/prometheus/templates/servicemonitor.yaml
+        //         '''
+        //     }
+        // }
 
         stage('Access Information') {
             steps {
