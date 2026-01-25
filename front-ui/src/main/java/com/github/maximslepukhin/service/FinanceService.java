@@ -58,16 +58,34 @@ public class FinanceService {
     }
 
     public void cashOperation(String login, Currency currency, BigDecimal value, String action) {
+        log.info("Начало cashOperation: login={}, currency={}, value={}, action={}",
+                login, currency, value, action);
+
         if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
+            log.warn("Ошибка: неверная сумма: {}", value);
             throw new IllegalArgumentException("Сумма должна быть положительным числом");
         }
 
         switch (action.toUpperCase()) {
-            case "PUT" -> deposit(login, currency, value);
-            case "GET" -> withdraw(login, currency, value);
-            default -> throw new IllegalArgumentException("Неизвестное действие: " + action);
+            case "PUT" -> {
+                log.info("Выполняется депозит: login={}, currency={}, value={}", login, currency, value);
+                deposit(login, currency, value);
+                log.info("Депозит успешно выполнен: login={}, currency={}, value={}", login, currency, value);
+            }
+            case "GET" -> {
+                log.info("Выполняется снятие: login={}, currency={}, value={}", login, currency, value);
+                withdraw(login, currency, value);
+                log.info("Снятие успешно выполнено: login={}, currency={}, value={}", login, currency, value);
+            }
+            default -> {
+                log.warn("Неизвестное действие: {}", action);
+                throw new IllegalArgumentException("Неизвестное действие: " + action);
+            }
         }
+
+        log.info("Завершение cashOperation для пользователя {}", login);
     }
+
 
     private String extractErrorMessage(String responseBody) {
         try {

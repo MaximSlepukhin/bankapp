@@ -34,6 +34,7 @@ public class TransferServiceImpl implements TransferService {
     private final BlockerClient blockerClient;
     private final TransferRepository transferRepository;
 
+
     @Override
     @Retry(name = "transferService")
     @CircuitBreaker(name = "transferService", fallbackMethod = "fallbackTransfer")
@@ -130,9 +131,7 @@ public class TransferServiceImpl implements TransferService {
                 .build();
     }
 
-    //  fallback вызывается только при сбоях внешних микросервисов
     private TransferResponse fallbackTransfer(TransferRequest request, Throwable ex) {
-        // Если это бизнес-ошибка — пробрасываем дальше
         if (ex instanceof TransferBlockedException || ex instanceof IllegalArgumentException) {
             log.warn("Business exception, fallback не применяется: {}", ex.getMessage());
             throw (RuntimeException) ex;
@@ -142,7 +141,6 @@ public class TransferServiceImpl implements TransferService {
         log.error("Transfer fallback {}, причина={}, тип={}",
                 txId, ex.getMessage(), ex.getClass().getName());
 
-        // Сохраняем запись об ошибке
         TransferEntity entity = TransferEntity.builder()
                 .id(txId)
                 .fromAccountId(request.getFromLogin())
@@ -157,7 +155,6 @@ public class TransferServiceImpl implements TransferService {
 
         transferRepository.save(entity);
 
-        // Возвращаем безопасный ответ
         return TransferResponse.builder()
                 .transactionId(txId.toString())
                 .status(TransferStatus.FAILED)

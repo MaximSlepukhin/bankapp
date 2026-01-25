@@ -1,19 +1,31 @@
 package com.github.maximslepukhin.client;
 
-import com.github.maximslepukhin.config.feign.FeignOAuth2Config;
 import com.github.maximslepukhin.model.dto.TransferRequestDto;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
-@FeignClient(
-        name = "transfer-gateway-client",
-        url = "http://gateway:8080",
-        configuration = FeignOAuth2Config.class
-)
+@Slf4j
+@Component
+public class TransferClient {
 
-public interface TransferClient {
+    private final RestTemplate restTemplate;
 
-    @PostMapping("/transfer-service/api/transfer")
-    void transfer(@RequestBody TransferRequestDto dto);
+    @Value("${TRANSFER_SERVICE_URL:http://transfer-service:8083}")
+    private String transferServiceUrl;
+
+    public TransferClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    public void transfer(TransferRequestDto dto) {
+        String url = transferServiceUrl + "/api/transfer";
+        try {
+            restTemplate.postForObject(url, dto, Void.class);
+            log.info("Запрос успешно выполнен");
+        } catch (Exception e) {
+            log.error("Ошибка при выполнении запроса на перевод", e);
+        }
+    }
 }

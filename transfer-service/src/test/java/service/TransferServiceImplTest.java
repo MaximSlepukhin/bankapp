@@ -156,7 +156,6 @@ class TransferServiceImplTest {
     void shouldReturnFailedTransfer_whenFallbackTriggered() {
         when(blockerClient.check(any())).thenThrow(new RuntimeException("Feign timeout"));
 
-        // Поскольку CircuitBreaker не активен в юнит-тестах, вызовем fallback вручную через reflection
         TransferResponse response = invokeFallback(request, new RuntimeException("Feign timeout"));
 
         assertThat(response.getStatus()).isEqualTo(TransferStatus.FAILED);

@@ -1,22 +1,47 @@
+
 package com.github.maximslepukhin.client;
 
-import com.github.maximslepukhin.config.feign.FeignOAuth2Config;
 import com.github.maximslepukhin.model.dto.CashOperationDto;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
+@Slf4j
+@Component
+public class CashClient {
 
-@FeignClient(
-        name = "cash-gateway-client",
-        url = "http://gateway:8080",
-        configuration = FeignOAuth2Config.class
-)
+    private final RestTemplate restTemplate;
 
-public interface CashClient {
+    @Value("${CASH_SERVICE_URL:http://cash-service:8082}")
+    private String cashServiceUrl;
 
-    @PostMapping("/cash-service/api/cash/deposit")
-    void deposit(@RequestBody CashOperationDto dto);
+    public CashClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
-    @PostMapping("/cash-service/api/cash/withdraw")
-    void withdraw(@RequestBody CashOperationDto dto);
+    public void deposit(CashOperationDto dto) {
+        String url = cashServiceUrl + "/api/cash/deposit";
+        try {
+            restTemplate.postForObject(url, dto, Void.class);
+        } catch (HttpClientErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Неожиданная ошибка при депозите: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public void withdraw(CashOperationDto dto) {
+        String url = cashServiceUrl + "/api/cash/withdraw";
+        try {
+            restTemplate.postForObject(url, dto, Void.class);
+        } catch (HttpClientErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Неожиданная ошибка при снятии: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
 }

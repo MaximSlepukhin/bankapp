@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "front-ui.fullname" . }}
+  labels:
+    {{- include "front-ui.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "front-ui.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "front-ui.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ include "front-ui.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.env.SPRING_PROFILES_ACTIVE }}
+
+            - name: KEYCLOAK_INTERNAL_URL
+              value: {{ .Values.env.KEYCLOAK_INTERNAL_URL }}
+
+            - name: KEYCLOAK_EXTERNAL_URL
+              value: {{ .Values.env.KEYCLOAK_EXTERNAL_URL }}
+
+            - name: OAUTH2_REALM
+              value: {{ .Values.env.OAUTH2_REALM }}
+
+            - name: OAUTH2_CLIENT_ID
+              value: {{ .Values.env.OAUTH2_CLIENT_ID }}
+
+            - name: OAUTH2_REDIRECT_URI
+              value: {{ .Values.env.OAUTH2_REDIRECT_URI }}
+
+            - name: OAUTH2_CLIENT_ADMIN_ID
+              value: {{ .Values.env.OAUTH2_CLIENT_ADMIN_ID }}
+
+            - name: OAUTH2_CLIENT_ADMIN_SECRET
+              value: {{ .Values.env.OAUTH2_CLIENT_ADMIN_SECRET }}
+
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_ADMIN_CLIENT_ID
+              value: {{ .Values.env.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_ADMIN_CLIENT_ID }}
+
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_ADMIN_CLIENT_SECRET
+              value: {{ .Values.env.SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_ADMIN_CLIENT_SECRET }}
+
+            - name: ACCOUNTS_SERVICE_URL
+              value: {{ .Values.env.ACCOUNTS_SERVICE_URL }}
+
+            - name: CASH_SERVICE_URL
+              value: {{ .Values.env.CASH_SERVICE_URL }}
+
+            - name: TRANSFER_SERVICE_URL
+              value: {{ .Values.env.TRANSFER_SERVICE_URL }}
+
+            - name: EXCHANGE_SERVICE_URL
+              value: {{ .Values.env.EXCHANGE_SERVICE_URL }}
+
+            - name: KEYCLOAK_ADMIN_USERNAME
+              value: {{ .Values.env.KEYCLOAK_ADMIN_USERNAME }}
+
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: {{ .Values.env.KEYCLOAK_ADMIN_PASSWORD }}

@@ -1,0 +1,12 @@
+postgres:
+  image: postgres:16
+  username: keycloak
+  password: keycloak
+  database: keycloak
+  port: 5432
+
+  persistence:
+    enabled: true
+    storageClass: standard
+    size: 8Gi
+    existingClaim: ""

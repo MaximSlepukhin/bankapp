@@ -1,6 +1,5 @@
 package integration;
 
-import com.github.maximslepukhin.TransferServiceApplication;
 import com.github.maximslepukhin.client.*;
 import com.github.maximslepukhin.model.dto.*;
 import com.github.maximslepukhin.model.entity.TransferEntity;
@@ -61,7 +60,6 @@ class TransferIntegrationTest {
 
     @Test
     void shouldPerformSuccessfulTransfer_withCurrencyConversion() {
-        // given
         TransferRequest request = new TransferRequest();
         request.setFromLogin("alice");
         request.setToLogin("bob");
@@ -84,10 +82,8 @@ class TransferIntegrationTest {
 
         when(transferRepository.save(any())).thenReturn(saved);
 
-        // when
         TransferResponse response = transferService.transfer(request);
 
-        // then
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(TransferStatus.SUCCESS);
         assertThat(response.getCredited()).isEqualTo(BigDecimal.valueOf(9500));
@@ -101,7 +97,6 @@ class TransferIntegrationTest {
 
     @Test
     void shouldRespectBlockerMaintenancePeriod() {
-        // given
         TransferRequest request = new TransferRequest();
         request.setFromLogin("alice");
         request.setToLogin("bob");
@@ -111,7 +106,6 @@ class TransferIntegrationTest {
 
         when(blockerClient.check(any())).thenReturn(new BlockerStatus(true, "Maintenance window"));
 
-        // when
         TransferResponse response;
         try {
             transferService.transfer(request);

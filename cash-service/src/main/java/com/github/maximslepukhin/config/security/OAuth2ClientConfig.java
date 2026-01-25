@@ -1,12 +1,13 @@
 package com.github.maximslepukhin.config.security;
 
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.*;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.client.RestTemplate;
 
+@Slf4j
 @Configuration
 public class OAuth2ClientConfig {
 
@@ -26,7 +27,6 @@ public class OAuth2ClientConfig {
     }
 
     @Bean
-    @LoadBalanced
     public RestTemplate restTemplate(OAuth2AuthorizedClientManager manager) {
         var restTemplate = new RestTemplate();
 
@@ -38,7 +38,12 @@ public class OAuth2ClientConfig {
 
             var client = manager.authorize(authorizeRequest);
             if (client != null && client.getAccessToken() != null) {
-                request.getHeaders().setBearerAuth(client.getAccessToken().getTokenValue());
+                String token = client.getAccessToken().getTokenValue();
+                log.info("Adding Bearer token to request: {}", token);
+
+                request.getHeaders().setBearerAuth(token);
+            } else {
+                log.warn("No access token available for cash-service");
             }
 
             return execution.execute(request, body);

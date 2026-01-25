@@ -1,6 +1,20 @@
 spring:
   application:
     name: exchange-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:80/realms/bank-realm
+          jwk-set-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs
 
-  config:
-    import: optional:configserver:http://config-server:8888
+server:
+  port: 8084
+  address: 0.0.0.0
+
+logging:
+  level:
+    root: info
+    org.springframework.security: trace
+    org.springframework.web: debug
+    org.springframework.security.oauth2: trace

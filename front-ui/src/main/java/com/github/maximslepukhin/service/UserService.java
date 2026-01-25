@@ -7,8 +7,12 @@ import com.github.maximslepukhin.exception.UserAlreadyExistsException;
 import com.github.maximslepukhin.model.dto.SignupForm;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +25,7 @@ public class UserService {
 
     private final AccountsClient accountsClient;
     private final KeycloakAdminClient keycloakAdminClient;
+    private final RestTemplate restTemplateWithAuth;
 
     public boolean userExists(String login) {
         try {
@@ -31,22 +36,38 @@ public class UserService {
         }
     }
 
+
     public void registerUser(SignupForm form) {
         if (userExists(form.getLogin())) {
             throw new UserAlreadyExistsException("Пользователь уже существует");
         }
 
+        log.info("Регистрация нового пользователя: {}", form);
+
         String keycloakId = keycloakAdminClient.createUser(form.getLogin(), form.getPassword());
+        log.info("Пользователь создан в Keycloak с ID: {}", keycloakId);
 
         UserDto dto = UserDto.builder()
                 .keycloakId(keycloakId)
                 .login(form.getLogin())
                 .name(form.getName())
                 .birthdate(LocalDate.parse(form.getBirthdate()))
-                .accounts(List.of())
+                .accounts(List.of()) // Пустой список аккаунтов на момент регистрации
                 .build();
 
-        accountsClient.createUser(dto);
+        log.info("Отправка данных пользователя в accounts-service: {}", dto);
+
+        try {
+            HttpEntity<UserDto> requestEntity = new HttpEntity<>(dto);  // Создаем тело запроса
+            ResponseEntity<String> response = restTemplateWithAuth.exchange(
+                    "http://accounts-service:8081/api/users", HttpMethod.POST, requestEntity, String.class);  // Отправляем запрос
+
+            log.info("Ответ от accounts-service: {}", response.getStatusCode());
+            log.info("Ответное тело: {}", response.getBody());
+        } catch (Exception e) {
+            log.error("Ошибка при отправке данных пользователя в accounts-service: {}", e.getMessage(), e);
+            throw new RuntimeException("Ошибка при регистрации пользователя в accounts-service", e);
+        }
     }
 
     public void updateUser(String login, UserDto user) {

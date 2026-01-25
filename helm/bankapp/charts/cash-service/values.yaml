@@ -1,0 +1,43 @@
+replicaCount: 1
+
+image:
+  repository: cash-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8091
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 512Mi
+
+env:
+  SPRING_PROFILES_ACTIVE: "prod"
+#  # Kafka connection variables
+#  KAFKA_BOOTSTRAP_SERVERS: "my-kafka.default.svc.cluster.local:9092"
+#  KAFKA_USERNAME: "user1"
+#  KAFKA_PASSWORD:
+#    valueFrom:
+#      secretKeyRef:
+#        name: my-kafka-user-passwords
+#        key: client-passwords
+
+clients:
+  accounts-service-url: "http://accounts-service:8081"
+  blocker-service-url: "http://blocker-service:8087"
+  notifications-service-url: "http://notifications-service:8087"
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: cash-service.local
+      paths:
+        - path: /
+          pathType: Prefix

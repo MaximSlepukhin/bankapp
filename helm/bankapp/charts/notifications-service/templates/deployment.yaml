@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications-service
+  labels:
+    app: notifications-service
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: notifications-service
+  template:
+    metadata:
+      labels:
+        app: notifications-service
+    spec:
+      containers:
+        - name: notifications-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://{{ .Values.postgres.host }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}?currentSchema={{ .Values.postgres.schema }}
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "{{ .Values.postgres.username }}"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "{{ .Values.postgres.password }}"
+            - name: POSTGRES_HOST
+              value: "{{ .Values.env.POSTGRES_HOST }}"
+            - name: POSTGRES_PORT
+              value: "{{ .Values.env.POSTGRES_PORT }}"
+            - name: POSTGRES_DATABASE
+              value: "{{ .Values.env.POSTGRES_DATABASE }}"
+            - name: POSTGRES_SCHEMA
+              value: "{{ .Values.env.POSTGRES_SCHEMA }}"
+            - name: KEYCLOAK_CLIENTSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: notifications-db-secret
+                  key: KEYCLOAK_CLIENTSECRET
+            - name: KEYCLOAK_JWKSETURI
+              value: "{{ .Values.keycloak.jwkSetUri }}"
+            - name: KEYCLOAK_CLIENTID
+              value: "{{ .Values.keycloak.clientId }}"
+            - name: KEYCLOAK_TOKENURI
+              value: "{{ .Values.keycloak.tokenUri }}"
+            - name: KEYCLOAK_AUTHORIZATIONURI
+              value: "{{ .Values.keycloak.authorizationUri }}"
+            - name: SERVER_PORT
+              value: "{{ .Values.service.port }}"
+
+

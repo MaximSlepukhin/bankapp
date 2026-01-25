@@ -34,6 +34,7 @@ public class MainController {
     private final FinanceService financeService;
     private final ExchangeService exchangeService;
 
+
     // ------------------ Главная страница ------------------
     @GetMapping("/")
     public String root() {
@@ -42,21 +43,26 @@ public class MainController {
 
     @GetMapping("/main")
     public String mainPage(Model model, @AuthenticationPrincipal OidcUser oidcUser) {
-        UserDto user = userService.getUserFromOidc(oidcUser);
-        log.info("OIDC user attributes: {}", oidcUser.getAttributes());
+        if (oidcUser == null) {
+            return "redirect:/login";
+        }
+        UserDto user = null;
+        try {
+            user = userService.getUserFromOidc(oidcUser);
+        } catch (Exception e) {
+            return "redirect:/login";
+        }
+
+        if (user == null) {
+            return "redirect:/login";
+        }
         model.addAttribute("login", user.getLogin());
         model.addAttribute("name", user.getName());
         model.addAttribute("birthdate", user.getBirthdate());
         model.addAttribute("accounts", user.getAccounts());
         model.addAttribute("currency", List.of(Currency.USD, Currency.RUB, Currency.CNY));
-        model.addAttribute("users", userService.getOtherUsers(user.getLogin()));
-
-        model.addAttribute("passwordErrors", model.getAttribute("passwordErrors") != null ? model.getAttribute("passwordErrors") : List.of());
-        model.addAttribute("userAccountsErrors", model.getAttribute("userAccountsErrors") != null ? model.getAttribute("userAccountsErrors") : List.of());
-        model.addAttribute("cashErrors", model.getAttribute("cashErrors") != null ? model.getAttribute("cashErrors") : List.of());
-        model.addAttribute("transferErrors", model.getAttribute("transferErrors") != null ? model.getAttribute("transferErrors") : List.of());
-        model.addAttribute("transferOtherErrors", model.getAttribute("transferOtherErrors") != null ? model.getAttribute("transferOtherErrors") : List.of());
-
+        List<UserDto> otherUsers = userService.getOtherUsers(user.getLogin());
+        model.addAttribute("users", otherUsers);
         return "main";
     }
 
@@ -90,9 +96,9 @@ public class MainController {
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("cashErrors", List.of("Ошибка при операции: " + e.getMessage()));
         }
-
         return "redirect:/main";
     }
+
 
     // ------------------ Переводы ------------------
     @PostMapping("/user/{login}/transfer")

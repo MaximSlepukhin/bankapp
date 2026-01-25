@@ -1,16 +1,19 @@
 package com.github.maximslepukhin.client;
 
 import com.github.maximslepukhin.model.enums.Currency;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 
-
 @Component
 public class AccountsClient {
 
     private final RestTemplate restTemplate;
+
+    @Value("${clients.accounts-service-url}")
+    private String accountsServiceUrl;
 
     public AccountsClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -18,7 +21,7 @@ public class AccountsClient {
 
     public BigDecimal getBalance(String login, Currency currency) {
         return restTemplate.getForObject(
-                "http://ACCOUNTS-SERVICE/api/accounts/{login}/{currency}",
+                accountsServiceUrl + "/api/accounts/{login}/{currency}",
                 BigDecimal.class,
                 login,
                 currency.name()
@@ -27,7 +30,7 @@ public class AccountsClient {
 
     public void updateBalance(String login, Currency currency, BigDecimal amount) {
         restTemplate.postForEntity(
-                "http://ACCOUNTS-SERVICE/api/accounts/{login}/{currency}",
+                accountsServiceUrl + "/api/accounts/{login}/{currency}",
                 amount,
                 Void.class,
                 login,

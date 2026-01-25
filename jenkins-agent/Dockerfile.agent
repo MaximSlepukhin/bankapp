@@ -1,0 +1,39 @@
+FROM eclipse-temurin:21-jdk
+
+USER root
+
+# Install base tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    maven \
+    docker.io \
+    openssh-server \
+    apt-transport-https \
+    ca-certificates \
+    lsb-release \
+    gnupg \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && chmod +x kubectl \
+    && mv kubectl /usr/local/bin/
+
+# Install Helm
+RUN curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+# Jenkins user
+RUN useradd -m -s /bin/bash jenkins \
+    && usermod -aG sudo jenkins \
+    && usermod -aG docker jenkins
+
+# Setup SSH
+RUN mkdir -p /home/jenkins/.ssh && chmod 700 /home/jenkins/.ssh
+COPY authorized_keys /home/jenkins/.ssh/authorized_keys
+RUN chmod 600 /home/jenkins/.ssh/authorized_keys && chown -R jenkins:jenkins /home/jenkins/.ssh
+
+EXPOSE 22
+
+CMD service ssh start && tail -f /dev/null

@@ -1,162 +1,217 @@
+# BankApp - Микросервисное банковское приложение
 
-# 🏦 BankApp — Микросервисное банковское приложение "Банк"
+BankApp - это микросервисное банковское приложение
 
-Микросервисный проект с использованием **Spring Boot**, **Spring Cloud**, **Keycloak**, **PostgreSQL**,
-**Docker Compose**, **Eureka Discovery**, **API Gateway** и **Frontend UI**.
+### Обязательные компоненты:
+   docker --version
+   minikube version
+   helm version
+   mvn --version
+   java -version
+   git --version
 
----
+## 📦 Описание Helm чартов
 
-##  Локальный запуск проекта
+Проект использует зонтичный (umbrella) Helm чарт `bankapp`, который объединяет все микросервисы и их зависимости.
 
-### 📋 Требования
+### Структура чартов
 
-Перед запуском убедись, что установлены:
+```
+helm/bankapp/
+├── Chart.yaml              # Главный чарт с зависимостями
+├── values-dev.yaml         # Конфигурация для dev окружения
+├── values-test.yaml        # Конфигурация для test окружения
+├── values-prod.yaml        # Конфигурация для prod окружения
+└── charts/                 # Sub-charts (зависимости)
+    ├── accounts-db/        # PostgreSQL база данных для accounts-service
+    ├── accounts-service/    # Сервис управления аккаунтами
+    ├── blocker-service/    # Сервис блокировки операций
+    ├── cash-service/       # Сервис работы с наличными
+    ├── exchange-generator-service/  # Генератор курсов валют
+    ├── exchange-service/   # Сервис обмена валют
+    ├── front-ui/           # Frontend приложение
+    ├── keycloak/           # Сервис аутентификации и авторизации
+    ├── keycloak-db/        # PostgreSQL база данных для Keycloak
+    ├── notifications-service/  # Сервис уведомлений
+    └── transfer-service/   # Сервис переводов
+```
 
-- **Docker**
-- **Docker Compose**
-- **Make** (для удобного запуска)
-- **Java** ≥ 21
+### Окружения
+Проект поддерживает три окружения:
+- **dev** - окружение разработки
+- **test** - тестовое окружение
+- **prod** - продакшн окружение
 
----
+Каждое окружение имеет свой namespace в Kubernetes и свой файл values.
+## 🚀 Порядок запуска
 
-##  1. Сборка проекта
+### Шаг 1: Клонирование проекта
+git clone <repository-url>
 
-Сначала собери все JAR-файлы проекта:
+
+### Шаг 2: Запуск Minikube
+minikube start --driver=docker --memory=6g --cpus=4
+# Проверка статуса
+minikube status
+kubectl get nodes
+
+### Шаг 3: Настройка Docker окружения для Minikube
 
 ```bash
-mvn clean install -DskipTests
+# Настройка Docker для использования Minikube registry
+eval $(minikube docker-env)
 ```
 
----
-
-## 🏗️ 2. Запуск контейнеров
-
-### ✅ Вариант 1 — через Makefile (рекомендуется)
-
-Просто выполни:
+### Шаг 4: Создание namespaces
 
 ```bash
-make all
+# Создание namespaces для разных окружений
+kubectl apply -f namespaces.yaml
+
+# Проверка созданных namespaces
+kubectl get namespaces
 ```
 
-Эта команда автоматически:
+### Шаг 5: Сборка Docker образов
 
-1. Поднимет **PostgreSQL** для Keycloak
-2. Поднимет **Keycloak** и дождётся его готовности
-3. Импортирует `bank-realm.json`
-4. Поднимет **PostgreSQL** для банковских сервисов
-5. Запустит **Config Server** и **Discovery Server**
-6. Запустит все микросервисы:  
-   `accounts-service`, `cash-service`, `transfer-service`,  
-   `exchange-service`, `blocker-service`, `notifications-service`, `exchange-generator-service`
-7. Запустит **Gateway** и **Frontend UI**
+Для каждого сервиса необходимо собрать Docker образ. Пример для всех сервисов:
+mvn clean package
+eval $(minikube docker-env)
+docker build -t accounts-service:latest -f accounts-service/Dockerfile accounts-service
 
-## ✅ Готово!
+# Blocker Service
+mvn clean package
+docker build -t blocker-service:latest -f blocker-service/Dockerfile blocker-service
 
-После запуска можно открыть:
-- Frontend → [http://localhost:8080/signup]
-- Авторизация через Keycloak (`bank-realm`)
-- Все микросервисы зарегистрированы в Eureka и доступны через Gateway.
+# Cash Service
+mvn clean package
+eval $(minikube docker-env)
+docker build -t cash-service:latest -f cash-service/Dockerfile cash-service
 
----
+# Exchange Generator Service
+mvn clean package
+eval $(minikube docker-env)
+docker build -t exchange-generator-service:latest -f exchange-generator-service/Dockerfile exchange-generator-service
 
-### ⚙️ Вариант 2 — вручную
+# Exchange Service
+mvn clean package
+eval $(minikube docker-env)
+docker build -t exchange-service:latest -f exchange-service/Dockerfile exchange-service
 
-Если нет `make`, можно запускать вручную:
+# Notifications Service
+mvn clean package
+eval $(minikube docker-env)
+docker build -t notifications-service:latest -f notifications-service/Dockerfile notifications-service
+
+# Transfer Service
+mvn clean package
+eval $(minikube docker-env)
+docker build -t transfer-service:latest -f transfer-service/Dockerfile transfer-service
+
+# Front UI
+mvn clean package
+eval $(minikube docker-env)
+docker build -t front-ui:latest -f front-ui/Dockerfile front-ui
+```
+```
+### Шаг 6: Установка приложения через Helm
+
+#### Вариант 1: Установка всего приложения одним чартом
+
+helm install bankapp . --namespace dev --create-namespace -f values-dev.yaml
+
+#### Вариант 2: Установка сервисов по отдельности (рекомендуется для первого запуска)
+
+**1. Установка баз данных (сначала):**
+helm install accounts-db . --namespace dev --force
+helm install keycloak-db . --namespace dev --force
+
+
+**2. Установка Keycloak:**
 
 ```bash
-docker compose up -d --build postgres-keycloak
-docker compose up -d --build keycloak
-# дождаться готовности Keycloak (~30 секунд)
-docker compose up -d --build postgres
-docker compose up -d --build config-server discovery-server
-docker compose up -d --build accounts-service cash-service transfer-service exchange-service blocker-service notifications-service exchange-generator-service
-docker compose up -d --build gateway front-ui
+helm install keycloak . --namespace dev --force
 ```
 
----
-
-## 🌍 3. Основные URL
-
-| Компонент | URL |
-|------------|-----|
-| 🦸 Keycloak Admin Console | [http://localhost:8082/admin](http://localhost:8082/admin) |
-| ⚙️ Config Server | [http://localhost:8888](http://localhost:8888) |
-| 🔍 Discovery Server (Eureka) | [http://localhost:8761](http://localhost:8761) |
-| 🌐 Gateway API | [http://localhost:8090](http://localhost:8090) |
-| 🖥️ Frontend UI | [http://localhost:8080](http://localhost:8080) |
-
-🔑 **Keycloak credentials:**
-```
-Username: admin
-Password: admin
-```
-
----
-
-## 🧱 4. Описание микросервисов
-
-| Сервис | Назначение | Порт |
-|---------|-------------|------|
-| 🐘 **postgres** | БД для банковских сервисов | 5433 |
-| 🐘 **postgres-keycloak** | БД для Keycloak | 5434 |
-| 🦸 **keycloak** | OAuth2 / OpenID Connect сервер авторизации | 8082 |
-| ⚙️ **config-server** | Spring Cloud Config Server | 8888 |
-| 🔍 **discovery-server** | Eureka Server для регистрации микросервисов | 8761 |
-| 💳 **accounts-service** | Управление банковскими счетами | 8081 |
-| 💰 **cash-service** | Наличные операции | 8091 |
-| 💸 **transfer-service** | Денежные переводы | 8083 |
-| 💱 **exchange-service** | Обмен валют | 8085 |
-| 🚫 **blocker-service** | Блокировка счетов и карт | 8086 |
-| 📢 **notifications-service** | Уведомления | 8087 |
-| 📊 **exchange-generator-service** | Генерация валютных курсов | 8088 |
-| 🌐 **gateway** | API Gateway (входная точка для фронта и клиентов) | 8090 |
-| 🖥️ **front-ui** | Веб-интерфейс приложения | 8080 |
-
----
-
-## 🔑 5. Импорт Keycloak Realm
-
-При первом старте Keycloak автоматически импортирует `bank-realm.json` из директории:
-
-```
-./keycloak-export → /opt/keycloak/data/import
-```
-
-Это создаёт:
-- Realm: `bank-realm`
-- Клиентов (front-ui и др.)
-- Роли, пользователей и настройки аутентификации.
-
----
-
-## 🧰 6. Полезные команды Makefile
-
-| Команда | Описание |
-|----------|-----------|
-| `make all` | Полный запуск всех сервисов в нужном порядке |
-| `make down` | Остановка всех контейнеров |
-| `make rebuild` | Полная пересборка и перезапуск |
-| `make ps` | Проверка статуса всех контейнеров |
-| `make logs` | Просмотр логов |
-| `make clean` | Полное удаление контейнеров и volume’ов |
-
----
-
-## 🧹 7. Очистка окружения
-
-Если нужно удалить всё (контейнеры, volume и кэш):
+**3. Установка микросервисов:**
 
 ```bash
-make clean
+# Accounts Service
+helm install accounts-service . --namespace dev --force
+
+# Blocker Service
+helm install blocker-service . --namespace dev --force
+
+# Cash Service
+helm install cash-service . --namespace dev --force
+
+# Exchange Generator Service
+helm install exchange-generator-service . --namespace dev --force
+
+# Exchange Service
+helm install exchange-service . --namespace dev --force
+
+# Notifications Service
+helm install notifications-service . --namespace dev --force
+
+# Transfer Service
+helm install transfer-service . --namespace dev --force
+
+# Front UI
+helm install front-ui . --namespace dev --force
 ```
 
-или
+### Шаг 8: Проверка статуса подов
 
 ```bash
-docker compose down -v --remove-orphans
-docker system prune -f
+# Проверка всех подов в namespace dev
+kubectl get pods -n dev
+
+# Проверка всех ресурсов
+kubectl get all -n dev
 ```
 
----
+## ✅ Проверка работоспособности
 
+### Проверка статуса сервисов
+
+```bash
+# Список всех установленных Helm релизов
+helm list -n dev
+
+# Статус подов
+kubectl get pods -n dev
+
+# Статус сервисов
+kubectl get svc -n dev
+
+# Логи конкретного сервиса
+kubectl logs -n dev deployment/accounts-service-accounts
+```
+
+### Проброс портов для доступа к сервисам
+
+```bash
+# Front UI (порт 8081)
+kubectl port-forward -n dev svc/front-ui 8081:8080
+
+# Keycloak (порт 8080)
+kubectl port-forward -n dev svc/keycloak 8080:80
+```
+
+После проброса портов:
+- Front UI будет доступен по адресу: http://localhost:8081
+- Keycloak будет доступен по адресу: http://localhost:808
+
+
+
+
+cd helm/bankapp/charts/kafka
+helm install kafka . --namespace dev --force
+helm upgrade kafka . --namespace dev --force
+kubectl get all -n dev
+helm upgrade kafka . --namespace dev --force
+
+nano ~/.docker/config.json
+# или
+vi ~/.docker/config.json

@@ -21,6 +21,7 @@ public class ExchangeService {
     private final Map<String, BigDecimal> rates = new ConcurrentHashMap<>();
 
     public void updateRates(List<CurrencyRate> newRates) {
+        log.info("POST запрос на /api/exchange/rates получен с телом: {}", rates);
         for (CurrencyRate rate : newRates) {
             rates.put(rate.getFrom() + "-" + rate.getTo(), rate.getRate());
         }
@@ -28,6 +29,7 @@ public class ExchangeService {
     }
 
     public List<CurrencyRate> getRates() {
+        log.info("GET запрос на /api/exchange/rates получен");
         List<CurrencyRate> result = new ArrayList<>();
         for (Map.Entry<String, BigDecimal> entry : rates.entrySet()) {
             String[] parts = entry.getKey().split("-");
@@ -37,6 +39,7 @@ public class ExchangeService {
     }
 
     public ConvertResponse convert(ConvertRequest request) {
+        log.info("POST запрос на /api/exchange/convert получен с телом: {}", request);
         log.info("➡️ Запрос на конвертацию: amount={}, from={}, to={}",
                 request.getAmount(), request.getFrom(), request.getTo());
 

@@ -1,0 +1,36 @@
+blocker-service:
+  replicaCount: 1
+  image:
+    repository: blocker-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  env:
+    maintenanceStart: "00:00"
+    maintenanceEnd: "00:05"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "400m"
+      memory: "512Mi"
+
+# values-test.yaml
+springProfile: test
+
+image:
+  repository: exchange-generator-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi

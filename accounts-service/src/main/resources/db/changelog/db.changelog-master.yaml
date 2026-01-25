@@ -1,4 +1,5 @@
 databaseChangeLog:
+  # Далее создаём таблицы
   - include:
       file: db/changelog/changesets/001-create-users-table.yaml
   - include:

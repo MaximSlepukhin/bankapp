@@ -1,0 +1,102 @@
+{{/*apiVersion: apps/v1*/}}
+{{/*kind: Deployment*/}}
+{{/*metadata:*/}}
+{{/*  name: keycloak*/}}
+{{/*spec:*/}}
+{{/*  replicas: {{ .Values.replicaCount }}*/}}
+{{/*  selector:*/}}
+{{/*    matchLabels:*/}}
+{{/*      app: keycloak*/}}
+{{/*  template:*/}}
+{{/*    metadata:*/}}
+{{/*      labels:*/}}
+{{/*        app: keycloak*/}}
+{{/*    spec:*/}}
+{{/*      containers:*/}}
+{{/*        - name: keycloak*/}}
+{{/*          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"*/}}
+{{/*          imagePullPolicy: {{ .Values.image.pullPolicy }}*/}}
+{{/*          ports:*/}}
+{{/*            - containerPort: {{ .Values.service.targetPort }}*/}}
+{{/*          env:*/}}
+{{/*            {{- range .Values.extraEnv }}*/}}
+{{/*            - name: {{ .name }}*/}}
+{{/*              {{- if .value }}*/}}
+{{/*              value: {{ .value | quote }}*/}}
+{{/*              {{- end }}*/}}
+{{/*              {{- if .valueFrom }}*/}}
+{{/*              valueFrom:*/}}
+{{/*                {{ toYaml .valueFrom | nindent 16 }}*/}}
+{{/*              {{- end }}*/}}
+{{/*            {{- end }}*/}}
+{{/*          command: {{ toYaml .Values.command | nindent 10 }}*/}}
+{{/*          volumeMounts:*/}}
+{{/*            {{- if .Values.realmImport.enabled }}*/}}
+{{/*            - name: realm-config*/}}
+{{/*              mountPath: /opt/keycloak/data/import*/}}
+{{/*            {{- end }}*/}}
+{{/*      volumes:*/}}
+{{/*        {{- if .Values.realmImport.enabled }}*/}}
+{{/*        - name: realm-config*/}}
+{{/*          configMap:*/}}
+{{/*            name: keycloak-realm*/}}
+{{/*        {{- end }}*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+          env:
+            {{- range .Values.extraEnv }}
+            - name: {{ .name }}
+              {{- if .value }}
+              value: {{ .value | quote }}
+              {{- end }}
+              {{- if .valueFrom }}
+              valueFrom:
+                {{ toYaml .valueFrom | nindent 16 }}
+              {{- end }}
+            {{- end }}
+            # Добавляем переменные для TLS
+            - name: KC_HTTPS_CERTIFICATE_FILE
+              value: /etc/x509/https/tls.crt
+            - name: KC_HTTPS_CERTIFICATE_KEY_FILE
+              value: /etc/x509/https/tls.key
+          args:
+            - start-dev
+            - --import-realm
+            - --verbose
+          volumeMounts:
+            {{- if .Values.realmImport.enabled }}
+            - name: realm-config
+              mountPath: /opt/keycloak/data/import
+            {{- end }}
+            # Монтируем TLS Secret
+            - name: keycloak-tls
+              mountPath: /etc/x509/https
+              readOnly: true
+      volumes:
+        {{- if .Values.realmImport.enabled }}
+        - name: realm-config
+          configMap:
+            name: keycloak-realm
+        {{- end }}
+        # TLS Secret volume
+        - name: keycloak-tls
+          secret:
+            secretName: keycloak-tls-secret

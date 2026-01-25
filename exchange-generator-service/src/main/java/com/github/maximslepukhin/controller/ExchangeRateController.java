@@ -30,9 +30,6 @@ public class ExchangeRateController {
                         rate.getRate()
                 ))
                 .collect(Collectors.toList());
-
-        log.info("Отправляем {} валютных курсов для UI: {}", dtoList.size(), dtoList);
-
         return dtoList;
     }
 }

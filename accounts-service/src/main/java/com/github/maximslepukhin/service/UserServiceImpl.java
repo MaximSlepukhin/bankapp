@@ -54,7 +54,6 @@ public class UserServiceImpl implements UserService {
         );
         user.setAccounts(accounts);
         userRepository.save(user);
-
         return getUserByLogin(user.getLogin());
     }
 

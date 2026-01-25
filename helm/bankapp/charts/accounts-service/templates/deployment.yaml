@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "accounts.fullname" . }}
+  labels:
+    app.kubernetes.io/name: accounts-service
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: accounts-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: accounts-service
+    spec:
+      containers:
+        - name: accounts
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+          env:
+{{/*            - name: SPRING_PROFILES_ACTIVE*/}}
+{{/*              value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"*/}}
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ .Values.postgres.host }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "none"
+            - name: SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA
+              value: "{{ .Values.postgres.schema }}"
+            - name: SPRING_LIQUIBASE_DEFAULT_SCHEMA
+              value: "{{ .Values.postgres.schema }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "accounts.secretName" . }}
+                  key: POSTGRES_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "accounts.secretName" . }}
+                  key: POSTGRES_PASSWORD
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+              value: "{{ .Values.keycloak.endpoints.jwkSetUri }}"
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI
+              value: "{{ .Values.keycloak.endpoints.tokenUri }}"
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI
+              value: "{{ .Values.keycloak.endpoints.authorizationUri }}"
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_SERVICE_CLIENT_ID
+              value: "{{ .Values.keycloak.client.id }}"
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_SERVICE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "accounts.secretName" . }}
+                  key: KEYCLOAK_CLIENT_SECRET

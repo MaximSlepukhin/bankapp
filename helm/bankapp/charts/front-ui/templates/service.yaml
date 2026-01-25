@@ -1,0 +1,18 @@
+{{- if .Values.service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "front-ui.fullname" . }}
+  labels:
+    {{- include "front-ui.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type | default "NodePort" }}
+  ports:
+    - name: http
+      port: {{ .Values.service.port | default 80 }}
+      targetPort: 8080
+      protocol: TCP
+      nodePort: {{ .Values.service.nodePort | default 30080 }}
+  selector:
+    {{- include "front-ui.selectorLabels" . | nindent 4 }}
+{{- end }}

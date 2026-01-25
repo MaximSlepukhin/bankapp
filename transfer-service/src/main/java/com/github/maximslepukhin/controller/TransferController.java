@@ -25,17 +25,7 @@ public class TransferController {
     @PostMapping
     @Operation(summary = "Совершить перевод")
     public ResponseEntity<TransferResponse> transfer(@RequestBody @Valid TransferRequest request) {
-        log.info("=== Получен запрос на перевод ===");
-        log.info("Отправитель: {}", request.getFromLogin());
-        log.info("Получатель: {}", request.getToLogin());
-        log.info("Сумма: {}", request.getAmount());
-        log.info("Из валюты: {}", request.getFromCurrency());
-        log.info("В валюту: {}", request.getToCurrency());
-
         TransferResponse response = transferService.transfer(request);
-
-        log.info("Перевод завершён: {}", response);
-
         return ResponseEntity.ok(response);
     }
 }

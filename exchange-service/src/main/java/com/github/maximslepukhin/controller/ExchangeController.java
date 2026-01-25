@@ -23,15 +23,13 @@ public class ExchangeController {
         return exchangeService.getRates();
     }
 
-    @PostMapping("/rates") // ✅ новый эндпоинт
+    @PostMapping("/rates")
     public void updateRates(@RequestBody List<CurrencyRate> rates) {
         exchangeService.updateRates(rates);
     }
 
     @PostMapping("/convert")
     public ConvertResponse convert(@RequestBody ConvertRequest request) {
-        log.info("📩 Получен запрос на конвертацию: amount={}, from={}, to={}",
-                request.getAmount(), request.getFrom(), request.getTo());
         return exchangeService.convert(request);
     }
 }

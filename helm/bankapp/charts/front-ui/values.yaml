@@ -1,0 +1,69 @@
+replicaCount: 1
+
+image:
+  repository: front-ui
+  tag: latest
+  pullPolicy: Never
+
+service:
+  enabled: true
+  type: NodePort
+  port: 8080
+  nodePort: 30080
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+env:
+  # Spring profile
+  SPRING_PROFILES_ACTIVE: "docker"
+
+  # Keycloak (internal cluster access)
+  KEYCLOAK_INTERNAL_URL: "http://keycloak:80"
+  KEYCLOAK_EXTERNAL_URL: "http://localhost:8080"
+  OAUTH2_REALM: "bank-realm"
+
+  # OAuth2 client for UI (user authentication)
+  OAUTH2_CLIENT_ID: "front-ui"
+  OAUTH2_REDIRECT_URI: "http://localhost:8081/login/oauth2/code/keycloak"
+
+
+
+  # Admin client credentials (for backend)
+  OAUTH2_CLIENT_ADMIN_ID: "front-ui-service"
+  OAUTH2_CLIENT_ADMIN_SECRET: "z1GkjE1Vi9Ba1B91tFPjZtg6CGQiw5ea"
+
+  # Additional admin credentials for Spring Security config
+  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_ADMIN_CLIENT_ID: "front-ui-service"
+  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_ADMIN_CLIENT_SECRET: "z1GkjE1Vi9Ba1B91tFPjZtg6CGQiw5ea"
+
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI: "http://keycloak:80/realms/bank-realm"
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI: "http://keycloak:80/realms/bank-realm/protocol/openid-connect/token"
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI: "http://keycloak:80/realms/bank-realm/protocol/openid-connect/auth"
+
+  # Добавить параметр JWK Set URI
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_JWK_SET_URI: "http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs"
+
+  # Добавляем user-info-uri для получения информации о пользователе
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI: "http://keycloak:80/realms/bank-realm/protocol/openid-connect/userinfo"
+
+  # Backend service URLs
+  ACCOUNTS_SERVICE_URL: "http://accounts-service:8081"
+  CASH_SERVICE_URL: "http://cash-service:8091"
+  TRANSFER_SERVICE_URL: "http://transfer-service:8083"
+  EXCHANGE_SERVICE_URL: "http://exchange-generator-service:8080"
+
+  # Optional: admin user for manual access or setup
+  KEYCLOAK_ADMIN_USERNAME: "admin"
+  KEYCLOAK_ADMIN_PASSWORD: "admin"
+
+ingress:
+  enabled: false
+  hosts: []
+  annotations: {}
+

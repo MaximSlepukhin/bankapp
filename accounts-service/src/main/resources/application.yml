@@ -2,5 +2,30 @@ spring:
   application:
     name: accounts-service
 
-  config:
-    import: optional:configserver:http://config-server:8888
+server:
+  port: 8081
+
+  datasource:
+    url: jdbc:postgresql://accounts-db-accounts-db:5432/accountsdb?currentSchema=accounts_service
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: accounts_service
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: accounts_service
+
+logging:
+  level:
+    root: INFO
+    org.springframework: DEBUG
+    liquibase: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

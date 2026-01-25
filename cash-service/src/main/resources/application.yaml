@@ -1,7 +1,35 @@
-# bootstrap.yml
 spring:
   application:
     name: cash-service
 
-  config:
-    import: optional:configserver:http://config-server:8888
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak-service:
+            client-id: front-ui-service
+            client-secret: z1GkjE1Vi9Ba1B91tFPjZtg6CGQiw5ea
+            authorization-grant-type: client_credentials
+            provider: keycloak
+        provider:
+          keycloak:
+            token-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/token
+
+server:
+  port: 8091
+  address: 0.0.0.0
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: TRACE
+    org.springframework.web: DEBUG
+    org.springframework.security.oauth2: TRACE
+
+clients:
+  accounts-service-url: ${ACCOUNTS_SERVICE_URL}
+  blocker-service-url: ${BLOCKER_SERVICE_URL}
+  notifications-service-url: ${NOTIFICATIONS_SERVICE_URL}

@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 @ContextConfiguration(classes = AccountsServiceApplication.class)
-@AutoConfigureMockMvc(addFilters = false) // ✅ отключает Spring Security
+@AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest {
 
     @Autowired

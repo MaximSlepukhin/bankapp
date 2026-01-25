@@ -21,7 +21,6 @@ class ExchangeServiceTest {
     void setUp() {
         exchangeService = new ExchangeService();
 
-        // Добавляем тестовые курсы
         exchangeService.updateRates(List.of(
                 new CurrencyRate(Currency.RUB, Currency.USD, new BigDecimal("0.010")),
                 new CurrencyRate(Currency.USD, Currency.RUB, new BigDecimal("100")),
@@ -82,7 +81,6 @@ class ExchangeServiceTest {
         req.setTo(Currency.CNY);
         req.setAmount(BigDecimal.ONE);
 
-        // USD->RUB (100) × RUB->CNY (0.08) = 8
         ConvertResponse resp = exchangeService.convert(req);
 
         assertEquals(new BigDecimal("8.000000"), resp.getConverted());
@@ -95,7 +93,6 @@ class ExchangeServiceTest {
         req.setTo(Currency.CNY);
         req.setAmount(BigDecimal.ONE);
 
-        // удаляем нужные курсы для проверки ошибки
         exchangeService = new ExchangeService();
         exchangeService.updateRates(List.of(
                 new CurrencyRate(Currency.RUB, Currency.USD, new BigDecimal("0.01"))
