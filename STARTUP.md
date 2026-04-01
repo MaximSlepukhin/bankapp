@@ -299,32 +299,26 @@ pkill -f "kubectl port-forward"
 
 Каждый микросервис запускается с JMX на уникальном порту.
 
-### Шаг 1 — Пробросить JMX-порт нужного сервиса
+### Шаг 1 — Узнать имена подов
 
 ```bash
-# accounts-service
-kubectl port-forward -n dev svc/accounts-service 9010:9010 &
+kubectl get pods -n dev --no-headers | grep -v "db\|keycloak"
+```
 
-# blocker-service
-kubectl port-forward -n dev svc/blocker-service 9011:9011 &
+### Шаг 2 — Пробросить JMX-порты напрямую на поды (одной командой)
 
-# cash-service
-kubectl port-forward -n dev svc/cash-service 9012:9012 &
+> ⚠️ `svc/` не работает для JMX — JMX-порт не прописан в Service, только в контейнере. Нужно форвардить на под напрямую.
 
-# exchange-service
-kubectl port-forward -n dev svc/exchange-service 9013:9013 &
-
-# exchange-generator-service
-kubectl port-forward -n dev svc/exchange-generator-service 9014:9014 &
-
-# front-ui
-kubectl port-forward -n dev svc/front-ui 9015:9015 &
-
-# notifications-service
-kubectl port-forward -n dev svc/notifications-service 9016:9016 &
-
-# transfer-service
-kubectl port-forward -n dev svc/transfer-service 9017:9017 &
+```bash
+# Получить актуальные имена подов и пробросить все JMX-порты одной командой
+kubectl port-forward -n dev pod/$(kubectl get pod -n dev -l app.kubernetes.io/name=accounts-service -o jsonpath='{.items[0].metadata.name}') 9010:9010 &
+kubectl port-forward -n dev pod/$(kubectl get pod -n dev -l app=blocker-service -o jsonpath='{.items[0].metadata.name}') 9011:9011 &
+kubectl port-forward -n dev pod/$(kubectl get pod -n dev -l app=cash-service -o jsonpath='{.items[0].metadata.name}') 9012:9012 &
+kubectl port-forward -n dev pod/$(kubectl get pod -n dev -l app=exchange-service -o jsonpath='{.items[0].metadata.name}') 9013:9013 &
+kubectl port-forward -n dev pod/$(kubectl get pod -n dev -l app=exchange-generator-service -o jsonpath='{.items[0].metadata.name}') 9014:9014 &
+kubectl port-forward -n dev pod/$(kubectl get pod -n dev -l app.kubernetes.io/name=front-ui -o jsonpath='{.items[0].metadata.name}') 9015:9015 &
+kubectl port-forward -n dev pod/$(kubectl get pod -n dev -l app=notifications-service -o jsonpath='{.items[0].metadata.name}') 9016:9016 &
+kubectl port-forward -n dev pod/$(kubectl get pod -n dev -l app=transfer-service -o jsonpath='{.items[0].metadata.name}') 9017:9017 &
 ```
 
 ### Шаг 2 — Подключиться в VisualVM
