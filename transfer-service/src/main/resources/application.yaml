@@ -12,6 +12,12 @@ spring:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 3
+      connection-timeout: 20000
+      idle-timeout: 600000
+      max-lifetime: 1800000
 
   jpa:
     hibernate:
@@ -31,31 +37,45 @@ spring:
       client:
         registration:
           transfer-service:
-            client-id: transfer-service  # ID клиента, который настроен в Keycloak
+            client-id: transfer-service
             client-secret: RMU6Vb96Ay0fWnLJ6WEBiyt8yjdjKk24
             provider: keycloak
             scope: openid
-            authorization-grant-type: client_credentials  # Тип авторизации
+            authorization-grant-type: client_credentials
         provider:
           keycloak:
             token-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/token
 
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 server:
   port: 8083
   address: 0.0.0.0
+  shutdown: graceful
 
 logging:
   level:
-    io.github.resilience4j: debug
-    org.springframework.web: debug
-    org.springframework.web.filter.CommonsRequestLoggingFilter: debug
-    org.springframework.security: trace
-    com.github.maximslepukhin: debug
+    root: INFO
+    com.github.maximslepukhin: INFO
+    org.springframework: WARN
+    io.github.resilience4j: WARN
 
 resilience4j:
   circuitbreaker:
     instances:
+      accountsService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      blockerService:
+        slidingWindowSize: 5
+        failureRateThreshold: 60
+        waitDurationInOpenState: 10s
+      exchangeService:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
       transferService:
         ignoreExceptions:
           - com.github.maximslepukhin.exception.TransferBlockedException
@@ -70,6 +90,16 @@ resilience4j:
         minimum-number-of-calls: 5
         failure-rate-threshold: 50
         wait-duration-in-open-state: 10s
+  retry:
+    instances:
+      accountsService:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+  timelimiter:
+    instances:
+      accountsService:
+        timeoutDuration: 3s
 
 management:
   endpoints:

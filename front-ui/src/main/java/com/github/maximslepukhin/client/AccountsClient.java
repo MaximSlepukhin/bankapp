@@ -1,6 +1,8 @@
 package com.github.maximslepukhin.client;
 
 import com.github.maximslepukhin.model.dto.UserDto;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -24,12 +26,14 @@ public class AccountsClient {
         this.restTemplate = restTemplate;
     }
 
+    @CircuitBreaker(name = "accountsService", fallbackMethod = "getUserByKeycloakIdFallback")
+    @Retry(name = "accountsService")
     public UserDto getUserByKeycloakId(String keycloakId) {
         try {
-            UserDto user = restTemplate.getForObject(accountsServiceUrl + "/api/users/keycloak/" + keycloakId, UserDto.class);
+            UserDto user = restTemplate.getForObject(accountsServiceUrl + "/api/v1/users/keycloak/" + keycloakId, UserDto.class);
 
             if (user != null) {
-                log.info("Получен ответ от accounts-service для keycloakId={} с данными пользователя: {}", keycloakId, user);
+                log.info("Получен ответ от accounts-service: keycloakId={}, login={}", keycloakId, user.getLogin());
             } else {
                 log.warn("Пользователь с keycloakId={} не найден в accounts-service", keycloakId);
             }
@@ -40,13 +44,27 @@ public class AccountsClient {
         }
     }
 
+    private UserDto getUserByKeycloakIdFallback(String keycloakId, Throwable t) {
+        log.error("Circuit breaker: accounts-service недоступен при запросе keycloakId={}: {}", keycloakId, t.getMessage());
+        throw new RuntimeException("accounts-service недоступен", t);
+    }
+
+    @CircuitBreaker(name = "accountsService", fallbackMethod = "getUserByLoginFallback")
+    @Retry(name = "accountsService")
     public UserDto getUserByLogin(String login) {
-        String url = accountsServiceUrl + "/api/users/login/" + login;
+        String url = accountsServiceUrl + "/api/v1/users/login/" + login;
         return restTemplate.getForObject(url, UserDto.class);
     }
 
+    private UserDto getUserByLoginFallback(String login, Throwable t) {
+        log.error("Circuit breaker: accounts-service недоступен при запросе login={}: {}", login, t.getMessage());
+        return null;
+    }
+
+    @CircuitBreaker(name = "accountsService", fallbackMethod = "getAllUsersFallback")
+    @Retry(name = "accountsService")
     public List<UserDto> getAllUsers() {
-        String url = accountsServiceUrl + "/api/users";
+        String url = accountsServiceUrl + "/api/v1/users";
         ResponseEntity<List<UserDto>> response = restTemplate.exchange(
                 url, HttpMethod.GET, null, new ParameterizedTypeReference<List<UserDto>>() {
                 }
@@ -54,13 +72,32 @@ public class AccountsClient {
         return response.getBody();
     }
 
+    private List<UserDto> getAllUsersFallback(Throwable t) {
+        log.error("Circuit breaker: accounts-service недоступен при получении списка пользователей: {}", t.getMessage());
+        return List.of();
+    }
+
+    @CircuitBreaker(name = "accountsService", fallbackMethod = "createUserFallback")
+    @Retry(name = "accountsService")
     public void createUser(UserDto user) {
-        String url = accountsServiceUrl + "/api/users";
+        String url = accountsServiceUrl + "/api/v1/users";
         restTemplate.postForObject(url, user, Void.class);
     }
 
+    private void createUserFallback(UserDto user, Throwable t) {
+        log.error("Circuit breaker: accounts-service недоступен при создании пользователя: {}", t.getMessage());
+        throw new RuntimeException("accounts-service недоступен", t);
+    }
+
+    @CircuitBreaker(name = "accountsService", fallbackMethod = "updateUserFallback")
+    @Retry(name = "accountsService")
     public void updateUser(String login, UserDto user) {
-        String url = accountsServiceUrl + "/api/users/" + login;
+        String url = accountsServiceUrl + "/api/v1/users/" + login;
         restTemplate.put(url, user);
+    }
+
+    private void updateUserFallback(String login, UserDto user, Throwable t) {
+        log.error("Circuit breaker: accounts-service недоступен при обновлении пользователя login={}: {}", login, t.getMessage());
+        throw new RuntimeException("accounts-service недоступен", t);
     }
 }

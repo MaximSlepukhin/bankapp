@@ -1,0 +1,48 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-idempotency-keys
+      author: maksim
+      changes:
+        - createTable:
+            tableName: idempotency_keys
+            schemaName: transfer_service
+            columns:
+              - column:
+                  name: key
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: operation
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: response_body
+                  type: TEXT
+              - column:
+                  name: http_status
+                  type: INT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_transfer_idempotency_expires
+            tableName: idempotency_keys
+            schemaName: transfer_service
+            columns:
+              - column:
+                  name: expires_at

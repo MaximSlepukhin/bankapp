@@ -715,11 +715,14 @@
       "http://localhost:30080/login/oauth2/code/keycloak",
       "http://127.0.0.1:30080/login/oauth2/code/keycloak",
       "http://localhost:*/login/oauth2/code/keycloak",
-      "http://127.0.0.1:*/login/oauth2/code/keycloak"
+      "http://127.0.0.1:*/login/oauth2/code/keycloak",
+      "http://localhost:8081/*",
+      "http://localhost:8081/login/oauth2/code/keycloak"
     ],
     "webOrigins": [
       "http://localhost:30080",
-      "http://127.0.0.1:30080"
+      "http://127.0.0.1:30080",
+      "http://localhost:8081"
     ],
     "notBefore" : 0,
     "bearerOnly" : false,

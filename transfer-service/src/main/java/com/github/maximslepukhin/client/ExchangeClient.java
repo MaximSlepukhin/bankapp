@@ -2,6 +2,8 @@ package com.github.maximslepukhin.client;
 
 import com.github.maximslepukhin.model.dto.ConvertRequest;
 import com.github.maximslepukhin.model.dto.ConvertResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 
 import java.io.IOException;
 
+@Slf4j
 @Service
 public class ExchangeClient {
 
@@ -30,8 +33,15 @@ public class ExchangeClient {
         });
     }
 
+    @CircuitBreaker(name = "exchangeService", fallbackMethod = "convertFallback")
     public ConvertResponse convert(ConvertRequest request) {
-        String url = exchangeServiceUrl + "/api/exchange/convert";
+        String url = exchangeServiceUrl + "/api/v1/exchange/convert";
         return restTemplate.postForObject(url, request, ConvertResponse.class);
+    }
+
+    private ConvertResponse convertFallback(ConvertRequest request, Throwable t) {
+        log.error("Circuit breaker: exchange-service недоступен при конвертации {} -> {}: {}",
+                request.getFrom(), request.getTo(), t.getMessage());
+        throw new RuntimeException("exchange-service недоступен", t);
     }
 }

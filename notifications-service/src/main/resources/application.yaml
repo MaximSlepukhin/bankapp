@@ -28,19 +28,27 @@ spring:
         jwt:
           jwk-set-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs
 
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+server:
+  shutdown: graceful
+
 logging:
   level:
-    root: info
-    org.springframework.security: trace
-    org.springframework.web: debug
-    org.springframework.security.oauth2: trace
-    org.springframework.jdbc.core: debug
-    org.springframework.jdbc.datasource: debug
-    org.springframework.boot.jdbc.DataSourceInitializer: debug
-    org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration: debug
-    org.hibernate.SQL: debug
-    org.hibernate.type.descriptor.sql.BasicBinder: trace
-    org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration: debug
+    root: INFO
+    com.github.maximslepukhin: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    liquibase: WARN
 
 management:
   endpoints:

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +73,10 @@ public class MainController {
             List<UserDto> otherUsers = userService.getOtherUsers(user.getLogin());
             model.addAttribute("users", otherUsers);
 
+            model.addAttribute("cashIdempotencyKey", UUID.randomUUID());
+            model.addAttribute("selfTransferIdempotencyKey", UUID.randomUUID());
+            model.addAttribute("otherTransferIdempotencyKey", UUID.randomUUID());
+
             return "main";
 
         } catch (Exception e) {
@@ -101,10 +106,11 @@ public class MainController {
             @RequestParam Currency currency,
             @RequestParam BigDecimal value,
             @RequestParam String action,
+            @RequestParam UUID idempotencyKey,
             RedirectAttributes redirectAttrs) {
 
         try {
-            financeService.cashOperation(login, currency, value, action);
+            financeService.cashOperation(login, currency, value, action, idempotencyKey);
         } catch (IllegalArgumentException e) {
             redirectAttrs.addFlashAttribute("cashErrors", List.of(e.getMessage()));
         } catch (Exception e) {
@@ -121,6 +127,7 @@ public class MainController {
             @RequestParam Currency to_currency,
             @RequestParam BigDecimal value,
             @RequestParam(required = false) String to_login,
+            @RequestParam UUID idempotencyKey,
             RedirectAttributes redirectAttrs) {
 
         try {
@@ -129,7 +136,8 @@ public class MainController {
                     (to_login == null || to_login.isBlank()) ? login : to_login,
                     from_currency,
                     to_currency,
-                    value
+                    value,
+                    idempotencyKey
             );
         } catch (IllegalArgumentException e) {
             redirectAttrs.addFlashAttribute("transferErrors", List.of(e.getMessage()));

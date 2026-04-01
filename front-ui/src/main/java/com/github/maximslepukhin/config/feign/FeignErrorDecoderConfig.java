@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
@@ -16,7 +17,10 @@ public class FeignErrorDecoderConfig {
 
     @Bean(name = "restTemplateWithErrorHandler")
     public RestTemplate restTemplateWithErrorHandler(ObjectMapper objectMapper) {
-        RestTemplate restTemplate = new RestTemplate();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(2000);
+        factory.setReadTimeout(3000);
+        RestTemplate restTemplate = new RestTemplate(factory);
         restTemplate.setErrorHandler(new CustomErrorHandler(objectMapper));
         return restTemplate;
     }

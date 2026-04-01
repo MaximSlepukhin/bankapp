@@ -1,10 +1,12 @@
 package service;
 
-import com.github.maximslepukhin.config.kafka.KafkaUserRegistrationProducer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.maximslepukhin.mapper.UserMapper;
 import com.github.maximslepukhin.model.dto.UserDto;
 import com.github.maximslepukhin.model.entity.User;
+import com.github.maximslepukhin.repository.OutboxEventRepository;
 import com.github.maximslepukhin.repository.UserRepository;
+import com.github.maximslepukhin.exception.InvalidUserDataException;
 import com.github.maximslepukhin.service.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,14 +23,16 @@ class UserServiceImplTest {
     private UserRepository userRepository;
     private UserMapper userMapper;
     private UserServiceImpl userService;
-    private  KafkaUserRegistrationProducer kafkaUserRegistrationProducer;
+    private OutboxEventRepository outboxEventRepository;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
-        kafkaUserRegistrationProducer = mock(KafkaUserRegistrationProducer.class);
-        userMapper = new UserMapper();
-        userService = new UserServiceImpl(userRepository, userMapper, kafkaUserRegistrationProducer);
+        outboxEventRepository = mock(OutboxEventRepository.class);
+        objectMapper = new ObjectMapper();
+        userMapper = mock(UserMapper.class);
+        userService = new UserServiceImpl(userRepository, userMapper, outboxEventRepository, objectMapper);
     }
 
 
@@ -59,7 +63,7 @@ class UserServiceImplTest {
         UserDto dto = new UserDto();
         dto.setKeycloakId("kc-123");
         assertThatThrownBy(() -> userService.createUser(dto))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidUserDataException.class)
                 .hasMessageContaining("Логин не может быть пустым");
     }
 

@@ -1,5 +1,6 @@
 package com.github.maximslepukhin.service;
 
+import com.github.maximslepukhin.exception.ExchangeRateNotFoundException;
 import com.github.maximslepukhin.model.dto.ConvertRequest;
 import com.github.maximslepukhin.model.dto.ConvertResponse;
 import com.github.maximslepukhin.model.dto.CurrencyRate;
@@ -76,7 +77,7 @@ public class ExchangeService {
 
             if (fromToRub == null || rubToTo == null) {
                 log.error("❌ Нет курса для конвертации {} → {}", request.getFrom(), request.getTo());
-                throw new IllegalArgumentException("Курс не найден для " + request.getFrom() + " → " + request.getTo());
+                throw new ExchangeRateNotFoundException("Курс не найден для " + request.getFrom() + " → " + request.getTo());
             }
 
             rate = fromToRub.multiply(rubToTo);

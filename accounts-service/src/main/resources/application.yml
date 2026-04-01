@@ -8,13 +8,16 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
-server:
-  port: 8081
-
   datasource:
     url: jdbc:postgresql://accounts-db-accounts-db:5432/accountsdb?currentSchema=accounts_service
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 600000
+      max-lifetime: 1800000
 
   jpa:
     hibernate:
@@ -28,13 +31,20 @@ server:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     default-schema: accounts_service
 
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  port: 8081
+  shutdown: graceful
+
 logging:
   level:
     root: INFO
-    org.springframework: DEBUG
-    liquibase: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.github.maximslepukhin: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    liquibase: WARN
 
 management:
   endpoints:

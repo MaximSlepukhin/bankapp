@@ -32,6 +32,7 @@ env:
   KEYCLOAK_INTERNAL_URL: "http://keycloak:80"
   KEYCLOAK_EXTERNAL_URL: "http://localhost:8080"
   OAUTH2_REALM: "bank-realm"
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI_CLAIM_VALIDATION_ENABLED: "false"
 
   # OAuth2 client for UI (user authentication)
   OAUTH2_CLIENT_ID: "front-ui"

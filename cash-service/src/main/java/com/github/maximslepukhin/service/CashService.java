@@ -2,8 +2,10 @@ package com.github.maximslepukhin.service;
 
 import com.github.maximslepukhin.model.dto.CashOperationDto;
 
-public interface CashService {
-    void deposit(CashOperationDto dto);
+import java.util.UUID;
 
-    void withdraw(CashOperationDto dto);
+public interface CashService {
+    void deposit(CashOperationDto dto, UUID idempotencyKey);
+
+    void withdraw(CashOperationDto dto, UUID idempotencyKey);
 }

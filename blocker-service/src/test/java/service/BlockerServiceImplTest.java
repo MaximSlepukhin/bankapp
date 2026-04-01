@@ -24,28 +24,21 @@ class BlockerServiceImplTest {
 
     @Test
     void shouldBlockDuringMaintenance() {
-        props.setStart(LocalTime.of(1, 0));
-        props.setEnd(LocalTime.of(5, 0));
+        props.setStart(LocalTime.now().minusMinutes(30));
+        props.setEnd(LocalTime.now().plusMinutes(30));
 
-        LocalTime now = LocalTime.of(3, 0);
-        BlockerRequest request = new BlockerRequest("user");
-
-        boolean blocked = now.isAfter(props.getStart()) && now.isBefore(props.getEnd());
-        BlockerStatus result = new BlockerStatus(blocked, blocked ? "Blocked" : "Allowed");
+        BlockerStatus result = service.checkBlock(new BlockerRequest("user"));
 
         assertTrue(result.isBlocked());
+        assertTrue(result.getReason().contains("техобслуживание"));
     }
 
     @Test
     void shouldNotBlockOutsideMaintenance() {
         props.setStart(LocalTime.of(1, 0));
-        props.setEnd(LocalTime.of(5, 0));
+        props.setEnd(LocalTime.of(1, 5));
 
-        LocalTime now = LocalTime.of(23, 0);
-        BlockerRequest request = new BlockerRequest("user");
-
-        boolean blocked = now.isAfter(props.getStart()) && now.isBefore(props.getEnd());
-        BlockerStatus result = new BlockerStatus(blocked, blocked ? "Blocked" : "Allowed");
+        BlockerStatus result = service.checkBlock(new BlockerRequest("user"));
 
         assertFalse(result.isBlocked());
     }

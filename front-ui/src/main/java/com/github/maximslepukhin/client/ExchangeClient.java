@@ -1,6 +1,7 @@
 package com.github.maximslepukhin.client;
 
 import com.github.maximslepukhin.model.dto.CurrencyRate;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,8 +23,9 @@ public class ExchangeClient {
         this.restTemplate = restTemplate;
     }
 
+    @CircuitBreaker(name = "exchangeService", fallbackMethod = "getRatesFallback")
     public List<CurrencyRate> getRates() {
-        String url = exchangeServiceUrl + "/api/rates";
+        String url = exchangeServiceUrl + "/api/v1/rates";
         CurrencyRate[] rates = restTemplate.getForObject(url, CurrencyRate[].class);
         if (rates != null && rates.length > 0) {
             log.info("Received {} currency rates: {}", rates.length, Arrays.toString(rates));
@@ -31,5 +33,10 @@ public class ExchangeClient {
             log.warn("No rates received or response is empty.");
         }
         return rates != null ? Arrays.asList(rates) : List.of();
+    }
+
+    private List<CurrencyRate> getRatesFallback(Throwable t) {
+        log.error("Circuit breaker: exchange-service недоступен: {}", t.getMessage());
+        return List.of();
     }
 }

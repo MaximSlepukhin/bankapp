@@ -9,6 +9,7 @@ import com.github.maximslepukhin.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,7 @@ class UserServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
+        ReflectionTestUtils.setField(userService, "accountsServiceUrl", "http://accounts-service:8081");
     }
 
     @Test
@@ -60,7 +62,7 @@ class UserServiceTest {
         verify(accountsClient).getUserByLogin("john");
         verify(keycloakAdminClient).createUser("john", "pass");
         verify(restTemplateWithAuth).exchange(
-                eq("http://accounts-service:8081/api/users"),
+                eq("http://accounts-service:8081/api/v1/users"),
                 eq(HttpMethod.POST),
                 any(HttpEntity.class),
                 eq(String.class)

@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     List<Notification> findByLoginOrderByCreatedAtDesc(String login);
+    boolean existsByMessageId(String messageId);
 }

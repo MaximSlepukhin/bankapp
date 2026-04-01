@@ -1,0 +1,17 @@
+{
+  "name": "POST convert RUB → CNY (rate: 7.5/90 ≈ 0.0833)",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/exchange/convert",
+    "bodyPatterns": [
+      {"matchesJsonPath": {"expression": "$.from", "equalTo": "RUB"}},
+      {"matchesJsonPath": {"expression": "$.to",   "equalTo": "CNY"}}
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {"Content-Type": "application/json"},
+    "body": "{\"original\": {{jsonPath request.body '$.amount'}}, \"from\": \"RUB\", \"to\": \"CNY\", \"converted\": {{math (jsonPath request.body '$.amount') '/' 12}}}",
+    "transformers": ["response-template"]
+  }
+}

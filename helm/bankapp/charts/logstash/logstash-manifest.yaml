@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: default
+data:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    xpack.monitoring.enabled: false
+  pipelines.yml: |
+    - pipeline.id: kafka_to_es
+      path.config: "/usr/share/logstash/pipeline/kafka_to_es.conf"
+  kafka_to_es.conf: |
+    input {
+      kafka {
+        bootstrap_servers => "my-kafka.default.svc.cluster.local:9092"
+        topics => ["logs"]
+        group_id => "logstash-consumer-group"
+        codec => "json"
+      }
+    }
+    filter {
+      mutate {
+        copy => { "[@metadata][kafka][topic]" => "source" }
+      }
+    }
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch-master.default.svc.cluster.local:9200"]
+        index => "bank-logs-%{+YYYY.MM.dd}"
+      }
+      stdout { codec => rubydebug }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+        - name: logstash
+          image: docker.elastic.co/logstash/logstash:8.5.1
+          env:
+            - name: LS_JAVA_OPTS
+              value: "-Xms256m -Xmx256m"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/logstash/config/logstash.yml
+              subPath: logstash.yml
+            - name: config
+              mountPath: /usr/share/logstash/config/pipelines.yml
+              subPath: pipelines.yml
+            - name: config
+              mountPath: /usr/share/logstash/pipeline/kafka_to_es.conf
+              subPath: kafka_to_es.conf
+      volumes:
+        - name: config
+          configMap:
+            name: logstash-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: logstash
+  ports:
+    - name: beats
+      port: 5044
+      targetPort: 5044

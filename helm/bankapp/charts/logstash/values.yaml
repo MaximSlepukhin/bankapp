@@ -10,14 +10,14 @@ resources:
 
 service:
   type: ClusterIP
-  port: 5044
+  ports:
+    - name: beats
+      port: 5044
+      targetPort: 5044
 
 extraEnvs:
-  - name: ELASTICSEARCH_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: elasticsearch-master-credentials
-        key: password
+  - name: LS_JAVA_OPTS
+    value: "-Xms256m -Xmx256m"
 
 config:
   logstash.yml: |
@@ -44,8 +44,6 @@ config:
     output {
       elasticsearch {
         hosts => ["http://elasticsearch-master.default.svc.cluster.local:9200"]
-        user => "elastic"
-        password => "${ELASTICSEARCH_PASSWORD}"
         index => "bank-logs-%{+YYYY.MM.dd}"
       }
       stdout { codec => rubydebug } # для отладки

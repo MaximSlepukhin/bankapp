@@ -4,9 +4,11 @@ import com.github.maximslepukhin.controller.BlockerController;
 import com.github.maximslepukhin.model.dto.BlockerRequest;
 import com.github.maximslepukhin.model.dto.BlockerStatus;
 import com.github.maximslepukhin.service.BlockerService;
+import io.micrometer.tracing.Tracer;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -19,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(BlockerController.class)
 @ContextConfiguration(classes = com.github.maximslepukhin.BlockerServiceApplication.class)
+@AutoConfigureMockMvc(addFilters = false)
 class BlockerControllerTest {
 
     @Autowired
@@ -27,12 +30,15 @@ class BlockerControllerTest {
     @MockBean
     private BlockerService blockerService;
 
+    @MockBean
+    private Tracer tracer;
+
     @Test
     void shouldReturnForbiddenWhenBlocked() throws Exception {
         Mockito.when(blockerService.checkBlock(any(BlockerRequest.class)))
                 .thenReturn(new BlockerStatus(true, "Maintenance"));
 
-        mockMvc.perform(post("/api/blocker/check")
+        mockMvc.perform(post("/api/v1/blocker/check")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"login\":\"user1\"}"))
                 .andExpect(status().isForbidden())
@@ -45,7 +51,7 @@ class BlockerControllerTest {
         Mockito.when(blockerService.checkBlock(any(BlockerRequest.class)))
                 .thenReturn(new BlockerStatus(false, "Allowed"));
 
-        mockMvc.perform(post("/api/blocker/check")
+        mockMvc.perform(post("/api/v1/blocker/check")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"login\":\"user2\"}"))
                 .andExpect(status().isOk())
@@ -55,7 +61,7 @@ class BlockerControllerTest {
 
     @Test
     void shouldReturnBadRequestWhenLoginIsBlank() throws Exception {
-        mockMvc.perform(post("/api/blocker/check")
+        mockMvc.perform(post("/api/v1/blocker/check")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"login\":\"\"}"))
                 .andExpect(status().isBadRequest());

@@ -7,16 +7,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-
 @Slf4j
 @RestController
-@RequestMapping("/api/exchange")
+@RequestMapping("/api/v1/exchange")
 @RequiredArgsConstructor
-public class ExchangeController {
+public class ExchangeController implements ExchangeApi {
 
     private final ExchangeService exchangeService;
 
-    @PostMapping("/convert")
+    @Override
     public ConvertResponse convert(@RequestBody ConvertRequest request) {
         log.info("📩 Получен запрос на конвертацию: amount={}, from={}, to={}",
                 request.getAmount(), request.getFrom(), request.getTo());

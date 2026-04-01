@@ -1,0 +1,17 @@
+{
+  "name": "POST convert CNY → USD (rate: 1/7.5 ≈ 0.133)",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/exchange/convert",
+    "bodyPatterns": [
+      {"matchesJsonPath": {"expression": "$.from", "equalTo": "CNY"}},
+      {"matchesJsonPath": {"expression": "$.to",   "equalTo": "USD"}}
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {"Content-Type": "application/json"},
+    "body": "{\"original\": {{jsonPath request.body '$.amount'}}, \"from\": \"CNY\", \"to\": \"USD\", \"converted\": {{math (jsonPath request.body '$.amount') '/' 7.5}}}",
+    "transformers": ["response-template"]
+  }
+}

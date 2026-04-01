@@ -14,6 +14,10 @@ spec:
       labels:
         {{- include "front-ui.selectorLabels" . | nindent 8 }}
     spec:
+      hostAliases:
+        - ip: "10.102.204.59"
+          hostnames:
+            - "localhost"
       containers:
         - name: {{ include "front-ui.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

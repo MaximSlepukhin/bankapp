@@ -1,3 +1,9 @@
 databaseChangeLog:
   - include:
       file: db/changelog/changesets/001-create-transfers-table.yaml
+  - include:
+      file: db/changelog/changesets/002-create-outbox-events-table.yaml
+  - include:
+      file: db/changelog/changesets/003-create-idempotency-keys-table.yaml
+  - include:
+      file: db/changelog/changesets/004-add-compensation-reason-to-transfers.yaml

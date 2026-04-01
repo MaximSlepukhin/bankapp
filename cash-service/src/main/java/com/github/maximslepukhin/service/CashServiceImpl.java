@@ -3,6 +3,7 @@ package com.github.maximslepukhin.service;
 import com.github.maximslepukhin.client.AccountsClient;
 import com.github.maximslepukhin.client.BlockerClient;
 import com.github.maximslepukhin.config.kafka.KafkaNotificationProducer;
+import com.github.maximslepukhin.exception.InsufficientFundsException;
 import com.github.maximslepukhin.exception.OperationBlockedException;
 import com.github.maximslepukhin.exception.OperationFailedException;
 import com.github.maximslepukhin.model.dto.CashOperationDto;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +26,7 @@ public class CashServiceImpl implements CashService {
     private final MeterRegistry meterRegistry;
 
     @Override
-    public void deposit(CashOperationDto dto) {
+    public void deposit(CashOperationDto dto, UUID idempotencyKey) {
         if (blockerClient.isBlocked(dto.getLogin(), dto.getCurrency(), dto.getAmount())) {
             meterRegistry.counter("transfer_blocked_total",
                     "login", dto.getLogin()).increment();
@@ -32,7 +34,7 @@ public class CashServiceImpl implements CashService {
         }
 
         try {
-            accountsClient.updateBalance(dto.getLogin(), dto.getCurrency(), dto.getAmount());
+            accountsClient.updateBalance(dto.getLogin(), dto.getCurrency(), dto.getAmount(), idempotencyKey);
             kafkaProducer.send(new NotificationRequest(dto.getLogin(),
                     "Пополнение на " + dto.getAmount() + " " + dto.getCurrency()));
         } catch (HttpClientErrorException e) {
@@ -45,21 +47,21 @@ public class CashServiceImpl implements CashService {
     }
 
     @Override
-    public void withdraw(CashOperationDto dto) {
+    public void withdraw(CashOperationDto dto, UUID idempotencyKey) {
         BigDecimal currentBalance = accountsClient.getBalance(dto.getLogin(), dto.getCurrency());
 
         if (currentBalance.compareTo(dto.getAmount()) < 0) {
-            throw new RuntimeException("Недостаточно средств");
+            throw new InsufficientFundsException("Недостаточно средств: баланс " + currentBalance + ", запрошено " + dto.getAmount());
         }
 
         boolean blocked = blockerClient.isBlocked(dto.getLogin(), dto.getCurrency(), dto.getAmount());
         if (blocked) {
             meterRegistry.counter("transfer_blocked_total",
                     "login", dto.getLogin()).increment();
-            throw new RuntimeException("Операция заблокирована");
+            throw new OperationBlockedException("Операция заблокирована");
         }
 
-        accountsClient.updateBalance(dto.getLogin(), dto.getCurrency(), dto.getAmount().negate());
+        accountsClient.updateBalance(dto.getLogin(), dto.getCurrency(), dto.getAmount().negate(), idempotencyKey);
         kafkaProducer.send(new NotificationRequest(dto.getLogin(),
                 "Снятие " + dto.getAmount() + " " + dto.getCurrency()));
     }

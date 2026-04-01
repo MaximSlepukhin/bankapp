@@ -17,11 +17,11 @@ service:
 
 resources:
   requests:
-    memory: "100Mi"
+    memory: "256Mi"
     cpu: "100m"
   limits:
-    memory: "200Mi"
-    cpu: "200m"
+    memory: "512Mi"
+    cpu: "500m"
 
 
 env:
@@ -31,6 +31,13 @@ clients:
   accounts-service-url: "http://accounts-service:8081"
   blocker-service-url: "http://blocker-service:8087"
   notifications-service-url: "http://notifications-service:8087"
+
+postgres:
+  host: accounts-db-accounts-db
+  port: 5432
+  database: accountsdb
+  username: accounts_user
+  password: strongpassword123
 
 ingress:
   enabled: false

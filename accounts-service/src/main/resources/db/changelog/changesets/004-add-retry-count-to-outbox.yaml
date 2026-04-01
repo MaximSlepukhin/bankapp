@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004
+      author: maxims
+      changes:
+        - addColumn:
+            tableName: outbox_events
+            schemaName: accounts_service
+            columns:
+              - column:
+                  name: retry_count
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false

@@ -1,6 +1,7 @@
 spring:
   application:
     name: exchange-service
+
   security:
     oauth2:
       resourceserver:
@@ -18,17 +19,19 @@ spring:
       properties:
         spring.json.trusted.packages: "com.github.maximslepukhin.model.dto"
 
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 server:
   port: 8084
   address: 0.0.0.0
+  shutdown: graceful
 
 logging:
   level:
-    root: info
-    org.springframework.security: trace
-    org.springframework.web: debug
-    org.springframework.security.oauth2: trace
+    root: INFO
+    com.github.maximslepukhin: INFO
+    org.springframework: WARN
 
 management:
   endpoints:

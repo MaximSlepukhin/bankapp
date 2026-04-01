@@ -1,0 +1,32 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    hikari:
+      connection-init-sql: "CREATE SCHEMA IF NOT EXISTS notifications_service"
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.default_schema: notifications_service
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/notifications-service/master.yaml
+    default-schema: notifications_service
+    drop-first: true
+    clear-checksums: true
+    liquibase-schema: public
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost/dummy
+
+management:
+  zipkin:
+    tracing:
+      export:
+        enabled: false
+  tracing:
+    sampling:
+      probability: 0

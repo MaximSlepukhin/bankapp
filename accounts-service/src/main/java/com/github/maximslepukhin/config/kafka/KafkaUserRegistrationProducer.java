@@ -18,7 +18,14 @@ public class KafkaUserRegistrationProducer {
     private String topicName;
 
     public void send(NotificationRequest notificationRequest) {
-        kafkaTemplate.send(topicName, notificationRequest);
-        log.info("Notification sent to Kafka: login={}", notificationRequest.getLogin());
+        try {
+            kafkaTemplate.send(topicName, notificationRequest).get();
+            log.info("Notification sent to Kafka: login={}", notificationRequest.getLogin());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Kafka send interrupted", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Kafka send failed", e);
+        }
     }
 }

@@ -16,6 +16,7 @@ spring:
             token-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${OAUTH2_REALM}/protocol/openid-connect/token
             user-info-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${OAUTH2_REALM}/protocol/openid-connect/userinfo
             jwk-set-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${OAUTH2_REALM}/protocol/openid-connect/certs
+            user-name-attribute: preferred_username
 
 keycloak:
   server-url: ${KEYCLOAK_INTERNAL_URL}

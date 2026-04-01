@@ -23,4 +23,7 @@ public class Notification {
     private String message;
 
     private OffsetDateTime createdAt;
+
+    @Column(unique = true)
+    private String messageId;
 }

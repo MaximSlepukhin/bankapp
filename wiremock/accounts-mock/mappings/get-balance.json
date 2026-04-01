@@ -1,0 +1,14 @@
+{
+  "name": "GET balance (cash-service)",
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/api/v1/accounts/[^/]+/(USD|RUB|CNY)"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "1000.00"
+  }
+}

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -22,9 +23,9 @@ public class FinanceService {
     private final TransferClient transferClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public void deposit(String login, Currency currency, BigDecimal value) {
+    public void deposit(String login, Currency currency, BigDecimal value, UUID idempotencyKey) {
         try {
-            cashClient.deposit(new CashOperationDto(login, currency, value));
+            cashClient.deposit(new CashOperationDto(login, currency, value), idempotencyKey);
         } catch (HttpClientErrorException e) {
             String responseBody = e.getResponseBodyAsString();
             log.error("Ошибка Feign при депозите: status={}, body={}", e.getStatusCode(), responseBody);
@@ -36,46 +37,45 @@ public class FinanceService {
         }
     }
 
-    public void withdraw(String login, Currency currency, BigDecimal value) {
+    public void withdraw(String login, Currency currency, BigDecimal value, UUID idempotencyKey) {
         try {
-            cashClient.withdraw(new CashOperationDto(login, currency, value));
+            cashClient.withdraw(new CashOperationDto(login, currency, value), idempotencyKey);
         } catch (HttpClientErrorException e) {
             String message = extractErrorMessage(e.getResponseBodyAsString());
             throw new RuntimeException(message != null ? message : "Ошибка списания: " + e.getStatusCode());
         }
     }
 
-    public void transfer(String from, String to, Currency fromCurrency, Currency toCurrency, BigDecimal amount) {
+    public void transfer(String from, String to, Currency fromCurrency, Currency toCurrency, BigDecimal amount, UUID idempotencyKey) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Сумма перевода должна быть положительным числом");
         }
         try {
-            transferClient.transfer(new TransferRequestDto(from, to, fromCurrency, toCurrency, amount));
+            transferClient.transfer(new TransferRequestDto(from, to, fromCurrency, toCurrency, amount), idempotencyKey);
         } catch (HttpClientErrorException e) {
             String message = extractErrorMessage(e.getResponseBodyAsString());
             throw new RuntimeException(message != null ? message : "Ошибка перевода: " + e.getStatusCode());
         }
     }
 
-    public void cashOperation(String login, Currency currency, BigDecimal value, String action) {
-        log.info("Начало cashOperation: login={}, currency={}, value={}, action={}",
-                login, currency, value, action);
+    public void cashOperation(String login, Currency currency, BigDecimal value, String action, UUID idempotencyKey) {
+        log.info("Начало cashOperation: login={}, currency={}, action={}", login, currency, action);
 
         if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
-            log.warn("Ошибка: неверная сумма: {}", value);
+            log.warn("Ошибка: неверная сумма для login={}", login);
             throw new IllegalArgumentException("Сумма должна быть положительным числом");
         }
 
         switch (action.toUpperCase()) {
             case "PUT" -> {
-                log.info("Выполняется депозит: login={}, currency={}, value={}", login, currency, value);
-                deposit(login, currency, value);
-                log.info("Депозит успешно выполнен: login={}, currency={}, value={}", login, currency, value);
+                log.info("Выполняется депозит: login={}, currency={}", login, currency);
+                deposit(login, currency, value, idempotencyKey);
+                log.info("Депозит успешно выполнен: login={}, currency={}", login, currency);
             }
             case "GET" -> {
-                log.info("Выполняется снятие: login={}, currency={}, value={}", login, currency, value);
-                withdraw(login, currency, value);
-                log.info("Снятие успешно выполнено: login={}, currency={}, value={}", login, currency, value);
+                log.info("Выполняется снятие: login={}, currency={}", login, currency);
+                withdraw(login, currency, value, idempotencyKey);
+                log.info("Снятие успешно выполнено: login={}, currency={}", login, currency);
             }
             default -> {
                 log.warn("Неизвестное действие: {}", action);

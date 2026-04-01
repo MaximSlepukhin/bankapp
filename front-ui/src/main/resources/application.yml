@@ -8,9 +8,19 @@ spring:
     mode: HTML
     encoding: UTF-8
 
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=5s
+    cache-names: rates
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
 server:
   port: 8080
   address: 0.0.0.0
+  shutdown: graceful
 
 management:
   endpoints:
@@ -30,13 +40,45 @@ management:
     tracing:
       endpoint: http://zipkin.monitoring.svc.cluster.local:9411/api/v2/spans
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      accountsService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      blockerService:
+        slidingWindowSize: 5
+        failureRateThreshold: 60
+        waitDurationInOpenState: 10s
+      cashService:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      transferService:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      exchangeService:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  retry:
+    instances:
+      accountsService:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+  timelimiter:
+    instances:
+      accountsService:
+        timeoutDuration: 3s
+      cashService:
+        timeoutDuration: 10s
+
 logging:
   level:
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.security.oauth2.client: TRACE
-    org.springframework.security.oauth2.core: TRACE
-    org.springframework.security.oauth2.client.userinfo: TRACE
-    org.springframework.security.oauth2.core.endpoint: DEBUG
-    org.keycloak: DEBUG
-    org.keycloak.adapters: DEBUG
+    root: INFO
+    com.github.maximslepukhin: INFO
+    org.springframework: WARN
+    org.keycloak: WARN

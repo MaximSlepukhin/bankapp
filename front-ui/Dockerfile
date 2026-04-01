@@ -1,6 +1,13 @@
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY target/*.jar app.jar
+RUN chown appuser:appgroup app.jar
+USER appuser
 EXPOSE 8080
-ENV JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-XX:+UseG1GC", \
+  "-XX:+HeapDumpOnOutOfMemoryError", \
+  "-jar", "app.jar"]

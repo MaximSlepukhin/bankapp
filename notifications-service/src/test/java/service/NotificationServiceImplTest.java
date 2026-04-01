@@ -5,6 +5,7 @@ import com.github.maximslepukhin.model.entity.Notification;
 import com.github.maximslepukhin.repository.NotificationRepository;
 import com.github.maximslepukhin.service.NotificationServiceImpl;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.OffsetDateTime;
 
@@ -20,21 +21,51 @@ class NotificationServiceImplTest {
     @Test
     void create_shouldSaveNotification() {
         NotificationRequest request = new NotificationRequest("user1", "Hello!");
+        String messageId = "0:42";
 
-        Notification savedNotification = Notification.builder()
+        Notification saved = Notification.builder()
                 .id(1L)
-                .login(request.getLogin())
-                .message(request.getMessage())
+                .login("user1")
+                .message("Hello!")
+                .messageId(messageId)
                 .createdAt(OffsetDateTime.now())
                 .build();
 
-        when(repository.save(any(Notification.class))).thenReturn(savedNotification);
+        when(repository.existsByMessageId(messageId)).thenReturn(false);
+        when(repository.save(any(Notification.class))).thenReturn(saved);
 
-        Notification result = service.create(request);
+        Notification result = service.create(request, messageId);
 
+        assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getLogin()).isEqualTo("user1");
-        assertThat(result.getMessage()).isEqualTo("Hello!");
-        verify(repository, times(1)).save(any(Notification.class));
+        assertThat(result.getMessageId()).isEqualTo(messageId);
+        verify(repository).save(any(Notification.class));
+    }
+
+    @Test
+    void create_shouldReturnNull_WhenDuplicate() {
+        NotificationRequest request = new NotificationRequest("user1", "Hello!");
+        String messageId = "0:42";
+
+        when(repository.existsByMessageId(messageId)).thenReturn(true);
+
+        Notification result = service.create(request, messageId);
+
+        assertThat(result).isNull();
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void create_shouldReturnNull_WhenRaceConditionOnSave() {
+        NotificationRequest request = new NotificationRequest("user1", "Hello!");
+        String messageId = "0:43";
+
+        when(repository.existsByMessageId(messageId)).thenReturn(false);
+        when(repository.save(any())).thenThrow(new DataIntegrityViolationException("duplicate key"));
+
+        Notification result = service.create(request, messageId);
+
+        assertThat(result).isNull();
     }
 }

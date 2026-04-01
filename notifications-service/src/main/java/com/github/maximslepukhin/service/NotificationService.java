@@ -5,6 +5,6 @@ import com.github.maximslepukhin.model.entity.Notification;
 
 
 public interface NotificationService {
-    Notification create(NotificationRequest request);
+    Notification create(NotificationRequest request, String messageId);
 
 }

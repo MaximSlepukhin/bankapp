@@ -2,14 +2,15 @@ package integration;
 
 import com.github.maximslepukhin.TransferServiceApplication;
 import com.github.maximslepukhin.client.*;
-import com.github.maximslepukhin.config.kafka.NotificationKafkaProducer;
 import com.github.maximslepukhin.model.dto.*;
 import com.github.maximslepukhin.model.enums.Currency;
 import com.github.maximslepukhin.model.enums.TransferStatus;
 import com.github.maximslepukhin.model.record.BlockerStatus;
+import com.github.maximslepukhin.idempotency.IdempotencyService;
+import com.github.maximslepukhin.repository.IdempotencyKeyRepository;
+import com.github.maximslepukhin.repository.OutboxEventRepository;
 import com.github.maximslepukhin.repository.TransferRepository;
 import com.github.maximslepukhin.service.TransferService;
-import com.github.maximslepukhin.service.TransferServiceImpl;
 import config.TestOAuth2Config;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,7 +35,7 @@ import static org.mockito.Mockito.*;
         }
 )
 @ActiveProfiles("test")
-@Import({TransferServiceImpl.class, TestOAuth2Config.class})
+@Import(TestOAuth2Config.class)
 class TransferIntegrationTest {
 
     @Autowired
@@ -48,7 +50,13 @@ class TransferIntegrationTest {
     @MockBean
     private TransferRepository transferRepository;
     @MockBean
-    private NotificationKafkaProducer notificationKafkaProducer;
+    private OutboxEventRepository outboxEventRepository;
+
+    @MockBean
+    private IdempotencyService idempotencyService;
+
+    @MockBean
+    private IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Test
     void contextLoads() {
@@ -56,7 +64,7 @@ class TransferIntegrationTest {
     }
 
     @Test
-    void shouldPerformSuccessfulTransfer() {
+    void shouldPerformSuccessfulTransfer() throws Exception {
         TransferRequest request = new TransferRequest();
         request.setFromLogin("alice");
         request.setToLogin("bob");
@@ -67,17 +75,14 @@ class TransferIntegrationTest {
         when(blockerClient.check(any())).thenReturn(new BlockerStatus(false, ""));
         when(accountsClient.getCurrencies(anyString())).thenReturn(List.of("USD", "RUB"));
         when(exchangeClient.convert(any())).thenReturn(new ConvertResponse(
-                BigDecimal.valueOf(100),
-                Currency.USD,
-                Currency.RUB,
-                BigDecimal.valueOf(9500)
-        ));
-
+                BigDecimal.valueOf(100), Currency.USD, Currency.RUB, BigDecimal.valueOf(9500)));
         when(transferRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(outboxEventRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        TransferResponse response = transferService.transfer(request);
+        TransferResponse response = transferService.transfer(request, UUID.randomUUID());
 
         assertThat(response.getStatus()).isEqualTo(TransferStatus.SUCCESS);
-        verify(notificationKafkaProducer).send(any());
+        assertThat(response.getCredited()).isEqualTo(BigDecimal.valueOf(9500));
+        verify(outboxEventRepository).save(any());
     }
 }

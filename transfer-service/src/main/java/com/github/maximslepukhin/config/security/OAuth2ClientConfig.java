@@ -2,6 +2,7 @@ package com.github.maximslepukhin.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.oauth2.client.*;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.client.RestTemplate;
@@ -27,7 +28,10 @@ public class OAuth2ClientConfig {
 
     @Bean
     public RestTemplate restTemplate(OAuth2AuthorizedClientManager manager) {
-        var restTemplate = new RestTemplate();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(2000);
+        factory.setReadTimeout(3000);
+        var restTemplate = new RestTemplate(factory);
 
         restTemplate.getInterceptors().add((request, body, execution) -> {
             var authorizeRequest = OAuth2AuthorizeRequest

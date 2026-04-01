@@ -1,5 +1,13 @@
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY target/exchange-generator-service-*.jar app.jar
-EXPOSE 8084
-ENTRYPOINT ["java","-jar","app.jar"]
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+COPY target/*.jar app.jar
+RUN chown appuser:appgroup app.jar
+USER appuser
+EXPOSE 8085
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-XX:+UseG1GC", \
+  "-XX:+HeapDumpOnOutOfMemoryError", \
+  "-jar", "app.jar"]

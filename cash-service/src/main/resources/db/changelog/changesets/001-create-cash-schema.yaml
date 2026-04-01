@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-cash-schema
+      author: maksim
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS cash_service;

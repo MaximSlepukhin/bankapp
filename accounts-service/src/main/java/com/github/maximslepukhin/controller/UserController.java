@@ -11,8 +11,8 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/users")
-public class UserController {
+@RequestMapping("/api/v1/users")
+public class UserController implements UserApi {
 
     private final UserService userService;
 
@@ -20,38 +20,36 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping
+    @Override
     public ResponseEntity<UserDto> create(@RequestBody UserDto userDto) {
         return ResponseEntity.ok(userService.createUser(userDto));
     }
 
-    @GetMapping("/keycloak/{keycloakId}")
+    @Override
     public ResponseEntity<UserDto> getByKeycloakId(@PathVariable String keycloakId) {
         UserDto user = userService.findByKeycloakId(keycloakId);
         if (user == null) {
-            throw new UserNotFoundException(
-                    "User with keycloakId " + keycloakId + " not found"
-            );
+            throw new UserNotFoundException("User with keycloakId " + keycloakId + " not found");
         }
         return ResponseEntity.ok(user);
     }
 
-    @GetMapping("/login/{login}")
+    @Override
     public ResponseEntity<UserDto> getByLogin(@PathVariable String login) {
         return ResponseEntity.ok(userService.findByLogin(login));
     }
 
-    @GetMapping("/{login}")
+    @Override
     public ResponseEntity<UserDto> getUser(@PathVariable String login) {
         return ResponseEntity.ok(userService.getUserByLogin(login));
     }
 
-    @GetMapping
+    @Override
     public ResponseEntity<List<UserDto>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @PutMapping("/{login}")
+    @Override
     public ResponseEntity<UserDto> updateUser(@PathVariable String login, @RequestBody UserDto userDto) {
         UserDto updatedUser = userService.updateUser(login, userDto);
         return ResponseEntity.ok(updatedUser);

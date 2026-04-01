@@ -1,10 +1,10 @@
 package controller;
 
 import com.github.maximslepukhin.controller.CashController;
+import com.github.maximslepukhin.idempotency.IdempotencyService;
 import com.github.maximslepukhin.model.dto.CashOperationDto;
 import com.github.maximslepukhin.service.CashService;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -13,10 +13,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
+import io.micrometer.tracing.Tracer;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.mockito.Mockito.*;
 
 @WebMvcTest(CashController.class)
 @ContextConfiguration(classes = com.github.maximslepukhin.CashServiceApplication.class)
@@ -29,6 +35,12 @@ class CashControllerTest {
     @MockBean
     private CashService cashService;
 
+    @MockBean
+    private IdempotencyService idempotencyService;
+
+    @MockBean
+    private Tracer tracer;
+
     @Test
     void deposit_ShouldReturnOk() throws Exception {
         String json = """
@@ -39,12 +51,15 @@ class CashControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/cash/deposit")
+        when(idempotencyService.find(any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/v1/cash/deposit")
+                        .header("X-Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());
 
-        verify(cashService).deposit(Mockito.any(CashOperationDto.class));
+        verify(cashService).deposit(any(CashOperationDto.class), any(UUID.class));
     }
 
     @Test
@@ -57,11 +72,42 @@ class CashControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/cash/withdraw")
+        when(idempotencyService.find(any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/v1/cash/withdraw")
+                        .header("X-Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());
 
-        verify(cashService).withdraw(Mockito.any(CashOperationDto.class));
+        verify(cashService).withdraw(any(CashOperationDto.class), any(UUID.class));
+    }
+
+    @Test
+    void deposit_ShouldReturnOk_WhenIdempotencyKeyAlreadyCompleted() throws Exception {
+        String json = """
+                {
+                  "currency": "RUB",
+                  "amount": 100,
+                  "login": "user1"
+                }
+                """;
+
+        com.github.maximslepukhin.model.entity.IdempotencyKey ik =
+                com.github.maximslepukhin.model.entity.IdempotencyKey.builder()
+                        .key(UUID.randomUUID())
+                        .status(com.github.maximslepukhin.model.enums.IdempotencyStatus.COMPLETED)
+                        .httpStatus(200)
+                        .build();
+
+        when(idempotencyService.find(any())).thenReturn(Optional.of(ik));
+
+        mockMvc.perform(post("/api/v1/cash/deposit")
+                        .header("X-Idempotency-Key", ik.getKey().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+
+        org.mockito.Mockito.verifyNoInteractions(cashService);
     }
 }

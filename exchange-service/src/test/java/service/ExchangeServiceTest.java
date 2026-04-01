@@ -4,6 +4,7 @@ import com.github.maximslepukhin.model.dto.ConvertRequest;
 import com.github.maximslepukhin.model.dto.ConvertResponse;
 import com.github.maximslepukhin.model.dto.CurrencyRate;
 import com.github.maximslepukhin.model.enums.Currency;
+import com.github.maximslepukhin.exception.ExchangeRateNotFoundException;
 import com.github.maximslepukhin.service.ExchangeService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,6 +60,6 @@ class ExchangeServiceTest {
         request.setTo(Currency.CNY);
         request.setAmount(BigDecimal.valueOf(10));
 
-        assertThrows(IllegalArgumentException.class, () -> exchangeService.convert(request));
+        assertThrows(ExchangeRateNotFoundException.class, () -> exchangeService.convert(request));
     }
 }
