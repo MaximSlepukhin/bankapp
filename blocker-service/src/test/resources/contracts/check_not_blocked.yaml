@@ -1,0 +1,32 @@
+# Контракт: blocker-service разрешает операцию для обычного пользователя.
+#
+# Почему здесь matchers вместо просто body:
+#   cash-service отправляет {"login":"alice","currency":"USD","amount":100},
+#   но blocker-service использует только поле login.
+#   Чтобы WireMock-стаб принимал любое тело с login=alice (и любыми доп. полями),
+#   используем jsonPath-матчер только на $.login.
+#
+#   Поле body (login: alice) по-прежнему нужно — оно используется в провайдерском
+#   тесте как тело запроса, который генерируется к контроллеру.
+
+description: "Возвращает 200 и blocked=false для обычного пользователя"
+
+request:
+  method: POST
+  url: /api/v1/blocker/check
+  headers:
+    Content-Type: application/json
+  body:
+    login: alice
+  matchers:
+    body:
+      - path: $.login
+        type: by_equality
+
+response:
+  status: 200
+  headers:
+    Content-Type: application/json
+  body:
+    blocked: false
+    reason: ""

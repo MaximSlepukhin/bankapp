@@ -4,103 +4,62 @@ import com.github.maximslepukhin.model.dto.ConvertRequest;
 import com.github.maximslepukhin.model.dto.ConvertResponse;
 import com.github.maximslepukhin.model.dto.CurrencyRate;
 import com.github.maximslepukhin.model.enums.Currency;
+import com.github.maximslepukhin.exception.ExchangeRateNotFoundException;
 import com.github.maximslepukhin.service.ExchangeService;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 class ExchangeServiceTest {
 
     private ExchangeService exchangeService;
+    private MeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
-        exchangeService = new ExchangeService();
+        meterRegistry = mock(MeterRegistry.class); // создаём мок
+        exchangeService = new ExchangeService(meterRegistry); // передаем мок
 
-        // Добавляем тестовые курсы
-        exchangeService.updateRates(List.of(
-                new CurrencyRate(Currency.RUB, Currency.USD, new BigDecimal("0.010")),
-                new CurrencyRate(Currency.USD, Currency.RUB, new BigDecimal("100")),
-                new CurrencyRate(Currency.RUB, Currency.CNY, new BigDecimal("0.08")),
-                new CurrencyRate(Currency.CNY, Currency.RUB, new BigDecimal("12.5"))
-        ));
+        exchangeService.consumeRates(new CurrencyRate(Currency.USD, Currency.RUB, BigDecimal.valueOf(95)));
+        exchangeService.consumeRates(new CurrencyRate(Currency.CNY, Currency.RUB, BigDecimal.valueOf(15)));
     }
 
     @Test
-    void testGetRates() {
-        var rates = exchangeService.getRates();
-        assertFalse(rates.isEmpty());
-        assertTrue(rates.stream().anyMatch(r -> r.getFrom() == Currency.RUB && r.getTo() == Currency.USD));
+    void convert_sameCurrency_shouldReturnSameAmount() {
+        ConvertRequest request = new ConvertRequest();
+        request.setFrom(Currency.USD);
+        request.setTo(Currency.USD);
+        request.setAmount(BigDecimal.valueOf(10));
+
+        ConvertResponse response = exchangeService.convert(request);
+
+        assertEquals(BigDecimal.valueOf(10).setScale(6), response.getConverted());
     }
 
     @Test
-    void testConvertSameCurrency() {
-        var req = new ConvertRequest();
-        req.setFrom(Currency.RUB);
-        req.setTo(Currency.RUB);
-        req.setAmount(BigDecimal.TEN);
+    void convert_USDtoRUB_shouldConvertCorrectly() {
+        ConvertRequest request = new ConvertRequest();
+        request.setFrom(Currency.USD);
+        request.setTo(Currency.RUB);
+        request.setAmount(BigDecimal.valueOf(10));
 
-        ConvertResponse resp = exchangeService.convert(req);
+        ConvertResponse response = exchangeService.convert(request);
 
-        assertEquals(BigDecimal.TEN.setScale(6), resp.getConverted());
-        assertEquals(Currency.RUB, resp.getFrom());
-        assertEquals(Currency.RUB, resp.getTo());
+        assertEquals(new BigDecimal("950.000000"), response.getConverted());
     }
 
     @Test
-    void testConvertRubToUsd() {
-        var req = new ConvertRequest();
-        req.setFrom(Currency.RUB);
-        req.setTo(Currency.USD);
-        req.setAmount(new BigDecimal("1000"));
+    void convert_missingRate_shouldThrowException() {
+        ConvertRequest request = new ConvertRequest();
+        request.setFrom(Currency.USD);
+        request.setTo(Currency.CNY);
+        request.setAmount(BigDecimal.valueOf(10));
 
-        ConvertResponse resp = exchangeService.convert(req);
-
-        assertEquals(new BigDecimal("10.000000"), resp.getConverted());
-    }
-
-    @Test
-    void testConvertUsdToRub() {
-        var req = new ConvertRequest();
-        req.setFrom(Currency.USD);
-        req.setTo(Currency.RUB);
-        req.setAmount(new BigDecimal("1"));
-
-        ConvertResponse resp = exchangeService.convert(req);
-
-        assertEquals(new BigDecimal("100.000000"), resp.getConverted());
-    }
-
-    @Test
-    void testConvertUsdToCny() {
-        var req = new ConvertRequest();
-        req.setFrom(Currency.USD);
-        req.setTo(Currency.CNY);
-        req.setAmount(BigDecimal.ONE);
-
-        // USD->RUB (100) × RUB->CNY (0.08) = 8
-        ConvertResponse resp = exchangeService.convert(req);
-
-        assertEquals(new BigDecimal("8.000000"), resp.getConverted());
-    }
-
-    @Test
-    void testConvertUnknownRateThrowsException() {
-        var req = new ConvertRequest();
-        req.setFrom(Currency.USD);
-        req.setTo(Currency.CNY);
-        req.setAmount(BigDecimal.ONE);
-
-        // удаляем нужные курсы для проверки ошибки
-        exchangeService = new ExchangeService();
-        exchangeService.updateRates(List.of(
-                new CurrencyRate(Currency.RUB, Currency.USD, new BigDecimal("0.01"))
-        ));
-
-        assertThrows(IllegalArgumentException.class, () -> exchangeService.convert(req));
+        assertThrows(ExchangeRateNotFoundException.class, () -> exchangeService.convert(request));
     }
 }

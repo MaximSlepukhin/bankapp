@@ -9,8 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/blocker")
-public class BlockerController {
+@RequestMapping("/api/v1/blocker")
+public class BlockerController implements BlockerApi {
 
     private final BlockerService blockerService;
 
@@ -18,7 +18,7 @@ public class BlockerController {
         this.blockerService = blockerService;
     }
 
-    @PostMapping("/check")
+    @Override
     public ResponseEntity<BlockerStatus> check(@Valid @RequestBody BlockerRequest request) {
         BlockerStatus status = blockerService.checkBlock(request);
         HttpStatus httpStatus = status.isBlocked() ? HttpStatus.FORBIDDEN : HttpStatus.OK;

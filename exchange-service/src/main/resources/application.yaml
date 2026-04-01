@@ -2,5 +2,51 @@ spring:
   application:
     name: exchange-service
 
-  config:
-    import: optional:configserver:http://config-server:8888
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:80/realms/bank-realm
+          jwk-set-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs
+
+  kafka:
+    bootstrap-servers: my-kafka.default.svc.cluster.local:9092
+    consumer:
+      group-id: exchange-service-group
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.github.maximslepukhin.model.dto"
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  port: 8084
+  address: 0.0.0.0
+  shutdown: graceful
+
+logging:
+  level:
+    root: INFO
+    com.github.maximslepukhin: INFO
+    org.springframework: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+  metrics:
+    enable:
+      all: true
+
+  tracing:
+    sampling:
+      probability: 1
+
+  zipkin:
+    tracing:
+      endpoint: http://zipkin.monitoring.svc.cluster.local:9411/api/v2/spans

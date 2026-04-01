@@ -4,72 +4,68 @@ import com.github.maximslepukhin.model.dto.NotificationRequest;
 import com.github.maximslepukhin.model.entity.Notification;
 import com.github.maximslepukhin.repository.NotificationRepository;
 import com.github.maximslepukhin.service.NotificationServiceImpl;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+
 
 class NotificationServiceImplTest {
 
-    @Mock
-    private NotificationRepository repository;
-
-    @InjectMocks
-    private NotificationServiceImpl service;
-
-    @BeforeEach
-    void setup() {
-        MockitoAnnotations.openMocks(this);
-    }
+    private final NotificationRepository repository = mock(NotificationRepository.class);
+    private final NotificationServiceImpl service = new NotificationServiceImpl(repository);
 
     @Test
-    void create_shouldSaveAndReturnNotification() {
-        // given
+    void create_shouldSaveNotification() {
         NotificationRequest request = new NotificationRequest("user1", "Hello!");
+        String messageId = "0:42";
+
         Notification saved = Notification.builder()
                 .id(1L)
                 .login("user1")
                 .message("Hello!")
+                .messageId(messageId)
                 .createdAt(OffsetDateTime.now())
                 .build();
 
+        when(repository.existsByMessageId(messageId)).thenReturn(false);
         when(repository.save(any(Notification.class))).thenReturn(saved);
 
-        // when
-        Notification result = service.create(request);
+        Notification result = service.create(request, messageId);
 
-        // then
+        assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getLogin()).isEqualTo("user1");
-        assertThat(result.getMessage()).isEqualTo("Hello!");
-        verify(repository, times(1)).save(any(Notification.class));
+        assertThat(result.getMessageId()).isEqualTo(messageId);
+        verify(repository).save(any(Notification.class));
     }
 
     @Test
-    void getForUser_shouldReturnNotificationsFromRepository() {
-        // given
-        List<Notification> expected = List.of(
-                new Notification(1L, "user1", "msg1", OffsetDateTime.now()),
-                new Notification(2L, "user1", "msg2", OffsetDateTime.now())
-        );
-        when(repository.findByLoginOrderByCreatedAtDesc("user1")).thenReturn(expected);
+    void create_shouldReturnNull_WhenDuplicate() {
+        NotificationRequest request = new NotificationRequest("user1", "Hello!");
+        String messageId = "0:42";
 
-        // when
-        List<Notification> result = service.getForUser("user1");
+        when(repository.existsByMessageId(messageId)).thenReturn(true);
 
-        // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).getMessage()).isEqualTo("msg1");
-        verify(repository, times(1)).findByLoginOrderByCreatedAtDesc("user1");
+        Notification result = service.create(request, messageId);
+
+        assertThat(result).isNull();
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void create_shouldReturnNull_WhenRaceConditionOnSave() {
+        NotificationRequest request = new NotificationRequest("user1", "Hello!");
+        String messageId = "0:43";
+
+        when(repository.existsByMessageId(messageId)).thenReturn(false);
+        when(repository.save(any())).thenThrow(new DataIntegrityViolationException("duplicate key"));
+
+        Notification result = service.create(request, messageId);
+
+        assertThat(result).isNull();
     }
 }

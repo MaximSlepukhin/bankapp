@@ -1,0 +1,29 @@
+replicaCount: 1   # количество реплик Zipkin (можно менять для тест/прод)
+
+image:
+  repository: openzipkin/zipkin
+  tag: 3.5
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 9411
+
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 250m
+  limits:
+    memory: 1Gi
+    cpu: 500m
+
+# Настройки для хранения данных (в памяти или persistent)
+storage:
+  type: memory   # или 'pvc' для постоянного хранения
+  size: 1Gi
+  className: standard
+
+# Настройки окружения
+env:
+  - name: JAVA_OPTS
+    value: "-Xmx512m -Xms256m"

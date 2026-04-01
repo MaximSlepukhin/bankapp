@@ -1,0 +1,23 @@
+# Контракт: accounts-service отдаёт баланс по логину и валюте.
+#
+# Что происходит при mvn install:
+#   1. Плагин читает этот файл и генерирует JUnit-тест (ContractsTest).
+#   2. Сгенерированный тест делает GET /api/v1/accounts/alice/USD через MockMvc.
+#   3. Проверяет, что ответ = 200 и тело = 1000.
+#   4. Пакует этот файл в accounts-service-1.0-SNAPSHOT-stubs.jar — его
+#      подключает cash-service / transfer-service в своих тестах через stub runner.
+#
+# Stub runner (потребитель) превращает этот контракт в WireMock-маппинг:
+#   GET /api/v1/accounts/alice/USD → 200, body: 1000
+
+description: "Возвращает баланс счёта alice в USD"
+
+request:
+  method: GET
+  url: /api/v1/accounts/alice/USD
+
+response:
+  status: 200
+  headers:
+    Content-Type: application/json
+  body: 1000

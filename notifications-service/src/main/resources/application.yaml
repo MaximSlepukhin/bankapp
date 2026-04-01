@@ -2,5 +2,68 @@ spring:
   application:
     name: notifications-service
 
-  config:
-    import: optional:configserver:http://config-server:8888
+  kafka:
+    bootstrap-servers: my-kafka.default.svc.cluster.local:9092
+    consumer:
+      group-id: notifications-service-consumer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.default_schema: notifications_service
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/notifications-service/master.yaml
+    default-schema: notifications_service
+    drop-first: true
+    clear-checksums: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+server:
+  shutdown: graceful
+
+logging:
+  level:
+    root: INFO
+    com.github.maximslepukhin: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    liquibase: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+  metrics:
+    enable:
+      all: true
+
+  tracing:
+    sampling:
+      probability: 1
+
+  zipkin:
+    tracing:
+      endpoint: http://zipkin.monitoring.svc.cluster.local:9411/api/v2/spans

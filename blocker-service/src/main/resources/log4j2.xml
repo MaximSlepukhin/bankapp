@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- Kafka appender -->
+        <Kafka name="KafkaAppender" topic="logs" syncSend="false">
+            <JsonLayout
+                    compact="true"
+                    eventEol="true"
+                    properties="true"
+                    includeStacktrace="true"
+                    includeTimeMillis="true"
+            />
+            <Property name="bootstrap.servers">my-kafka.default.svc.cluster.local:9092</Property>
+            <Property name="linger.ms">1000</Property>
+        </Kafka>
+
+        <!-- Асинхронная очередь Log4j2 поверх Kafka -->
+        <Async name="AsyncKafka" bufferSize="8192" blocking="false">
+            <AppenderRef ref="KafkaAppender"/>
+        </Async>
+
+        <!-- Kafka клиент — в консоль, чтобы не было рекурсии -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <!-- Все логи приложения через AsyncKafka -->
+        <Root level="info" additivity="false">
+            <AppenderRef ref="AsyncKafka"/>
+        </Root>
+
+        <!-- Логи Kafka клиента -->
+        <Logger name="org.apache.kafka" level="INFO" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+    </Loggers>
+</Configuration>

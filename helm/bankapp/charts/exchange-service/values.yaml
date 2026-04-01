@@ -1,0 +1,36 @@
+replicaCount: 1
+
+image:
+  repository: exchange-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  name: exchange-service
+  type: ClusterIP
+  port: 8084
+  targetPort: 8084
+  labels:
+    app.kubernetes.io/name: exchange-service
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8084"
+
+ingress:
+  enabled: false
+  annotations: {}
+  path: "/"
+  hosts:
+    - "exchange-service.local"
+  tls: []
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+

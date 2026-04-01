@@ -1,0 +1,7 @@
+{{- define "keycloak-db.name" -}}
+{{- .Chart.Name | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "keycloak-db.fullname" -}}
+{{- printf "%s-%s" .Release.Name (include "keycloak-db.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}

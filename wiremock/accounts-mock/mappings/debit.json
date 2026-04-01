@@ -1,0 +1,10 @@
+{
+  "name": "POST debit (transfer-service)",
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/api/v1/accounts/[^/]+/[^/]+/debit"
+  },
+  "response": {
+    "status": 200
+  }
+}

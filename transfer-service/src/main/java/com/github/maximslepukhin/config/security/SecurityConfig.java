@@ -14,19 +14,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
-                )
-
-                .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(jwt -> {
-                        })
                 );
 
         return http.build();
     }
 }
-

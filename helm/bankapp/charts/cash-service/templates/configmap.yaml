@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cash-service.fullname" . }}-config
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  ACCOUNTS_SERVICE_URL: "http://accounts-service:8081"
+  BLOCKER_SERVICE_URL: "http://blocker-service:8087"
+  NOTIFICATIONS_SERVICE_URL: "http://notifications-service:8087"
+{{/*apiVersion: v1*/}}
+{{/*kind: ConfigMap*/}}
+{{/*metadata:*/}}
+{{/*  name: {{ include "cash-service.fullname" . }}-config*/}}
+{{/*data:*/}}
+{{/*  SPRING_PROFILES_ACTIVE: "prod"*/}}
+{{/*  ACCOUNTS_SERVICE_URL: "http://accounts-service:8081"*/}}
+{{/*  BLOCKER_SERVICE_URL: "http://blocker-service:8087"*/}}
+{{/*  NOTIFICATIONS_SERVICE_URL: "http://notifications-service:8087"*/}}
+{{/*  # Kafka environment variables*/}}
+{{/*  KAFKA_BOOTSTRAP_SERVERS: "my-kafka.default.svc.cluster.local:9092"*/}}
+{{/*  KAFKA_USERNAME: "user1"*/}}

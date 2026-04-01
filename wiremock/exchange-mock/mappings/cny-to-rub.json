@@ -1,0 +1,17 @@
+{
+  "name": "POST convert CNY → RUB (rate: 12)",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/exchange/convert",
+    "bodyPatterns": [
+      {"matchesJsonPath": {"expression": "$.from", "equalTo": "CNY"}},
+      {"matchesJsonPath": {"expression": "$.to",   "equalTo": "RUB"}}
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {"Content-Type": "application/json"},
+    "body": "{\"original\": {{jsonPath request.body '$.amount'}}, \"from\": \"CNY\", \"to\": \"RUB\", \"converted\": {{math (jsonPath request.body '$.amount') '*' 12}}}",
+    "transformers": ["response-template"]
+  }
+}

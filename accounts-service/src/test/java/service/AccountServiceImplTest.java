@@ -1,5 +1,6 @@
 package service;
 
+import com.github.maximslepukhin.exception.AccountNotFoundException;
 import com.github.maximslepukhin.exception.InsufficientFundsException;
 import com.github.maximslepukhin.model.entity.Account;
 import com.github.maximslepukhin.model.entity.User;
@@ -15,8 +16,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
-import com.github.maximslepukhin.exception.AccountNotFoundException;
 
 class AccountServiceImplTest {
 
@@ -34,7 +33,7 @@ class AccountServiceImplTest {
     @Test
     void credit_shouldIncreaseBalance() {
         User user = new User();
-        Account acc = new Account(1L, Currency.RUB, BigDecimal.valueOf(100), user);
+        Account acc = new Account(1L, Currency.RUB, BigDecimal.valueOf(100), 0L, user);
         when(userRepository.findByLogin("alex")).thenReturn(Optional.of(user));
         when(accountRepository.findByUserAndCurrency(user, Currency.RUB)).thenReturn(Optional.of(acc));
 
@@ -47,7 +46,7 @@ class AccountServiceImplTest {
     @Test
     void debit_shouldDecreaseBalance() {
         User user = new User();
-        Account acc = new Account(1L, Currency.USD, BigDecimal.valueOf(100), user);
+        Account acc = new Account(1L, Currency.USD, BigDecimal.valueOf(100), 0L, user);
         when(userRepository.findByLogin("alex")).thenReturn(Optional.of(user));
         when(accountRepository.findByUserAndCurrency(user, Currency.USD)).thenReturn(Optional.of(acc));
 
@@ -59,7 +58,7 @@ class AccountServiceImplTest {
     @Test
     void debit_shouldThrow_whenInsufficientFunds() {
         User user = new User();
-        Account acc = new Account(1L, Currency.USD, BigDecimal.valueOf(20), user);
+        Account acc = new Account(1L, Currency.USD, BigDecimal.valueOf(20), 0L, user);
         when(userRepository.findByLogin("alex")).thenReturn(Optional.of(user));
         when(accountRepository.findByUserAndCurrency(user, Currency.USD)).thenReturn(Optional.of(acc));
 

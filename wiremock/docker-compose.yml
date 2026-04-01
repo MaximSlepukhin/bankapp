@@ -1,0 +1,39 @@
+version: '3.8'
+
+# Запускает три WireMock-сервера — по одному на каждый внешний HTTP-сервис.
+# Использование:
+#   cd wiremock && docker compose up
+#
+# Порты:
+#   8091 — accounts-service mock  (http://localhost:8091/__admin — UI)
+#   8092 — blocker-service mock   (http://localhost:8092/__admin — UI)
+#   8093 — exchange-service mock  (http://localhost:8093/__admin — UI)
+
+services:
+
+  accounts-mock:
+    image: wiremock/wiremock:3.9.1
+    container_name: accounts-mock
+    ports:
+      - "8091:8080"
+    volumes:
+      - ./accounts-mock/mappings:/home/wiremock/mappings
+    command: --verbose --local-response-templating
+
+  blocker-mock:
+    image: wiremock/wiremock:3.9.1
+    container_name: blocker-mock
+    ports:
+      - "8092:8080"
+    volumes:
+      - ./blocker-mock/mappings:/home/wiremock/mappings
+    command: --verbose
+
+  exchange-mock:
+    image: wiremock/wiremock:3.9.1
+    container_name: exchange-mock
+    ports:
+      - "8093:8080"
+    volumes:
+      - ./exchange-mock/mappings:/home/wiremock/mappings
+    command: --verbose --local-response-templating

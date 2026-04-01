@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cash-service.fullname" . }}
+  labels:
+    app: {{ include "cash-service.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "cash-service.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "cash-service.name" . }}
+    spec:
+      containers:
+        - name: cash-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+            - containerPort: 9012
+              name: jmx
+          envFrom:
+            - configMapRef:
+                name: {{ include "cash-service.fullname" . }}-config
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: >-
+                -Dcom.sun.management.jmxremote=true
+                -Dcom.sun.management.jmxremote.port=9012
+                -Dcom.sun.management.jmxremote.rmi.port=9012
+                -Dcom.sun.management.jmxremote.authenticate=false
+                -Dcom.sun.management.jmxremote.ssl=false
+                -Djava.rmi.server.hostname=127.0.0.1
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ .Values.postgres.host }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cash-service.fullname" . }}-secret
+                  key: POSTGRES_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cash-service.fullname" . }}-secret
+                  key: POSTGRES_PASSWORD
+          resources:
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}

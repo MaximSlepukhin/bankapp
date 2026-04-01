@@ -1,0 +1,52 @@
+replicaCount: 1
+
+image:
+  repository: accounts-service
+  tag: "latest"
+  pullPolicy: Never
+
+service:
+  name: accounts-service
+  port: 8081
+  targetPort: 8081
+  type: ClusterIP
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8081"
+
+resources:
+  requests:
+    memory: "100Mi"
+    cpu: "100m"
+  limits:
+    memory: "200Mi"
+    cpu: "200m"
+
+
+postgres:
+  host: accounts-db-accounts-db
+  port: 5432
+  database: accountsdb
+  username: accounts_user
+  password: strongpassword123
+  schema: accounts_service
+
+keycloak:
+  url: http://keycloak:80
+  realm: bank-realm
+
+  client:
+    id: front-ui-service
+    secret: z1GkjE1Vi9Ba1B91tFPjZtg6CGQiw5ea
+
+  endpoints:
+    jwkSetUri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs
+    tokenUri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/token
+    authorizationUri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/auth
+
+ingress:
+  enabled: false
+  host: accounts.dev.bankapp.local
+  annotations: {}
+

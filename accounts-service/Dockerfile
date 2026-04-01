@@ -1,16 +1,13 @@
-FROM eclipse-temurin:21-jdk AS build
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y maven bash git && rm -rf /var/lib/apt/lists/*
-
-COPY pom.xml .
-COPY accounts-service/pom.xml accounts-service/pom.xml
-COPY accounts-service/src accounts-service/src
-
-RUN mvn clean package -DskipTests -f accounts-service/pom.xml
-
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/accounts-service/target/accounts-service-1.0-SNAPSHOT.jar app.jar
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+COPY target/*.jar app.jar
+RUN chown appuser:appgroup app.jar
+USER appuser
 EXPOSE 8081
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-XX:+UseG1GC", \
+  "-XX:+HeapDumpOnOutOfMemoryError", \
+  "-jar", "app.jar"]

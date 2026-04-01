@@ -1,0 +1,43 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    hikari:
+      connection-init-sql: "CREATE SCHEMA IF NOT EXISTS cash_service"
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.default_schema: cash_service
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/cash-service/master.yaml
+    default-schema: cash_service
+    liquibase-schema: public
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost/dummy
+      client:
+        registration:
+          keycloak-service:
+            client-id: test
+            client-secret: test
+            authorization-grant-type: client_credentials
+            provider: keycloak
+        provider:
+          keycloak:
+            token-uri: http://localhost/dummy/token
+
+management:
+  zipkin:
+    tracing:
+      export:
+        enabled: false
+  tracing:
+    sampling:
+      probability: 0
+
+ACCOUNTS_SERVICE_URL: http://localhost:8081
+BLOCKER_SERVICE_URL: http://localhost:8087

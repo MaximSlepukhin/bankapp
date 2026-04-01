@@ -1,0 +1,16 @@
+# Контракт: accounts-service возвращает список валют пользователя.
+
+description: "Возвращает список валют счетов alice"
+
+request:
+  method: GET
+  url: /api/v1/accounts/alice/currencies
+
+response:
+  status: 200
+  headers:
+    Content-Type: application/json
+  body:
+    - USD
+    - RUB
+    - CNY

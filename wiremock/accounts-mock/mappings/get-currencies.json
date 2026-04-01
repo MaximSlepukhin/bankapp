@@ -1,0 +1,14 @@
+{
+  "name": "GET currencies (transfer-service)",
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/api/v1/accounts/[^/]+/currencies"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "[\"USD\", \"RUB\", \"CNY\"]"
+  }
+}

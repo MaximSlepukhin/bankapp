@@ -1,0 +1,50 @@
+replicaCount: 1
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+service:
+  type: ClusterIP
+  ports:
+    - name: beats
+      port: 5044
+      targetPort: 5044
+
+extraEnvs:
+  - name: LS_JAVA_OPTS
+    value: "-Xms256m -Xmx256m"
+
+config:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    xpack.monitoring.enabled: false
+
+  pipelines.yml: |
+    - pipeline.id: kafka_to_es
+
+  kafka_to_es.conf: |
+    input {
+      kafka {
+        bootstrap_servers => "my-kafka.default.svc.cluster.local:9092"
+        topics => ["logs"]
+        group_id => "logstash-consumer-group"
+        codec => "json"
+      }
+    }
+    filter {
+      mutate {
+        copy => { "[@metadata][kafka][topic]" => "source" }
+      }
+    }
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch-master.default.svc.cluster.local:9200"]
+        index => "bank-logs-%{+YYYY.MM.dd}"
+      }
+      stdout { codec => rubydebug } # для отладки
+    }

@@ -1,0 +1,57 @@
+apiVersion: v2
+name: bankapp
+description: A Helm chart for deploying the entire BankApp system, including multiple microservices
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+
+dependencies:
+  - name: accounts-service
+    version: "1.0.0"
+    repository: "file://charts/accounts-service"
+
+  - name: blocker-service
+    version: "1.0.0"
+    repository: "file://charts/blocker-service"
+
+  - name: cash-service
+    version: "1.0.0"
+    repository: "file://charts/cash-service"
+
+  - name: exchange-generator-service
+    version: "1.0.0"
+    repository: "file://charts/exchange-generator-service"
+
+  - name: exchange-service
+    version: "1.0.0"
+    repository: "file://charts/exchange-service"
+
+  - name: front-ui
+    version: "1.0.0"
+    repository: "file://charts/front-ui"
+
+  - name: notifications-service
+    version: "1.0.0"
+    repository: "file://charts/notifications-service"
+
+  - name: transfer-service
+    version: "1.0.0"
+    repository: "file://charts/transfer-service"
+
+  - name: keycloak
+    version: "1.0.0"
+    repository: "file://charts/keycloak"
+
+  # Databases
+  - name: accounts-db
+    version: "1.0.0"
+    repository: "file://charts/accounts-db"
+
+  - name: keycloak-db
+    version: "1.0.0"
+    repository: "file://charts/keycloak-db"
+
+  # ✅ Apache Kafka (Bitnami)
+  - name: kafka
+    version: "32.4.3"
+    repository: "https://charts.bitnami.com/bitnami"

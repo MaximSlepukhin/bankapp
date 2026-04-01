@@ -2,13 +2,46 @@ package com.github.maximslepukhin.client;
 
 import com.github.maximslepukhin.model.dto.ConvertRequest;
 import com.github.maximslepukhin.model.dto.ConvertResponse;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.ClientHttpRequestExecution;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 
-@FeignClient(name = "exchange-service")
-public interface ExchangeClient {
+import java.io.IOException;
 
-    @PostMapping("/api/exchange/convert")
-    ConvertResponse convert(@RequestBody ConvertRequest request);
+@Slf4j
+@Service
+public class ExchangeClient {
+
+    private final RestTemplate restTemplate;
+    private final String exchangeServiceUrl;
+
+    public ExchangeClient(RestTemplate restTemplate,
+                          @Value("${EXCHANGE_SERVICE_URL}") String exchangeServiceUrl) {
+        this.restTemplate = restTemplate;
+        this.exchangeServiceUrl = exchangeServiceUrl;
+        this.restTemplate.getInterceptors().add(new ClientHttpRequestInterceptor() {
+            @Override
+            public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
+                return execution.execute(request, body);
+            }
+        });
+    }
+
+    @CircuitBreaker(name = "exchangeService", fallbackMethod = "convertFallback")
+    public ConvertResponse convert(ConvertRequest request) {
+        String url = exchangeServiceUrl + "/api/v1/exchange/convert";
+        return restTemplate.postForObject(url, request, ConvertResponse.class);
+    }
+
+    private ConvertResponse convertFallback(ConvertRequest request, Throwable t) {
+        log.error("Circuit breaker: exchange-service недоступен при конвертации {} -> {}: {}",
+                request.getFrom(), request.getTo(), t.getMessage());
+        throw new RuntimeException("exchange-service недоступен", t);
+    }
 }

@@ -3,17 +3,15 @@ package com.github.maximslepukhin.controller;
 import com.github.maximslepukhin.model.dto.CurrencyRateDto;
 import com.github.maximslepukhin.service.ExchangeRateGenerator;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/rates")
-public class ExchangeRateController {
+@RequestMapping("/api/v1/rates")
+public class ExchangeRateController implements ExchangeRateApi {
 
     private final ExchangeRateGenerator rateGenerator;
 
@@ -21,7 +19,7 @@ public class ExchangeRateController {
         this.rateGenerator = rateGenerator;
     }
 
-    @GetMapping("")
+    @Override
     public List<CurrencyRateDto> getRatesForUi() {
         List<CurrencyRateDto> dtoList = rateGenerator.generateRates().stream()
                 .map(rate -> new CurrencyRateDto(

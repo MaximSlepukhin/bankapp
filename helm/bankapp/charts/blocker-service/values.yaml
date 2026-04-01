@@ -1,0 +1,30 @@
+replicaCount: 1
+
+image:
+  repository: blocker-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: blocker-service
+  port: 8087
+  targetPort: 8087
+  labels:
+    app.kubernetes.io/name: blocker-service
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8087"
+
+env:
+  maintenanceStart: "00:00"
+  maintenanceEnd: "00:05"
+
+resources:
+  requests:
+    memory: "100Mi"
+    cpu: "100m"
+  limits:
+    memory: "200Mi"
+    cpu: "200m"

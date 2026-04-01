@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "keycloak-db.fullname" . }}
+  labels:
+    app: {{ include "keycloak-db.name" . }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.postgres.port }}
+      targetPort: {{ .Values.postgres.port }}
+  selector:
+    app: {{ include "keycloak-db.name" . }}

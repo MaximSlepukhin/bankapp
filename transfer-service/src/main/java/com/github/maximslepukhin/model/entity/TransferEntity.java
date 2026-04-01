@@ -37,4 +37,7 @@ public class TransferEntity {
     private TransferStatus status;
 
     private Instant createdAt;
+
+    @Column(length = 500)
+    private String compensationReason;
 }

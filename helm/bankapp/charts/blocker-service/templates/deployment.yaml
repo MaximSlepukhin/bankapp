@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: blocker-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+            - containerPort: 9011
+              name: jmx
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: >-
+                -Dcom.sun.management.jmxremote=true
+                -Dcom.sun.management.jmxremote.port=9011
+                -Dcom.sun.management.jmxremote.rmi.port=9011
+                -Dcom.sun.management.jmxremote.authenticate=false
+                -Dcom.sun.management.jmxremote.ssl=false
+                -Djava.rmi.server.hostname=127.0.0.1
+            - name: BLOCKER_MAINTENANCE_START
+              value: "{{ .Values.env.maintenanceStart }}"
+            - name: BLOCKER_MAINTENANCE_END
+              value: "{{ .Values.env.maintenanceEnd }}"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

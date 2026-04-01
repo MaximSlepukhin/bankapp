@@ -27,3 +27,19 @@ databaseChangeLog:
                   name: created_at
                   type: TIMESTAMP
                   defaultValueComputed: CURRENT_TIMESTAMP
+  - changeSet:
+      id: 002-add-message-id-to-notifications
+      author: maksim
+      changes:
+        - addColumn:
+            schemaName: notifications_service
+            tableName: notifications
+            columns:
+              - column:
+                  name: message_id
+                  type: VARCHAR(100)
+        - addUniqueConstraint:
+            schemaName: notifications_service
+            tableName: notifications
+            columnNames: message_id
+            constraintName: uq_notifications_message_id

@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-add-compensation-reason-to-transfers
+      author: maksim
+      changes:
+        - addColumn:
+            tableName: transfers
+            schemaName: transfer_service
+            columns:
+              - column:
+                  name: compensation_reason
+                  type: VARCHAR(500)

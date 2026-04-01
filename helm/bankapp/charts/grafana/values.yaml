@@ -1,0 +1,44 @@
+# helm/bankapp/charts/grafana/values.yaml
+
+# Админ-пользователь Grafana
+adminUser: admin
+adminPassword: admin
+
+# Источники данных
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-stack-kube-prom-prometheus.monitoring.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
+
+# Хранение данных
+persistence:
+  enabled: true
+  size: 10Gi
+
+# Тип сервиса Grafana
+service:
+  type: ClusterIP
+
+# Sidecar для автоматического подхвата ConfigMap с дашбордами
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard   # все ConfigMap с этой меткой будут монтироваться
+    folder: /var/lib/grafana/dashboards
+
+initChownData:
+  enabled: false
+
+resources:
+  requests:
+    memory: "100Mi"
+    cpu: "100m"
+  limits:
+    memory: "200Mi"
+    cpu: "200m"
+

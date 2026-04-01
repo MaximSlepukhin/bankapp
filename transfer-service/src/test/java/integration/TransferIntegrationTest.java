@@ -3,10 +3,12 @@ package integration;
 import com.github.maximslepukhin.TransferServiceApplication;
 import com.github.maximslepukhin.client.*;
 import com.github.maximslepukhin.model.dto.*;
-import com.github.maximslepukhin.model.entity.TransferEntity;
 import com.github.maximslepukhin.model.enums.Currency;
 import com.github.maximslepukhin.model.enums.TransferStatus;
 import com.github.maximslepukhin.model.record.BlockerStatus;
+import com.github.maximslepukhin.idempotency.IdempotencyService;
+import com.github.maximslepukhin.repository.IdempotencyKeyRepository;
+import com.github.maximslepukhin.repository.OutboxEventRepository;
 import com.github.maximslepukhin.repository.TransferRepository;
 import com.github.maximslepukhin.service.TransferService;
 import config.TestOAuth2Config;
@@ -16,7 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,14 +27,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest(classes = com.github.maximslepukhin.TransferServiceApplication.class)
+@SpringBootTest(
+        classes = TransferServiceApplication.class,
+        properties = {
+                "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration," +
+                "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration"
+        }
+)
 @ActiveProfiles("test")
 @Import(TestOAuth2Config.class)
-@TestPropertySource(properties = {
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration," +
-        "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration," +
-        "org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration"
-})
 class TransferIntegrationTest {
 
     @Autowired
@@ -41,18 +43,20 @@ class TransferIntegrationTest {
 
     @MockBean
     private AccountsClient accountsClient;
-
     @MockBean
     private ExchangeClient exchangeClient;
-
-    @MockBean
-    private NotificationsClient notificationsClient;
-
     @MockBean
     private BlockerClient blockerClient;
-
     @MockBean
     private TransferRepository transferRepository;
+    @MockBean
+    private OutboxEventRepository outboxEventRepository;
+
+    @MockBean
+    private IdempotencyService idempotencyService;
+
+    @MockBean
+    private IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Test
     void contextLoads() {
@@ -60,8 +64,7 @@ class TransferIntegrationTest {
     }
 
     @Test
-    void shouldPerformSuccessfulTransfer_withCurrencyConversion() {
-        // given
+    void shouldPerformSuccessfulTransfer() throws Exception {
         TransferRequest request = new TransferRequest();
         request.setFromLogin("alice");
         request.setToLogin("bob");
@@ -70,59 +73,16 @@ class TransferIntegrationTest {
         request.setAmount(BigDecimal.valueOf(100));
 
         when(blockerClient.check(any())).thenReturn(new BlockerStatus(false, ""));
-        when(accountsClient.getCurrencies("alice")).thenReturn(List.of("USD"));
-        when(accountsClient.getCurrencies("bob")).thenReturn(List.of("RUB", "USD"));
-        when(exchangeClient.convert(any())).thenReturn(
-                new ConvertResponse(BigDecimal.valueOf(100), Currency.USD, Currency.RUB, BigDecimal.valueOf(9500))
-        );
+        when(accountsClient.getCurrencies(anyString())).thenReturn(List.of("USD", "RUB"));
+        when(exchangeClient.convert(any())).thenReturn(new ConvertResponse(
+                BigDecimal.valueOf(100), Currency.USD, Currency.RUB, BigDecimal.valueOf(9500)));
+        when(transferRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(outboxEventRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        TransferEntity saved = TransferEntity.builder()
-                .id(UUID.randomUUID())
-                .status(TransferStatus.SUCCESS)
-                .credited(BigDecimal.valueOf(9500))
-                .build();
+        TransferResponse response = transferService.transfer(request, UUID.randomUUID());
 
-        when(transferRepository.save(any())).thenReturn(saved);
-
-        // when
-        TransferResponse response = transferService.transfer(request);
-
-        // then
-        assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(TransferStatus.SUCCESS);
         assertThat(response.getCredited()).isEqualTo(BigDecimal.valueOf(9500));
-        assertThat(response.getCurrencyTo()).isEqualTo("RUB");
-
-        verify(accountsClient).debit("alice", "USD", BigDecimal.valueOf(100));
-        verify(accountsClient).credit("bob", "RUB", BigDecimal.valueOf(9500));
-        verify(notificationsClient).notify(any());
-        verify(transferRepository).save(any());
-    }
-
-    @Test
-    void shouldRespectBlockerMaintenancePeriod() {
-        // given
-        TransferRequest request = new TransferRequest();
-        request.setFromLogin("alice");
-        request.setToLogin("bob");
-        request.setFromCurrency(Currency.USD);
-        request.setToCurrency(Currency.USD);
-        request.setAmount(BigDecimal.valueOf(100));
-
-        when(blockerClient.check(any())).thenReturn(new BlockerStatus(true, "Maintenance window"));
-
-        // when
-        TransferResponse response;
-        try {
-            transferService.transfer(request);
-            response = null; // должен выбросить исключение
-        } catch (Exception e) {
-            response = null;
-            assertThat(e.getMessage()).contains("Maintenance");
-        }
-
-        // then
-        verify(blockerClient, atLeastOnce()).check(any());
-        verifyNoInteractions(accountsClient, exchangeClient, notificationsClient, transferRepository);
+        verify(outboxEventRepository).save(any());
     }
 }

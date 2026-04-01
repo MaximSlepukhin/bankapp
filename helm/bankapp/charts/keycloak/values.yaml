@@ -1,0 +1,82 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/keycloak/keycloak
+  tag: "24.0.1"
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    memory: "100Mi"
+    cpu: "100m"
+  limits:
+    memory: "200Mi"
+    cpu: "200m"
+
+
+service:
+  type: ClusterIP
+  port: 80       # порт для Ingress
+  targetPort: 8080 # порт контейнера Keycloak
+
+
+postgres:
+  username: keycloak
+  password: keycloak
+
+admin:
+  username: admin
+  password: admin
+
+extraEnv:
+  - name: KC_DB
+    value: postgres
+  - name: KC_DB_URL
+    value: "jdbc:postgresql://keycloak-db-keycloak-db:5432/keycloak"
+  - name: KC_DB_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-db-secret
+        key: username
+  - name: KC_DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-db-secret
+        key: password
+  - name: KEYCLOAK_ADMIN
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-admin-secret
+        key: admin-username
+  - name: KEYCLOAK_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-admin-secret
+        key: admin-password
+  - name: KC_HOSTNAME
+    value: "localhost:8080"
+  - name: KC_HOSTNAME_STRICT
+    value: "false"
+  - name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC
+    value: "true"
+  - name: KC_PROXY
+    value: "edge"
+
+realmImport:
+  enabled: true
+  file: bank-realm-realm.json
+
+ingress:
+  enabled: true
+  className: nginx
+  host: keycloak.local
+
+tls:
+  enabled: true
+  secretName: keycloak-tls-secret
+  certFile: tls.crt
+  keyFile: tls.key
+
+secrets:
+  enabled: true
+

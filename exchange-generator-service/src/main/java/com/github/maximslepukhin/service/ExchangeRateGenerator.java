@@ -43,18 +43,6 @@ public class ExchangeRateGenerator {
         return rates;
     }
 
-    public BigDecimal convert(BigDecimal amount, Currency from, Currency to) {
-        if (from == to) {
-            return amount;
-        }
-        var baseRates = generateBaseRates();
-        BigDecimal rate = calculateRate(from, to, baseRates);
-        double noise = 1 + (random.nextDouble() * 0.04 - 0.02);
-        return amount.multiply(rate)
-                .multiply(BigDecimal.valueOf(noise))
-                .setScale(6, RoundingMode.HALF_UP);
-    }
-
     private BigDecimal calculateRate(Currency from, Currency to, Map<Currency, BigDecimal> baseRates) {
         return baseRates.get(from).divide(baseRates.get(to), 6, RoundingMode.HALF_UP);
     }

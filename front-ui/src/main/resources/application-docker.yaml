@@ -1,0 +1,25 @@
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: ${OAUTH2_CLIENT_ID}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${OAUTH2_REDIRECT_URI}
+            scope:
+              - openid
+
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_EXTERNAL_URL}/realms/${OAUTH2_REALM}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${OAUTH2_REALM}/protocol/openid-connect/token
+            user-info-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${OAUTH2_REALM}/protocol/openid-connect/userinfo
+            jwk-set-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${OAUTH2_REALM}/protocol/openid-connect/certs
+            user-name-attribute: preferred_username
+
+keycloak:
+  server-url: ${KEYCLOAK_INTERNAL_URL}
+  admin:
+    username: ${KEYCLOAK_ADMIN_USERNAME}
+    password: ${KEYCLOAK_ADMIN_PASSWORD}

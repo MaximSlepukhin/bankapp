@@ -1,0 +1,10 @@
+{
+  "name": "POST update-balance (cash-service: deposit/withdraw)",
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/api/v1/accounts/[^/]+/(USD|RUB|CNY)"
+  },
+  "response": {
+    "status": 200
+  }
+}

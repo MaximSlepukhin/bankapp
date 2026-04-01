@@ -1,5 +1,14 @@
 databaseChangeLog:
+  # Далее создаём таблицы
   - include:
       file: db/changelog/changesets/001-create-users-table.yaml
   - include:
       file: db/changelog/changesets/002-create-accounts-table.yaml
+  - include:
+      file: db/changelog/changesets/003-create-outbox-events-table.yaml
+  - include:
+      file: db/changelog/changesets/004-add-retry-count-to-outbox.yaml
+  - include:
+      file: db/changelog/changesets/005-create-idempotency-keys-table.yaml
+  - include:
+      file: db/changelog/changesets/006-add-version-to-accounts.yaml

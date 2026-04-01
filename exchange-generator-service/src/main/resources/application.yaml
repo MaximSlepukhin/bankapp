@@ -2,5 +2,38 @@ spring:
   application:
     name: exchange-generator
 
-  config:
-    import: optional:configserver:http://config-server:8888
+  kafka:
+    bootstrap-servers: my-kafka.default.svc.cluster.local:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  shutdown: graceful
+
+logging:
+  level:
+    root: INFO
+    com.github.maximslepukhin: INFO
+    org.springframework: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+  metrics:
+    enable:
+      all: true
+
+  tracing:
+    sampling:
+      probability: 1
+
+  zipkin:
+    tracing:
+      endpoint: http://zipkin.monitoring.svc.cluster.local:9411/api/v2/spans

@@ -1,0 +1,99 @@
+{
+  "realm" : "bank-realm",
+  "users" : [ {
+    "id" : "102f1996-1eea-450d-90cb-c167a2768de0",
+    "username" : "qqq",
+    "firstName" : "qqq",
+    "lastName" : "qqq",
+    "email" : "qqq@example.com",
+    "emailVerified" : false,
+    "createdTimestamp" : 1761813448023,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "22139ab0-78f3-4db2-a511-095b8344ee0f",
+      "type" : "password",
+      "createdDate" : 1761813448323,
+      "secretData" : "{\"value\":\"yf41MOgz4kPZetJyD9LoeTXsgMglUWlyezJgX1xX70J97MoKxR3lmQxjZXwTbEWxVG9ClqxUNns2WJM7Nim9Wg==\",\"salt\":\"od6ZHyWyfJ/RBXJINjU1cg==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-bank-realm" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "96b3efe7-b1f0-48dc-bf42-ce23619232f0",
+    "username" : "service-account-accounts-service",
+    "emailVerified" : false,
+    "createdTimestamp" : 1760119221380,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "accounts-service",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-bank-realm" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "b923c181-fa80-46a8-81de-82a47922c693",
+    "username" : "service-account-cash-service",
+    "emailVerified" : false,
+    "createdTimestamp" : 1760117958837,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "cash-service",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-bank-realm" ],
+    "clientRoles" : {
+      "accounts-service" : [ "access", "read", "write" ]
+    },
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "2dd47459-acf5-4b9a-a6e3-5edfa53fc274",
+    "username" : "service-account-front-ui-service",
+    "emailVerified" : false,
+    "createdTimestamp" : 1759710263975,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "front-ui-service",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-bank-realm" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "e571b463-1735-4722-a719-8d18ea80d23c",
+    "username" : "service-account-gateway-service",
+    "emailVerified" : false,
+    "createdTimestamp" : 1760146061336,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "gateway-service",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-bank-realm" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "2044bbeb-693b-475c-bb70-5d586fbf0ae7",
+    "username" : "service-account-transfer-service",
+    "emailVerified" : false,
+    "createdTimestamp" : 1760443705695,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "transfer-service",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-bank-realm" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  } ]
+}

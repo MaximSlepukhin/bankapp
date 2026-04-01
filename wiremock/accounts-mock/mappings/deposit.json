@@ -1,0 +1,10 @@
+{
+  "name": "POST deposit/compensate (transfer-service: credit + compensation)",
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/api/v1/accounts/[^/]+/[^/]+/deposit"
+  },
+  "response": {
+    "status": 200
+  }
+}

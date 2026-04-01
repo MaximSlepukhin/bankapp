@@ -1,0 +1,58 @@
+apiVersion: v2
+name: transfer-service
+description: Transfer Service Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+replicaCount: 1
+
+image:
+  repository: transfer-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8083
+  labels:
+    app.kubernetes.io/name: transfer-service
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "8083"
+
+env:
+  SPRING_PROFILES_ACTIVE: "dev"
+
+  POSTGRES_HOST: "accounts-db-accounts-db"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DATABASE: "accountsdb"
+  POSTGRES_USERNAME: "accounts_user"
+  POSTGRES_PASSWORD: "strongpassword123"
+  POSTGRES_SCHEMA: "transfer_service"
+
+  ACCOUNTS_SERVICE_URL: "http://accounts-service:8081"
+  BLOCKER_SERVICE_URL: "http://blocker-service:8087"
+  NOTIFICATIONS_SERVICE_URL: "http://notifications-service:8080"
+  EXCHANGE_SERVICE_URL: "http://exchange-service:8084"
+
+keycloak:
+  realm: bank-realm
+  url: http://keycloak:8080
+  clientSecret: "RMU6Vb96Ay0fWnLJ6WEBiyt8yjdjKk24"
+
+resources:
+  requests:
+    memory: "100Mi"
+    cpu: "100m"
+  limits:
+    memory: "200Mi"
+    cpu: "200m"
+
+secrets:
+  KEYCLOAK_CLIENTSECRET: "RMU6Vb96Ay0fWnLJ6WEBiyt8yjdjKk24"
+  ACCOUNTS_SERVICE_URL: "http://accounts-service:8081"
+  CASH_SERVICE_URL: "http://cash-service:8091"
+  TRANSFER_SERVICE_URL: "http://transfer-service:8083"
+  EXCHANGE_SERVICE_URL: "http://exchange-generator-service:8080"

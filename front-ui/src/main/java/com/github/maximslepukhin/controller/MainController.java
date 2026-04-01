@@ -8,6 +8,7 @@ import com.github.maximslepukhin.model.dto.SignupForm;
 import com.github.maximslepukhin.service.ExchangeService;
 import com.github.maximslepukhin.service.FinanceService;
 import com.github.maximslepukhin.service.UserService;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,8 @@ public class MainController {
     private final UserService userService;
     private final FinanceService financeService;
     private final ExchangeService exchangeService;
+    private final MeterRegistry meterRegistry;
+
 
     // ------------------ Главная страница ------------------
     @GetMapping("/")
@@ -42,22 +46,43 @@ public class MainController {
 
     @GetMapping("/main")
     public String mainPage(Model model, @AuthenticationPrincipal OidcUser oidcUser) {
-        UserDto user = userService.getUserFromOidc(oidcUser);
-        log.info("OIDC user attributes: {}", oidcUser.getAttributes());
-        model.addAttribute("login", user.getLogin());
-        model.addAttribute("name", user.getName());
-        model.addAttribute("birthdate", user.getBirthdate());
-        model.addAttribute("accounts", user.getAccounts());
-        model.addAttribute("currency", List.of(Currency.USD, Currency.RUB, Currency.CNY));
-        model.addAttribute("users", userService.getOtherUsers(user.getLogin()));
+        String login = (oidcUser != null) ? oidcUser.getPreferredUsername() : "unknown";
 
-        model.addAttribute("passwordErrors", model.getAttribute("passwordErrors") != null ? model.getAttribute("passwordErrors") : List.of());
-        model.addAttribute("userAccountsErrors", model.getAttribute("userAccountsErrors") != null ? model.getAttribute("userAccountsErrors") : List.of());
-        model.addAttribute("cashErrors", model.getAttribute("cashErrors") != null ? model.getAttribute("cashErrors") : List.of());
-        model.addAttribute("transferErrors", model.getAttribute("transferErrors") != null ? model.getAttribute("transferErrors") : List.of());
-        model.addAttribute("transferOtherErrors", model.getAttribute("transferOtherErrors") != null ? model.getAttribute("transferOtherErrors") : List.of());
+        if (oidcUser == null) {
+            meterRegistry.counter("user_login_total", "status", "failed", "login", login).increment();
+            return "redirect:/login";
+        }
 
-        return "main";
+        UserDto user;
+        try {
+            user = userService.getUserFromOidc(oidcUser);
+
+            if (user == null || user.getLogin().isBlank()) {
+                meterRegistry.counter("user_login_total", "status", "failed", "login", login).increment();
+                return "redirect:/login";
+            }
+
+            meterRegistry.counter("user_login_total", "status", "success", "login", user.getLogin()).increment();
+
+            model.addAttribute("login", user.getLogin());
+            model.addAttribute("name", user.getName());
+            model.addAttribute("birthdate", user.getBirthdate());
+            model.addAttribute("accounts", user.getAccounts());
+            model.addAttribute("currency", List.of(Currency.USD, Currency.RUB, Currency.CNY));
+
+            List<UserDto> otherUsers = userService.getOtherUsers(user.getLogin());
+            model.addAttribute("users", otherUsers);
+
+            model.addAttribute("cashIdempotencyKey", UUID.randomUUID());
+            model.addAttribute("selfTransferIdempotencyKey", UUID.randomUUID());
+            model.addAttribute("otherTransferIdempotencyKey", UUID.randomUUID());
+
+            return "main";
+
+        } catch (Exception e) {
+            meterRegistry.counter("user_login_total", "status", "failed", "login", login).increment();
+            return "redirect:/login";
+        }
     }
 
     // ------------------ Регистрация ------------------
@@ -81,16 +106,16 @@ public class MainController {
             @RequestParam Currency currency,
             @RequestParam BigDecimal value,
             @RequestParam String action,
+            @RequestParam UUID idempotencyKey,
             RedirectAttributes redirectAttrs) {
 
         try {
-            financeService.cashOperation(login, currency, value, action);
+            financeService.cashOperation(login, currency, value, action, idempotencyKey);
         } catch (IllegalArgumentException e) {
             redirectAttrs.addFlashAttribute("cashErrors", List.of(e.getMessage()));
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("cashErrors", List.of("Ошибка при операции: " + e.getMessage()));
         }
-
         return "redirect:/main";
     }
 
@@ -102,6 +127,7 @@ public class MainController {
             @RequestParam Currency to_currency,
             @RequestParam BigDecimal value,
             @RequestParam(required = false) String to_login,
+            @RequestParam UUID idempotencyKey,
             RedirectAttributes redirectAttrs) {
 
         try {
@@ -110,7 +136,8 @@ public class MainController {
                     (to_login == null || to_login.isBlank()) ? login : to_login,
                     from_currency,
                     to_currency,
-                    value
+                    value,
+                    idempotencyKey
             );
         } catch (IllegalArgumentException e) {
             redirectAttrs.addFlashAttribute("transferErrors", List.of(e.getMessage()));

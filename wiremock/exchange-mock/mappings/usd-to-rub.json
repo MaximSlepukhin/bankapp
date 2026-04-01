@@ -1,0 +1,17 @@
+{
+  "name": "POST convert USD → RUB (rate: 90)",
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/exchange/convert",
+    "bodyPatterns": [
+      {"matchesJsonPath": {"expression": "$.from", "equalTo": "USD"}},
+      {"matchesJsonPath": {"expression": "$.to",   "equalTo": "RUB"}}
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {"Content-Type": "application/json"},
+    "body": "{\"original\": {{jsonPath request.body '$.amount'}}, \"from\": \"USD\", \"to\": \"RUB\", \"converted\": {{math (jsonPath request.body '$.amount') '*' 90}}}",
+    "transformers": ["response-template"]
+  }
+}

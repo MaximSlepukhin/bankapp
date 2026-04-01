@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-add-version-to-accounts
+      author: maksim
+      comment: >
+        Добавляем колонку version для оптимистичной блокировки (JPA @Version).
+        Существующим строкам выставляем version = 0 — JPA начнёт счёт с 1 при первом обновлении.
+      changes:
+        - addColumn:
+            tableName: accounts
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                  defaultValueNumeric: 0

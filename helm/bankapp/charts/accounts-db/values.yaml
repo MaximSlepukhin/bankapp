@@ -1,0 +1,15 @@
+image:
+  repository: postgres
+  tag: "16"
+  pullPolicy: Always
+
+postgres:
+  db: accountsdb
+  user: accounts_user
+  password: strongpassword123
+
+storage:
+  size: 1Gi
+
+service:
+  port: 5432

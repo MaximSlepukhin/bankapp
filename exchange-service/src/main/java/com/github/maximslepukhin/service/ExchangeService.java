@@ -1,42 +1,61 @@
 package com.github.maximslepukhin.service;
 
+import com.github.maximslepukhin.exception.ExchangeRateNotFoundException;
 import com.github.maximslepukhin.model.dto.ConvertRequest;
 import com.github.maximslepukhin.model.dto.ConvertResponse;
 import com.github.maximslepukhin.model.dto.CurrencyRate;
 import com.github.maximslepukhin.model.enums.Currency;
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ExchangeService {
 
     private final Map<String, BigDecimal> rates = new ConcurrentHashMap<>();
+    private final MeterRegistry meterRegistry;
 
-    public void updateRates(List<CurrencyRate> newRates) {
-        for (CurrencyRate rate : newRates) {
-            rates.put(rate.getFrom() + "-" + rate.getTo(), rate.getRate());
-        }
-        rates.put("RUB-RUB", BigDecimal.ONE);
-    }
+    @KafkaListener(topics = "exchange-rates", groupId = "exchange-service-group")
+    public void consumeRates(CurrencyRate rate) {
+        if (rate == null) {
+            log.warn("⚠️ Получен null rate из Kafka для {} → {}",
+                    rate.getFrom(), rate.getTo());
 
-    public List<CurrencyRate> getRates() {
-        List<CurrencyRate> result = new ArrayList<>();
-        for (Map.Entry<String, BigDecimal> entry : rates.entrySet()) {
-            String[] parts = entry.getKey().split("-");
-            result.add(new CurrencyRate(Currency.valueOf(parts[0]), Currency.valueOf(parts[1]), entry.getValue()));
+            meterRegistry.counter("exchange_rate_missing_total",
+                    "from", rate.getFrom().name(),
+                    "to", rate.getTo().name()
+            ).increment();
+            return;
         }
-        return result;
+
+        try {
+            String key = rate.getFrom() + "-" + rate.getTo();
+            rates.put(key, rate.getRate());
+            rates.put("RUB-RUB", BigDecimal.ONE);
+
+            log.info("📥 Принят курс из Kafka: {} → {} = {}",
+                    rate.getFrom(), rate.getTo(), rate.getRate());
+
+        } catch (Exception e) {
+            log.error("Ошибка при обработке курса из Kafka: {}", rate, e);
+            meterRegistry.counter("exchange_rate_failed_total",
+                    "from", rate.getFrom().name(),
+                    "to", rate.getTo().name()
+            ).increment();
+        }
     }
 
     public ConvertResponse convert(ConvertRequest request) {
+        log.info("POST запрос на /api/exchange/convert получен с телом: {}", request);
         log.info("➡️ Запрос на конвертацию: amount={}, from={}, to={}",
                 request.getAmount(), request.getFrom(), request.getTo());
 
@@ -58,7 +77,7 @@ public class ExchangeService {
 
             if (fromToRub == null || rubToTo == null) {
                 log.error("❌ Нет курса для конвертации {} → {}", request.getFrom(), request.getTo());
-                throw new IllegalArgumentException("Курс не найден для " + request.getFrom() + " → " + request.getTo());
+                throw new ExchangeRateNotFoundException("Курс не найден для " + request.getFrom() + " → " + request.getTo());
             }
 
             rate = fromToRub.multiply(rubToTo);

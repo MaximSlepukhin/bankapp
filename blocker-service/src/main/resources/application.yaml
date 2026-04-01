@@ -2,5 +2,45 @@ spring:
   application:
     name: blocker-service
 
-  config:
-    import: optional:configserver:http://config-server:8888
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:80/realms/bank-realm/protocol/openid-connect/certs
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  port: 8087
+  address: 0.0.0.0
+  shutdown: graceful
+
+blocker:
+  maintenance:
+    start: "00:00"
+    end: "00:05"
+
+logging:
+  level:
+    root: INFO
+    com.github.maximslepukhin: INFO
+    org.springframework: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+  metrics:
+    enable:
+      all: true
+
+  tracing:
+    sampling:
+      probability: 1
+
+  zipkin:
+    tracing:
+      endpoint: http://zipkin.monitoring.svc.cluster.local:9411/api/v2/spans
