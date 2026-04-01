@@ -21,7 +21,17 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.targetPort }}
+            - containerPort: 9010
+              name: jmx
           env:
+            - name: JAVA_TOOL_OPTIONS
+              value: >-
+                -Dcom.sun.management.jmxremote=true
+                -Dcom.sun.management.jmxremote.port=9010
+                -Dcom.sun.management.jmxremote.rmi.port=9010
+                -Dcom.sun.management.jmxremote.authenticate=false
+                -Dcom.sun.management.jmxremote.ssl=false
+                -Djava.rmi.server.hostname=127.0.0.1
 {{/*            - name: SPRING_PROFILES_ACTIVE*/}}
 {{/*              value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"*/}}
             - name: SPRING_DATASOURCE_URL

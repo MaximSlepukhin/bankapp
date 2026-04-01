@@ -292,3 +292,58 @@ kubectl port-forward -n monitoring svc/prometheus-stack-grafana 3000:80 &
 ```bash
 pkill -f "kubectl port-forward"
 ```
+
+---
+
+## Профилирование через VisualVM
+
+Каждый микросервис запускается с JMX на уникальном порту.
+
+### Шаг 1 — Пробросить JMX-порт нужного сервиса
+
+```bash
+# accounts-service
+kubectl port-forward -n dev svc/accounts-service 9010:9010 &
+
+# blocker-service
+kubectl port-forward -n dev svc/blocker-service 9011:9011 &
+
+# cash-service
+kubectl port-forward -n dev svc/cash-service 9012:9012 &
+
+# exchange-service
+kubectl port-forward -n dev svc/exchange-service 9013:9013 &
+
+# exchange-generator-service
+kubectl port-forward -n dev svc/exchange-generator-service 9014:9014 &
+
+# front-ui
+kubectl port-forward -n dev svc/front-ui 9015:9015 &
+
+# notifications-service
+kubectl port-forward -n dev svc/notifications-service 9016:9016 &
+
+# transfer-service
+kubectl port-forward -n dev svc/transfer-service 9017:9017 &
+```
+
+### Шаг 2 — Подключиться в VisualVM
+
+1. Открыть VisualVM
+2. `File` → `Add JMX Connection`
+3. Ввести `localhost:<порт>` (например `localhost:9010` для accounts-service)
+4. Снять галочку `Use security credentials`
+5. Нажать `OK`
+
+### Таблица портов
+
+| Сервис | JMX порт |
+|---|---|
+| accounts-service | 9010 |
+| blocker-service | 9011 |
+| cash-service | 9012 |
+| exchange-service | 9013 |
+| exchange-generator-service | 9014 |
+| front-ui | 9015 |
+| notifications-service | 9016 |
+| transfer-service | 9017 |

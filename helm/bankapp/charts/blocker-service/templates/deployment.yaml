@@ -20,7 +20,17 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.port }}
+            - containerPort: 9011
+              name: jmx
           env:
+            - name: JAVA_TOOL_OPTIONS
+              value: >-
+                -Dcom.sun.management.jmxremote=true
+                -Dcom.sun.management.jmxremote.port=9011
+                -Dcom.sun.management.jmxremote.rmi.port=9011
+                -Dcom.sun.management.jmxremote.authenticate=false
+                -Dcom.sun.management.jmxremote.ssl=false
+                -Djava.rmi.server.hostname=127.0.0.1
             - name: BLOCKER_MAINTENANCE_START
               value: "{{ .Values.env.maintenanceStart }}"
             - name: BLOCKER_MAINTENANCE_END
